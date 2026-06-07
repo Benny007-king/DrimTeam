@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>הרשמה / התחברות — DrimTeam</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Rubik:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="container nav">
+      <a href="index.html" class="logo"><span class="drim">Drim</span><span class="ball"></span><span class="team">Team</span></a>
+      <nav class="nav__links">
+        <a href="index.html">בית</a>
+        <a href="games.html">לוח משחקים</a>
+        <a href="tournaments.html">טורנירים</a>
+        <a href="gallery.html">גלריה</a>
+        <a href="cities.html">איפה משחקים</a>
+        <a href="takanon.html">תקנון</a>
+      </nav>
+      <div class="nav__actions">
+        <a href="register.html" class="btn btn--ghost btn--sm active">התחברות</a>
+        <button class="nav__toggle" aria-label="תפריט"><span></span><span></span><span></span></button>
+      </div>
+    </div>
+  </header>
+
+  <section class="section">
+    <div class="container">
+      <div class="section-head" style="margin-bottom:36px">
+        <span class="eyebrow">ארגון הכדורגל לחובבנים הגדול בישראל</span>
+        <h1 class="h-lg">הצטרפו ל-DrimTeam</h1>
+        <p class="lead">דקה אחת וזהו — מלאו את הפרטים, דרגו את עצמכם, ואנחנו נשבץ אתכם למשחק המתאים.</p>
+      </div>
+
+      <div class="auth-grid">
+
+        <!-- REGISTER -->
+        <div class="panel">
+          <h2 class="h-md">טופס הרשמה</h2>
+          <form onsubmit="return false">
+            <div class="field-row">
+              <div class="field">
+                <label for="fname">שם פרטי</label>
+                <input class="input" id="fname" type="text" placeholder="ישראל" />
+              </div>
+              <div class="field">
+                <label for="lname">שם משפחה</label>
+                <input class="input" id="lname" type="text" placeholder="ישראלי" />
+              </div>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label for="phone">טלפון</label>
+                <input class="input" id="phone" type="tel" placeholder="050-0000000" />
+              </div>
+              <div class="field">
+                <label for="email">אימייל</label>
+                <input class="input" id="email" type="email" placeholder="name@email.com" autocomplete="email" />
+              </div>
+            </div>
+            <div class="field">
+              <label for="idnum">תעודת זהות</label>
+              <input class="input" id="idnum" inputmode="numeric" placeholder="000000000" />
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label for="pass">סיסמה</label>
+                <input class="input" id="pass" type="password" placeholder="לפחות 6 תווים" autocomplete="new-password" />
+              </div>
+              <div class="field">
+                <label for="pass2">אימות סיסמה</label>
+                <input class="input" id="pass2" type="password" placeholder="הקלד שוב" autocomplete="new-password" />
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="city">עיר מועדפת</label>
+              <select class="select" id="city">
+                <option>הרצליה</option><option>רחובות</option><option>ראשל"צ</option>
+                <option>אשדוד</option><option>מודיעין</option><option>כפר סבא</option>
+                <option>רמת גן</option><option>פ"ת</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="sport">ענף ספורט מועדף</label>
+              <select class="select" id="sport">
+                <option>כדורגל</option><option>פוטסל</option><option>רכיבת אופניים</option>
+                <option>חוגים</option><option>ריצה</option><option>אחר</option>
+              </select>
+            </div>
+
+            <div class="field checkbox-row">
+              <input type="checkbox" id="terms" />
+              <label for="terms" style="margin:0">אני מאשר/ת את <a href="takanon.html" class="link-lime">תקנון האתר</a> ואת <a href="health.html" class="link-lime">הצהרת הבריאות</a></label>
+            </div>
+
+            <button class="btn btn--primary btn--block btn--lg" id="regSubmit">המשך</button>
+            <p id="regMsg" class="hint" style="color:var(--text-dim);margin-top:12px"></p>
+          </form>
+        </div>
+
+        <!-- LOGIN -->
+        <div class="panel">
+          <h2 class="h-md">משתמש קיים? התחבר</h2>
+          <form onsubmit="return false">
+            <div class="field">
+              <label for="lu">שם משתמש</label>
+              <input class="input" id="lu" type="text" placeholder="שם משתמש או אימייל" />
+            </div>
+            <div class="field">
+              <label for="lp">סיסמה</label>
+              <input class="input" id="lp" type="password" placeholder="••••••••" />
+            </div>
+            <button class="btn btn--ghost btn--block btn--lg" id="loginSubmit">התחברות</button>
+            <p id="loginMsg" class="hint" style="color:var(--text-dim);margin-top:12px"></p>
+            <p style="text-align:center;margin-top:16px"><a href="#" id="forgotLink" class="link-lime">שכחת סיסמה?</a></p>
+          </form>
+
+          <div class="note" style="margin-top:24px">
+            <strong>שימו לב:</strong> ההשתתפות במשחקים מותרת מגיל 25 ומעלה, ומחייבת חתימה על
+            <a href="health.html" class="link-lime">הצהרת בריאות</a> לפני רכישת כרטיס.
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-bottom" style="border:none;padding-top:0">
+        <span>© 2026 DrimTeam — כל הזכויות שמורות · 054-5543734 · בן ציון פוגל 43, רחובות</span>
+        <span><a href="takanon.html" class="link-lime">תקנון</a></span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Sign popup (terms + health declaration) -->
+  <div class="modal" id="signModal" aria-hidden="true">
+    <div class="modal__box">
+      <h2 class="h-md">חתימה על תקנון והצהרת בריאות</h2>
+      <p class="muted">שלום <span id="signName" class="text-lime"></span> 👋 כדי להשתתף באירועים יש לאשר ולחתום:</p>
+      <ul class="tcol__list" style="margin:14px 0">
+        <li>מצב בריאותי תקין ואין מניעה רפואית מפעילות גופנית.</li>
+        <li>ידוע לי כי אין ביטוח לשחקנים ובאחריותי לדאוג לביטוח אישי.</li>
+        <li>אני משתתף/ת מרצוני החופשי ועל אחריותי בלבד.</li>
+      </ul>
+      <div class="field"><label for="signId">תעודת זהות</label><input class="input" id="signId" inputmode="numeric" placeholder="000000000" /></div>
+      <div class="field checkbox-row"><input type="checkbox" id="signOk" /><label for="signOk" style="margin:0">קראתי ואני מאשר/ת את <a href="takanon.html" target="_blank" class="link-lime">התקנון</a> ואת הצהרת הבריאות</label></div>
+      <div class="filters">
+        <button class="btn btn--primary" id="signConfirm">חתימה ואישור ✍️</button>
+        <button class="btn btn--ghost" id="signSkip">דלג כרגע</button>
+      </div>
+      <p id="signMsg" class="hint" style="color:var(--text-dim);margin-top:10px"></p>
+    </div>
+  </div>
+
+  <!-- Firebase + data -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="assets/js/db.js"></script>
+  <script src="assets/js/auth-ui.js"></script>
+  <script src="assets/js/main.js"></script>
+  <script>
+    (function () {
+      var params = new URLSearchParams(location.search);
+      var gameId = params.get("game");
+      var val = function (id) { var e = document.getElementById(id); return e ? e.value.trim() : ""; };
+
+      // הקשר משחק (אם הגיעו מ"הרשמה למשחק")
+      if (gameId) {
+        var head = document.querySelector(".section-head .lead");
+        if (head) head.innerHTML = "נרשמים למשחק שבחרתם 🎯 מלאו פרטים ודרגו את עצמכם — נשמור לכם מקום.";
+      }
+
+      // טען את מקסימום השחקנים למשחק (לחישוב רשימת המתנה)
+      window.__gameMax = 0;
+      if (gameId && window.DTDB && DTDB.load) {
+        DTDB.load().then(function () {
+          var g = (DTDB.get("games", []) || []).filter(function (x) { return x.id === gameId; })[0];
+          if (g) window.__gameMax = parseInt(g.max, 10) || 0;
+        });
+      }
+
+      // הרשמה / רישום שחקן חדש (יוצר חשבון עם סיסמה + שומר חבר)
+      var reg = document.getElementById("regSubmit");
+      if (reg) reg.addEventListener("click", function () {
+        var msg = document.getElementById("regMsg"); msg.style.color = "var(--text-dim)";
+        if (!document.getElementById("terms").checked) { msg.textContent = "יש לאשר את התקנון והצהרת הבריאות."; return; }
+        var name = (val("fname") + " " + val("lname")).trim();
+        var email = val("email"), pass = val("pass"), pass2 = val("pass2");
+        if (!name) { msg.textContent = "נא למלא שם."; return; }
+        if (!email) { msg.textContent = "נא למלא אימייל."; return; }
+        if (pass.length < 6) { msg.textContent = "סיסמה חייבת להכיל לפחות 6 תווים."; return; }
+        if (pass !== pass2) { msg.textContent = "הסיסמאות אינן תואמות."; return; }
+        var profile = {
+          name: name, phone: val("phone"), email: email, city: val("city"),
+          idNumber: val("idnum"), sport: val("sport"), termsAccepted: true
+        };
+        var err = function (e) { msg.style.color = "#ff8a72"; msg.textContent = "⚠️ " + (window.DTDB ? DTDB.authErrorText(e) : (e.message || e)); };
+
+        // השלמת ההרשמה (רישום למשחק אם רלוונטי + מעבר לתשלום)
+        function finalize() {
+          if (gameId && window.DTDB && DTDB.addRegistration) {
+            return DTDB.addRegistration(gameId, profile).then(function (res) {
+              var max = window.__gameMax || 0, pos = (res && res.position) || 0;
+              msg.style.color = "var(--lime-400)";
+              if (pos && max && pos > max) msg.textContent = "📋 המשחק מלא — נרשמת לרשימת המתנה, מקום " + (pos - max) + " בתור. מעבר לתשלום…";
+              else msg.textContent = "✅ נרשמת! מעבר לתשלום…";
+              try { localStorage.removeItem("dt_pending_game"); } catch (_) { }
+              setTimeout(function () { location.href = "checkout.html?game=" + gameId; }, 1100);
+            });
+          }
+          msg.style.color = "var(--lime-400)"; msg.textContent = "✅ נרשמת בהצלחה ל-DrimTeam! נתראה במגרש.";
+        }
+
+        // פופאפ חתימה על תקנון + הצהרת בריאות (מיד בסיום ההרשמה)
+        var sm = document.getElementById("signModal");
+        function openSign() {
+          document.getElementById("signId").value = profile.idNumber || "";
+          var sn = document.getElementById("signName"); if (sn) sn.textContent = (profile.name || "").split(" ")[0];
+          document.getElementById("signMsg").textContent = "";
+          sm.classList.add("open");
+        }
+        document.getElementById("signConfirm").onclick = function () {
+          var smsg = document.getElementById("signMsg");
+          if (!document.getElementById("signOk").checked) { smsg.style.color = "#ff8a72"; smsg.textContent = "יש לאשר את התקנון והצהרת הבריאות."; return; }
+          var idv = (document.getElementById("signId").value || "").trim();
+          if (!idv) { smsg.style.color = "#ff8a72"; smsg.textContent = "נא למלא תעודת זהות."; return; }
+          profile.idNumber = idv;
+          smsg.style.color = "var(--text-dim)"; smsg.textContent = "שומר חתימה…";
+          if (window.DTDB && DTDB.saveMember) DTDB.saveMember({ idNumber: idv }).catch(function () { });
+          var sv = (window.DTDB && DTDB.saveHealth) ? DTDB.saveHealth({ accepted: true, fullName: profile.name, idNumber: idv }) : Promise.resolve();
+          sv.then(function () { sm.classList.remove("open"); finalize(); })
+            .catch(function (e) { smsg.style.color = "#ff8a72"; smsg.textContent = "⚠️ " + (window.DTDB ? DTDB.authErrorText(e) : "שמירה נכשלה"); });
+        };
+        document.getElementById("signSkip").onclick = function () {
+          sm.classList.remove("open");
+          msg.style.color = "var(--text-dim)";
+          finalize();
+          setTimeout(function () { if (!gameId) msg.innerHTML = "✅ נרשמת! ⚠️ טרם חתמת על ההצהרה — <a href='health.html' class='link-lime'>לחתימה ←</a> (חובה לפני תשלום)."; }, 50);
+        };
+
+        function done() {
+          var saveM = (window.DTDB && DTDB.saveMember) ? DTDB.saveMember(profile).catch(function () { }) : Promise.resolve();
+          return saveM.then(function () { msg.style.color = "var(--lime-400)"; msg.textContent = "✅ נוצר חשבון — חתמו על ההצהרה כדי להמשיך."; openSign(); });
+        }
+        msg.style.color = "var(--text-dim)"; msg.textContent = "יוצר חשבון…";
+        var su = (window.DTDB && DTDB.signUp) ? DTDB.signUp(email, pass) : Promise.resolve(null);
+        su.then(function () { return done(); }).catch(function (e) {
+          if (e && e.code === "auth/email-already-in-use") {
+            msg.textContent = "המייל כבר רשום — מתחבר…";
+            return DTDB.signIn(email, pass).then(done).catch(function (e2) {
+              msg.style.color = "#ff8a72";
+              msg.textContent = (e2 && (e2.code === "auth/wrong-password" || e2.code === "auth/invalid-credential"))
+                ? "⚠️ האימייל כבר רשום והסיסמה שגויה. התחברו עם הסיסמה הנכונה בצד, או אפסו סיסמה."
+                : "⚠️ " + DTDB.authErrorText(e2);
+            });
+          }
+          err(e);
+        });
+      });
+
+      // התחברות (Firebase Auth) — מנהל מועבר לפאנל
+      var login = document.getElementById("loginSubmit");
+      if (login) login.addEventListener("click", function () {
+        var msg = document.getElementById("loginMsg");
+        var email = val("lu"), pass = val("lp");
+        msg.style.color = "var(--text-dim)"; msg.textContent = "מתחבר…";
+        var p = (window.DTDB && DTDB.signIn) ? DTDB.signIn(email, pass) : Promise.resolve(null);
+        p.then(function (res) {
+          if (res === true) {
+            var pending = gameId || (function () { try { return localStorage.getItem("dt_pending_game"); } catch (_) { return null; } })();
+            if (pending) { try { localStorage.removeItem("dt_pending_game"); } catch (_) { } location.href = "checkout.html?game=" + pending; return; }
+            DTDB.isAdminEmail(email).then(function (a) { location.href = a ? "admin.html" : "index.html"; });
+          } else { msg.textContent = "התחברות תהיה זמינה לאחר חיבור Firebase."; }
+        }).catch(function (e) { msg.style.color = "#ff8a72"; msg.textContent = "⚠️ " + (window.DTDB ? DTDB.authErrorText(e) : (e.message || e)); });
+      });
+
+      // שכחת סיסמה
+      var forgot = document.getElementById("forgotLink");
+      if (forgot) forgot.addEventListener("click", function (e) {
+        e.preventDefault();
+        var msg = document.getElementById("loginMsg");
+        var email = val("lu") || prompt("הזן את האימייל לאיפוס סיסמה:");
+        if (!email) return;
+        msg.style.color = "var(--text-dim)"; msg.textContent = "שולח קישור איפוס…";
+        var p = (window.DTDB && DTDB.resetPassword) ? DTDB.resetPassword(email) : Promise.reject(new Error("no-firebase"));
+        p.then(function () { msg.style.color = "var(--lime-400)"; msg.textContent = "✅ נשלח קישור לאיפוס סיסמה ל-" + email + " (בדקו גם בספאם)."; })
+          .catch(function (er) { msg.style.color = "#ff8a72"; msg.textContent = "⚠️ " + (window.DTDB ? DTDB.authErrorText(er) : "שגיאה"); });
+      });
+    })();
+  </script>
+</body>
+</html>

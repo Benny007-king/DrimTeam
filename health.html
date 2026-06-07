@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>הצהרת בריאות — DrimTeam</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Rubik:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="container nav">
+      <a href="index.html" class="logo"><span class="drim">Drim</span><span class="ball"></span><span class="team">Team</span></a>
+      <nav class="nav__links">
+        <a href="index.html">בית</a>
+        <a href="games.html">לוח משחקים</a>
+        <a href="tournaments.html">טורנירים</a>
+        <a href="gallery.html">גלריה</a>
+        <a href="cities.html">איפה משחקים</a>
+        <a href="takanon.html">תקנון</a>
+      </nav>
+      <div class="nav__actions">
+        <a href="register.html" class="btn btn--ghost btn--sm">התחברות</a>
+        <button class="nav__toggle" aria-label="תפריט"><span></span><span></span><span></span></button>
+      </div>
+    </div>
+  </header>
+
+  <section class="section">
+    <div class="container prose">
+      <div class="section-head">
+        <span class="eyebrow">לפני המשחק</span>
+        <h1 class="h-lg">הצהרת בריאות</h1>
+        <p class="lead">חתימה על ההצהרה היא תנאי להשתתפות במשחקים. אנא קראו בעיון.</p>
+      </div>
+
+      <div class="panel">
+        <p>אני, החתום/ה מטה, מצהיר/ה בזאת כי:</p>
+        <ul class="bullets">
+          <li>מצב בריאותי תקין ואין מניעה רפואית מלהשתתף בפעילות גופנית מאומצת.</li>
+          <li>ידוע לי כי ב-DrimTeam אין ביטוח לשחקנים, ובאחריותי לדאוג לביטוח תאונות אישיות.</li>
+          <li>אני משתתף/ת בפעילות מרצוני החופשי ועל אחריותי בלבד.</li>
+          <li>גילי 25 שנים ומעלה.</li>
+        </ul>
+
+        <form onsubmit="return false">
+          <div class="field-row">
+            <div class="field">
+              <label for="hn">שם מלא</label>
+              <input class="input" id="hn" type="text" placeholder="שם מלא" />
+            </div>
+            <div class="field">
+              <label for="hid">תעודת זהות</label>
+              <input class="input" id="hid" type="text" placeholder="000000000" />
+            </div>
+          </div>
+          <div class="field checkbox-row">
+            <input type="checkbox" id="hagree" />
+            <label for="hagree" style="margin:0">קראתי, הבנתי ואני מאשר/ת את הצהרת הבריאות והתקנון</label>
+          </div>
+          <button class="btn btn--primary btn--block btn--lg" id="healthSubmit">אישור וחתימה</button>
+          <p id="healthMsg" class="hint" style="margin-top:12px"></p>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-bottom" style="border:none">
+        <span>© 2026 DrimTeam — כל הזכויות שמורות · 054-5543734</span>
+        <span><a href="takanon.html" class="link-lime">תקנון</a></span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="assets/js/db.js"></script>
+  <script src="assets/js/auth-ui.js"></script>
+  <script src="assets/js/main.js"></script>
+  <script>
+    (function () {
+      var btn = document.getElementById("healthSubmit"); if (!btn) return;
+      btn.addEventListener("click", function () {
+        var msg = document.getElementById("healthMsg"); msg.style.color = "var(--text-dim)";
+        var name = (document.getElementById("hn").value || "").trim();
+        var idn = (document.getElementById("hid").value || "").trim();
+        if (!document.getElementById("hagree").checked) { msg.style.color = "#ff8a72"; msg.textContent = "יש לאשר את הצהרת הבריאות."; return; }
+        if (!name) { msg.style.color = "#ff8a72"; msg.textContent = "נא למלא שם מלא."; return; }
+        if (!(window.DTDB && DTDB.currentUid && DTDB.currentUid())) {
+          msg.style.color = "#ff8a72";
+          msg.innerHTML = 'כדי לחתום ולשמור, יש להתחבר תחילה. <a href="register.html" class="link-lime">התחברות / הרשמה ←</a>';
+          return;
+        }
+        msg.textContent = "שומר…";
+        DTDB.saveHealth({ accepted: true, fullName: name, idNumber: idn }).then(function () {
+          msg.style.color = "var(--lime-400)"; msg.textContent = "✅ הצהרת הבריאות נחתמה ונשמרה בחשבונך.";
+        }).catch(function (e) { msg.style.color = "#ff8a72"; msg.textContent = "⚠️ " + (DTDB.authErrorText ? DTDB.authErrorText(e) : "שמירה נכשלה"); });
+      });
+    })();
+  </script>
+</body>
+</html>

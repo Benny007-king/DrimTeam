@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>תשלום — DrimTeam</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Rubik:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="container nav">
+      <a href="index.html" class="logo"><span class="drim">Drim</span><span class="ball"></span><span class="team">Team</span></a>
+      <nav class="nav__links">
+        <a href="index.html">בית</a>
+        <a href="games.html">לוח משחקים</a>
+        <a href="tournaments.html">טורנירים</a>
+        <a href="gallery.html">גלריה</a>
+        <a href="cities.html">איפה משחקים</a>
+        <a href="takanon.html">תקנון</a>
+      </nav>
+      <div class="nav__actions">
+        <a href="register.html" class="btn btn--ghost btn--sm">התחברות</a>
+        <button class="nav__toggle" aria-label="תפריט"><span></span><span></span><span></span></button>
+      </div>
+    </div>
+  </header>
+
+  <section class="section">
+    <div class="container">
+      <div class="section-head" style="margin-bottom:32px">
+        <span class="eyebrow">סל קניות</span>
+        <h1 class="h-lg">סיום הזמנה ותשלום</h1>
+      </div>
+
+      <div class="auth-grid">
+        <!-- Details -->
+        <div class="panel">
+          <h2 class="h-md">פרטי המזמין</h2>
+          <form onsubmit="return false">
+            <div class="field-row">
+              <div class="field"><label for="cn">שם מלא</label><input class="input" id="cn" placeholder="שם מלא" /></div>
+              <div class="field"><label for="cp">טלפון</label><input class="input" id="cp" type="tel" placeholder="050-0000000" /></div>
+            </div>
+            <div class="field"><label for="ce">אימייל לקבלת אישור</label><input class="input" id="ce" type="email" placeholder="name@email.com" /></div>
+            <div class="note">🔒 התשלום מתבצע בעמוד מאובטח של ספק הסליקה (אשראי / Bit). איננו שומרים את פרטי כרטיס האשראי.</div>
+            <div class="field checkbox-row">
+              <input type="checkbox" id="cok" />
+              <label for="cok" style="margin:0">אני מאשר/ת את <a href="takanon.html" class="link-lime">התקנון</a> ואת <a href="health.html" class="link-lime">הצהרת הבריאות</a></label>
+            </div>
+            <button class="btn btn--primary btn--block btn--lg" id="payBtn">המשך לתשלום מאובטח 🔒</button>
+            <p id="payMsg" class="hint" style="color:var(--text-dim);margin-top:12px"></p>
+          </form>
+        </div>
+
+        <!-- Summary -->
+        <div class="panel">
+          <h2 class="h-md">סיכום הזמנה</h2>
+          <div class="game-meta" style="justify-content:space-between;margin-bottom:14px">
+            <span id="sumItem">כרטיס למשחק</span><strong id="sumPrice">₪35</strong>
+          </div>
+          <hr style="border:none;border-top:1px solid var(--navy-line);margin:18px 0" />
+          <div class="game-meta" style="justify-content:space-between;font-size:1.25rem">
+            <span>סה"כ לתשלום</span><strong class="text-lime" id="sumTotal">₪35</strong>
+          </div>
+          <div class="note" style="margin-top:22px">אישור הזמנה יישלח מיידית למייל לאחר התשלום.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-bottom" style="border:none">
+        <span>© 2026 DrimTeam — כל הזכויות שמורות</span>
+        <span><a href="takanon.html" class="link-lime">תקנון</a> · <a href="health.html" class="link-lime">הצהרת בריאות</a></span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Firebase (compat) + payment -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-functions-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="assets/js/db.js"></script>
+  <script src="assets/js/auth-ui.js"></script>
+  <script src="assets/js/main.js"></script>
+  <script>
+    (function () {
+      var params = new URLSearchParams(location.search);
+      var gameId = params.get("game");
+      var ITEM = { name: "כרטיס למשחק", price: 35, qty: 1 };
+
+      // טען פרטי המשחק שנבחר (כותרת + מחיר)
+      var ready = (window.DTDB && DTDB.load) ? DTDB.load() : Promise.resolve();
+      ready.then(function () {
+        if (gameId && window.DTDB) {
+          var g = (DTDB.get("games", []) || []).filter(function (x) { return x.id === gameId; })[0];
+          if (g) {
+            ITEM = { name: "כרטיס: " + (g.title || "משחק"), price: parseInt(g.price, 10) || 35, qty: 1 };
+            var s = document.getElementById("sumItem"); if (s) s.textContent = ITEM.name;
+            var sp = document.getElementById("sumPrice"); if (sp) sp.textContent = "₪" + ITEM.price;
+            var st = document.getElementById("sumTotal"); if (st) st.textContent = "₪" + ITEM.price;
+          }
+        }
+        // מילוי פרטי לקוח מהחשבון המחובר
+        if (window.DTDB && DTDB.getMyMember) DTDB.getMyMember().then(function (m) {
+          if (!m) return;
+          if (m.name) document.getElementById("cn").value = m.name;
+          if (m.phone) document.getElementById("cp").value = m.phone;
+          if (m.email) document.getElementById("ce").value = m.email;
+        });
+      });
+
+      var btn = document.getElementById("payBtn");
+      if (!btn) return;
+      function pay() {
+        var msg = document.getElementById("payMsg");
+        var customer = {
+          name: document.getElementById("cn").value,
+          phone: document.getElementById("cp").value,
+          email: document.getElementById("ce").value
+        };
+        msg.style.color = "var(--text-dim)"; msg.textContent = "יוצר תשלום מאובטח…";
+        var p = (window.DTDB && DTDB.createPayment) ? DTDB.createPayment([ITEM], customer, gameId) : Promise.resolve(null);
+        p.then(function (r) {
+          if (r && r.url) { window.location.href = r.url; }
+          else { msg.style.color = "var(--lime-400)"; msg.textContent = "✅ ההרשמה נקלטה! התשלום המאובטח (PayPlus) ייפתח לאחר חיבור ספק הסליקה. סה\"כ ₪" + ITEM.price + "."; }
+        }).catch(function (e) { msg.style.color = "#ff8a72"; msg.textContent = "שגיאה ביצירת תשלום: " + (window.DTDB ? DTDB.authErrorText(e) : (e && e.message ? e.message : e)); });
+      }
+
+      btn.addEventListener("click", function () {
+        var msg = document.getElementById("payMsg"); msg.style.color = "var(--text-dim)";
+        if (!document.getElementById("cok").checked) { msg.style.color = "#ff8a72"; msg.textContent = "יש לאשר את התקנון והצהרת הבריאות."; return; }
+        // חובה להיות מחובר
+        if (!(window.DTDB && DTDB.currentUid && DTDB.currentUid())) {
+          msg.style.color = "#ff8a72";
+          msg.innerHTML = 'כדי לשלם יש להתחבר תחילה. <a href="register.html" class="link-lime">התחברות / הרשמה ←</a>';
+          return;
+        }
+        // הצלבה: חייבים חתימה על הצהרת בריאות + תקנון (כולל ת"ז) לפני תשלום
+        msg.textContent = "בודק חתימה על הצהרת בריאות…";
+        DTDB.getMyMember().then(function (m) {
+          if (!(m && m.health && m.health.accepted)) {
+            msg.style.color = "#ff8a72";
+            msg.innerHTML = '⚠️ לא חתמת על הצהרת הבריאות והתקנון — ללא חתימה לא ניתן להמשיך לתשלום. <a href="health.html" class="link-lime">לחתימה עכשיו ←</a>';
+            return;
+          }
+          pay();
+        }).catch(function () { msg.style.color = "#ff8a72"; msg.textContent = "שגיאה בבדיקת החתימה. נסו שוב."; });
+      });
+    })();
+  </script>
+</body>
+</html>

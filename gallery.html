@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>גלריה — DrimTeam</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Rubik:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav">
+      <a href="index.html" class="logo"><span class="drim">Drim</span><span class="ball"></span><span class="team">Team</span></a>
+      <nav class="nav__links">
+        <a href="index.html">בית</a>
+        <a href="games.html">לוח משחקים</a>
+        <a href="tournaments.html">טורנירים</a>
+        <a href="gallery.html" class="active">גלריה</a>
+        <a href="cities.html">איפה משחקים</a>
+        <a href="takanon.html">תקנון</a>
+      </nav>
+      <div class="nav__actions">
+        <a href="register.html" class="btn btn--ghost btn--sm">התחברות</a>
+        <a href="register.html" class="btn btn--primary btn--sm show-mobile">הרשמה</a>
+        <button class="nav__toggle" aria-label="תפריט"><span></span><span></span><span></span></button>
+      </div>
+    </div>
+  </header>
+
+  <section class="section">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">גלריה</span>
+        <h1 class="h-xl">רגעים מהמגרשים והטורנירים</h1>
+        <p class="lead">הצצה לאווירה: משחקים, טורנירים וזריחות על הדשא. לחצו על תמונה להגדלה.</p>
+      </div>
+
+      <div class="view-tabs" id="galFilters" style="justify-content:center;flex-wrap:wrap;margin-bottom:24px"></div>
+      <div class="gallery" id="gallery"></div>
+    </div>
+  </section>
+
+  <section class="section section--tight">
+    <div class="container">
+      <div class="cta-band">
+        <h2 class="h-lg">רוצים להיות בתמונה הבאה?</h2>
+        <p class="lead">הצטרפו למשחק הקרוב ותפסו מקום על הדשא.</p>
+        <div style="margin-top:20px"><a href="register.html" class="btn btn--primary btn--lg">הרשמה למשחק</a></div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-bottom" style="border:none">
+        <span>© 2026 DrimTeam — כל הזכויות שמורות</span>
+        <span><a href="tournaments.html" class="link-lime">טורנירים</a></span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Lightbox -->
+  <div class="lightbox" id="lightbox"><button class="lightbox__close" id="lbClose" aria-label="סגור">×</button><img id="lbImg" src="" alt=""></div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="assets/js/db.js"></script>
+  <script src="assets/js/auth-ui.js"></script>
+  <script src="assets/js/main.js"></script>
+  <script>
+    (function () {
+      var grid = document.getElementById("gallery");
+      var filters = document.getElementById("galFilters");
+      var lb = document.getElementById("lightbox"), lbImg = document.getElementById("lbImg");
+      function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]; }); }
+      function ytId(u) { var m = (u || "").match(/(?:youtu\.be\/|v=|embed\/)([\w-]{11})/); return m ? m[1] : null; }
+
+      var FALLBACK = [
+        { type: "image", url: "assets/img/gallery/running.jpg", caption: "ריצה", tournamentName: "ריצה" },
+        { type: "image", url: "assets/img/gallery/cycling.jpg", caption: "רכיבת אופניים", tournamentName: "אופניים" },
+        { type: "image", url: "assets/img/gallery/g3.jpg", caption: "כדורגל", tournamentName: "כדורגל" },
+        { type: "image", url: "assets/img/gallery/fitness.jpg", caption: "חוגים", tournamentName: "חוגים" },
+        { type: "image", url: "assets/img/gallery/basketball.jpg", caption: "כדורסל", tournamentName: "כדורסל" },
+        { type: "image", url: "assets/img/gallery/tennis.jpg", caption: "טניס", tournamentName: "טניס" },
+        { type: "image", url: "assets/img/gallery/g8.jpg", caption: "תחרויות", tournamentName: "תחרויות" },
+        { type: "image", url: "assets/img/gallery/g4.jpg", caption: "פוטסל", tournamentName: "פוטסל" }
+      ];
+
+      function cell(it) {
+        var d = document.createElement("div");
+        d.className = "gallery__item";
+        d.setAttribute("data-tour", it.tournamentName || "כללי");
+        if (it.type === "video") {
+          var id = ytId(it.url);
+          d.innerHTML = id
+            ? '<iframe width="100%" height="100%" style="border:0" allowfullscreen src="https://www.youtube.com/embed/' + id + '"></iframe>'
+            : '<video src="' + esc(it.url) + '" controls style="width:100%;height:100%;object-fit:cover"></video>';
+        } else {
+          d.innerHTML = '<img src="' + esc(it.url) + '" alt="' + esc(it.caption || "") + '">';
+          d.querySelector("img").addEventListener("click", function () { lbImg.src = it.url; lb.classList.add("open"); });
+        }
+        if (it.caption) d.insertAdjacentHTML("beforeend", '<span class="gallery__cap">' + esc(it.caption) + "</span>");
+        return d;
+      }
+
+      function render(items) {
+        grid.innerHTML = "";
+        items.forEach(function (it) { grid.appendChild(cell(it)); });
+      }
+      function buildFilters(items) {
+        var tours = []; items.forEach(function (it) { var t = it.tournamentName || "כללי"; if (tours.indexOf(t) < 0) tours.push(t); });
+        if (tours.length <= 1) { filters.style.display = "none"; return; }
+        filters.style.display = "";
+        filters.innerHTML = '<button class="active" data-t="">הכל</button>' + tours.map(function (t) { return '<button data-t="' + esc(t) + '">' + esc(t) + "</button>"; }).join("");
+        filters.querySelectorAll("button").forEach(function (b) {
+          b.addEventListener("click", function () {
+            filters.querySelectorAll("button").forEach(function (x) { x.classList.remove("active"); });
+            b.classList.add("active");
+            var t = b.getAttribute("data-t");
+            grid.querySelectorAll(".gallery__item").forEach(function (c) {
+              c.style.display = (!t || c.getAttribute("data-tour") === t) ? "" : "none";
+            });
+          });
+        });
+      }
+
+      var ready = (window.DTDB && DTDB.getGallery) ? DTDB.getGallery() : Promise.resolve([]);
+      ready.then(function (items) {
+        if (!items || !items.length) { render(FALLBACK); filters.style.display = "none"; return; }
+        render(items); buildFilters(items);
+      }).catch(function () { render(FALLBACK); filters.style.display = "none"; });
+    })();
+  </script>
+</body>
+</html>
