@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="כדורגל">
+  <circle cx="50" cy="50" r="47" fill="#ffffff" stroke="#0a1430" stroke-width="3"/>
+  <!-- center pentagon -->
+  <polygon points="50,33 64,43 59,60 41,60 36,43" fill="#0a1430"/>
+  <!-- spokes to edge pentagons -->
+  <path d="M50 33 L50 14 M64 43 L80 33 M59 60 L72 76 M41 60 L28 76 M36 43 L20 33"
+        stroke="#0a1430" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <!-- edge pentagon hints -->
+  <path d="M50 14 L62 9 M50 14 L38 9" stroke="#0a1430" stroke-width="3" stroke-linecap="round"/>
+  <path d="M80 33 L86 45 M80 33 L84 21" stroke="#0a1430" stroke-width="3" stroke-linecap="round"/>
+  <path d="M72 76 L82 70 M72 76 L70 88" stroke="#0a1430" stroke-width="3" stroke-linecap="round"/>
+  <path d="M28 76 L18 70 M28 76 L30 88" stroke="#0a1430" stroke-width="3" stroke-linecap="round"/>
+  <path d="M20 33 L14 45 M20 33 L16 21" stroke="#0a1430" stroke-width="3" stroke-linecap="round"/>
+</svg>

@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>טורנירים ופורמטים — DrimTeam</title>
+  <meta name="description" content="כל הפורמטים של DrimTeam — פוטסל, כדורגל 7, טורניר בוטיק וליגה שבועית." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Rubik:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="container nav">
+      <a href="index.html" class="logo"><span class="drim">Drim</span><span class="ball"></span><span class="team">Team</span></a>
+      <nav class="nav__links">
+        <a href="index.html">בית</a>
+        <a href="games.html">לוח משחקים</a>
+        <a href="tournaments.html" class="active">טורנירים</a>
+        <a href="gallery.html">גלריה</a>
+        <a href="cities.html">איפה משחקים</a>
+        <a href="takanon.html">תקנון</a>
+      </nav>
+      <div class="nav__actions">
+        <a href="register.html" class="btn btn--ghost btn--sm">התחברות</a>
+        <a href="register.html" class="btn btn--primary btn--sm show-mobile">הרשמה</a>
+        <button class="nav__toggle" aria-label="תפריט"><span></span><span></span><span></span></button>
+      </div>
+    </div>
+  </header>
+
+  <!-- HERO BANNER -->
+  <section class="hero2 hero2--page">
+    <div class="hero2__media"><img src="assets/img/hero-athlete.jpg" alt="ספורט" /></div>
+    <div class="container">
+      <div class="hero2__inner">
+        <div class="hero2__kicker">DRIMTEAM · טורנירים</div>
+        <h1 class="hero2__title">טורנירים</h1>
+        <p class="hero2__sub">בחרו את אופן המשחק שמתאים לכם — מפוטסל מהיר ועד ליגה עם טבלה. שיבוץ לפי רמה.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- OVERVIEW COLUMNS -->
+  <section class="section" style="padding-top:0">
+    <div class="container">
+      <div class="tournaments">
+
+        <article class="tcol tcol--featured">
+          <span class="tcol__tag">הכי פופולרי</span>
+          <div class="tcol__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7l4 3-1.5 5h-5L8 10z" stroke-linejoin="round"/></svg>
+          </div>
+          <h3>פוטסל</h3>
+          <div class="tcol__sub">5 נגד 5 · מהיר וטכני</div>
+          <ul class="tcol__list">
+            <li>מגרש קטן, הרבה נגיעות</li>
+            <li>קצב גבוה לערב באמצע השבוע</li>
+          </ul>
+          <div class="tcol__foot">
+            <div class="tcol__price">₪30 <span>/ משחק</span></div>
+            <a href="format-futsal.html" class="btn btn--primary btn--block">לפרטים</a>
+          </div>
+        </article>
+
+        <article class="tcol">
+          <div class="tcol__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20a6 6 0 0 1 12 0M14.5 20a5 5 0 0 1 6.5-4.8" stroke-linecap="round"/></svg>
+          </div>
+          <h3>כדורגל 7</h3>
+          <div class="tcol__sub">7 נגד 7 · הקלאסי</div>
+          <ul class="tcol__list">
+            <li>דשא מלא, הפורמט המוכר</li>
+            <li>איזון קבוצות בכל משחק</li>
+          </ul>
+          <div class="tcol__foot">
+            <div class="tcol__price">₪35 <span>/ משחק</span></div>
+            <a href="format-7.html" class="btn btn--ghost btn--block">לפרטים</a>
+          </div>
+        </article>
+
+        <article class="tcol">
+          <div class="tcol__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4h12v3a6 6 0 0 1-12 0z"/><path d="M6 5H3v1a3 3 0 0 0 3 3M18 5h3v1a3 3 0 0 1-3 3M9 19h6M12 13v6" stroke-linecap="round"/></svg>
+          </div>
+          <h3>טורניר בוטיק</h3>
+          <div class="tcol__sub">4 קבוצות · כולל גמר</div>
+          <ul class="tcol__list">
+            <li>בית, חצי גמר וגמר</li>
+            <li>אירוע חד-פעמי בסופ"ש</li>
+          </ul>
+          <div class="tcol__foot">
+            <div class="tcol__price">₪55 <span>/ טורניר</span></div>
+            <a href="format-boutique.html" class="btn btn--ghost btn--block">לפרטים</a>
+          </div>
+        </article>
+
+        <article class="tcol">
+          <div class="tcol__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 9v11M3 14h6" stroke-linecap="round"/></svg>
+          </div>
+          <h3>ליגה שבועית</h3>
+          <div class="tcol__sub">עונה מלאה · עם טבלה</div>
+          <ul class="tcol__list">
+            <li>קבוצה קבועה לאורך העונה</li>
+            <li>טבלה ומלך שערים</li>
+          </ul>
+          <div class="tcol__foot">
+            <div class="tcol__price">₪280 <span>/ עונה</span></div>
+            <a href="format-league.html" class="btn btn--ghost btn--block">לפרטים</a>
+          </div>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- DETAIL: FUTSAL -->
+  <section class="section format" id="futsal">
+    <div class="container">
+      <div class="format__grid">
+        <div class="panel format__media">
+          <div class="card__icon" style="width:72px;height:72px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7l4 3-1.5 5h-5L8 10z" stroke-linejoin="round"/></svg>
+          </div>
+          <span class="badge">5 נגד 5</span>
+          <div class="format__price">₪30 <span>/ משחק</span></div>
+          <a href="register.html" class="btn btn--primary btn--block">להרשמה לפוטסל</a>
+        </div>
+        <div class="format__body">
+          <span class="eyebrow">פורמט מהיר</span>
+          <h2 class="h-lg">פוטסל — 5 נגד 5</h2>
+          <p class="lead">משחק קצר, מהיר וטכני על מגרש קטן. מושלם לערב באמצע השבוע כשרוצים הרבה נגיעות בכדור ואין זמן ל-90 דקות.</p>
+          <ul class="tcol__list">
+            <li>2 מחציות של 20 דקות</li>
+            <li>מגרש פוטסל סגור או חצי מגרש דשא סינתטי</li>
+            <li>שיבוץ קבוצות לפי דירוג עצמי כדי לשמור על איזון</li>
+            <li>מתאים גם למתחילים — קצב גבוה אבל באווירה כיפית</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DETAIL: 7v7 -->
+  <section class="section format" id="seven">
+    <div class="container">
+      <div class="format__grid format__grid--rev">
+        <div class="panel format__media">
+          <div class="card__icon" style="width:72px;height:72px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20a6 6 0 0 1 12 0M14.5 20a5 5 0 0 1 6.5-4.8" stroke-linecap="round"/></svg>
+          </div>
+          <span class="badge">7 נגד 7</span>
+          <div class="format__price">₪35 <span>/ משחק</span></div>
+          <a href="register.html" class="btn btn--primary btn--block">להרשמה לכדורגל 7</a>
+        </div>
+        <div class="format__body">
+          <span class="eyebrow">הקלאסי</span>
+          <h2 class="h-lg">כדורגל 7 נגד 7</h2>
+          <p class="lead">הפורמט המוכר והאהוב על דשא מלא. מספיק מקום לרוץ, לפתח התקפות ולהרגיש כמו במשחק אמיתי — בלי הלחץ של תחרות רשמית.</p>
+          <ul class="tcol__list">
+            <li>2 מחציות של 25 דקות</li>
+            <li>מגרש דשא מלא בכל אחת מהערים</li>
+            <li>קפטן לכל קבוצה ושיבוץ מאוזן</li>
+            <li>הפורמט המבוקש ביותר בארגון</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DETAIL: BOUTIQUE -->
+  <section class="section format" id="boutique">
+    <div class="container">
+      <div class="format__grid">
+        <div class="panel format__media">
+          <div class="card__icon" style="width:72px;height:72px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4h12v3a6 6 0 0 1-12 0z"/><path d="M6 5H3v1a3 3 0 0 0 3 3M18 5h3v1a3 3 0 0 1-3 3M9 19h6M12 13v6" stroke-linecap="round"/></svg>
+          </div>
+          <span class="badge">4 קבוצות</span>
+          <div class="format__price">₪55 <span>/ טורניר</span></div>
+          <a href="shop.html" class="btn btn--primary btn--block">לרכישת מקום בטורניר</a>
+        </div>
+        <div class="format__body">
+          <span class="eyebrow">אירוע תחרותי</span>
+          <h2 class="h-lg">טורניר בוטיק</h2>
+          <p class="lead">ערב טורניר חד-פעמי בסופ"ש: ארבע קבוצות, שלב בית, חצי גמר וגמר. כל האקשן של תחרות אמיתית — אבל בכיף ובאווירה טובה.</p>
+          <ul class="tcol__list">
+            <li>שלב בית — כל קבוצה משחקת מול כולן</li>
+            <li>חצי גמר וגמר מותח</li>
+            <li>גביע ומדליות לזוכים</li>
+            <li>מתאים לקבוצות חברים או הרשמה אישית עם שיבוץ</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DETAIL: LEAGUE -->
+  <section class="section format" id="league">
+    <div class="container">
+      <div class="format__grid format__grid--rev">
+        <div class="panel format__media">
+          <div class="card__icon" style="width:72px;height:72px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 9v11M3 14h6" stroke-linecap="round"/></svg>
+          </div>
+          <span class="badge">עונה מלאה</span>
+          <div class="format__price">₪280 <span>/ עונה</span></div>
+          <a href="register.html" class="btn btn--primary btn--block">להרשמה לליגה</a>
+        </div>
+        <div class="format__body">
+          <span class="eyebrow">הכי רציני (בכיף)</span>
+          <h2 class="h-lg">ליגה שבועית</h2>
+          <p class="lead">עונה שלמה עם קבוצה קבועה, מחזור בכל שבוע, טבלת ליגה אמיתית, מלך שערים וסטטיסטיקות. בשביל מי שרוצה את התחושה של שחקן ליגה.</p>
+          <ul class="tcol__list">
+            <li>מחזור משחקים שבועי קבוע</li>
+            <li>טבלה, מלך שערים ושיא בישולים</li>
+            <li>קבוצה קבועה לאורך כל העונה</li>
+            <li>סיכום עונה וטקס סיום</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GALLERY STRIP -->
+  <section class="section section--tight">
+    <div class="container">
+      <div class="admin-head"><h2 class="h-lg">גלריית טורנירים</h2><a href="gallery.html" class="link-lime">לכל הגלריה ←</a></div>
+      <div class="gallery" style="grid-auto-rows:180px">
+        <div class="gallery__item gallery__item--wide"><img src="assets/img/gallery/g8.jpg" alt="טורניר"></div>
+        <div class="gallery__item"><img src="assets/img/gallery/g3.jpg" alt=""></div>
+        <div class="gallery__item"><img src="assets/img/gallery/g5.jpg" alt=""></div>
+        <div class="gallery__item"><img src="assets/img/gallery/g1.jpg" alt=""></div>
+        <div class="gallery__item"><img src="assets/img/gallery/g7.jpg" alt=""></div>
+        <div class="gallery__item gallery__item--wide"><img src="assets/img/gallery/g4.jpg" alt=""></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="section">
+    <div class="container">
+      <div class="cta-band">
+        <h2 class="h-lg">לא בטוחים מה מתאים לכם?</h2>
+        <p class="lead">הירשמו, דרגו את עצמכם, ואנחנו נשבץ אתכם לפורמט ולרמה המתאימים.</p>
+        <div class="hero__cta" style="margin-top:22px">
+          <a href="register.html" class="btn btn--primary btn--lg btn--block">הרשמה לשחקנים חדשים</a>
+          <a href="games.html" class="btn btn--ghost btn--lg btn--block">לכל המשחקים הקרובים</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-cities">
+        <span class="pin">📍</span> היכן אנו משחקים?
+        הרצליה <span>|</span> רחובות <span>|</span> ראשל"צ <span>|</span> אשדוד <span>|</span> מודיעין <span>|</span> כפר סבא <span>|</span> רמת גן <span>|</span> פ"ת
+      </div>
+      <div class="footer-bottom">
+        <span>© 2026 DrimTeam — כל הזכויות שמורות</span>
+        <span><a href="takanon.html" class="link-lime">תקנון</a> · <a href="health.html" class="link-lime">הצהרת בריאות</a></span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="assets/js/db.js"></script>
+  <script src="assets/js/auth-ui.js"></script>
+  <script src="assets/js/main.js"></script>
+</body>
+</html>

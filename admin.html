@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>פאנל ניהול — DrimTeam</title>
+  <meta name="robots" content="noindex" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Rubik:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+
+  <!-- LOGIN -->
+  <div class="admin-login" id="loginScreen">
+    <div class="panel">
+      <a href="index.html" class="logo" style="margin-bottom:18px"><span class="drim">Drim</span><span class="ball"></span><span class="team">Team</span></a>
+      <h1 class="h-md">פאנל ניהול</h1>
+      <p class="muted">הכניסה למנהלים מורשים בלבד.</p>
+      <form id="loginForm" onsubmit="return false">
+        <div class="field">
+          <label for="loginEmail">אימייל מנהל</label>
+          <input class="input" id="loginEmail" type="email" placeholder="name@email.com" autocomplete="username" />
+        </div>
+        <div class="field">
+          <label for="loginPass">סיסמה</label>
+          <input class="input" id="loginPass" type="password" placeholder="••••••••" autocomplete="current-password" />
+        </div>
+        <div class="field" id="loginOtpField" style="display:none">
+          <label for="loginOtp">קוד אימות (OTP) מהאפליקציה</label>
+          <input class="input" id="loginOtp" inputmode="numeric" maxlength="6" placeholder="000000" autocomplete="one-time-code" />
+        </div>
+        <p id="loginError" style="color:#ff8a72;display:none;margin:0 0 12px">אימייל לא מורשה. פנה למנהל המערכת.</p>
+        <button class="btn btn--primary btn--block btn--lg">כניסה</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- APP -->
+  <div class="admin-shell" id="appShell" style="display:none">
+    <!-- Sidebar -->
+    <aside class="admin-side">
+      <a href="index.html" class="logo"><span class="drim">Drim</span><span class="ball"></span><span class="team">Team</span></a>
+      <button class="admin-nav-btn active" data-view="dashboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> סקירה</button>
+      <button class="admin-nav-btn" data-view="tournaments"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4h12v3a6 6 0 0 1-12 0z"/><path d="M9 19h6M12 13v6" stroke-linecap="round"/></svg> טורנירים</button>
+      <button class="admin-nav-btn" data-view="games"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4" stroke-linecap="round"/></svg> משחקים</button>
+      <button class="admin-nav-btn" data-view="regs"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0M16 6a3 3 0 0 1 0 6M19 20a5 5 0 0 0-3-4.6" stroke-linecap="round"/></svg> נרשמים</button>
+      <button class="admin-nav-btn" data-view="members"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-8 0v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM20 8v6M23 11h-6" stroke-linecap="round" stroke-linejoin="round"/></svg> חברים</button>
+      <button class="admin-nav-btn" data-view="teams"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7l4 3-1.5 5h-5L8 10z" stroke-linejoin="round"/></svg> חלוקת כוחות</button>
+      <button class="admin-nav-btn" data-view="gallery"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21" stroke-linecap="round" stroke-linejoin="round"/></svg> גלריה</button>
+      <button class="admin-nav-btn" data-view="payments"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20" stroke-linecap="round"/></svg> תשלומים</button>
+      <button class="admin-nav-btn" data-view="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.5-2.4 1a7 7 0 0 0-1.7-1L14.5 2h-5l-.3 2.5a7 7 0 0 0-1.7 1l-2.4-1-2 3.5L3 11a7 7 0 0 0 0 2l-2 1.5 2 3.5 2.4-1a7 7 0 0 0 1.7 1l.3 2.5h5l.3-2.5a7 7 0 0 0 1.7-1l2.4 1 2-3.5-2-1.5a7 7 0 0 0 .1-1z"/></svg> הגדרות</button>
+      <div class="admin-side__foot">
+        <a class="admin-nav-btn" href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8M5 10v10h14V10" stroke-linecap="round" stroke-linejoin="round"/></svg> חזרה לאתר</a>
+        <button class="admin-nav-btn" id="logoutBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 12H4M9 7l-5 5 5 5M14 4h5v16h-5" stroke-linecap="round" stroke-linejoin="round"/></svg> יציאה</button>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="admin-main">
+
+      <!-- DASHBOARD -->
+      <section class="admin-view active" id="view-dashboard">
+        <div class="admin-head"><h1 class="h-md">שלום, <span id="adminName" class="text-lime"></span> 👋</h1></div>
+        <div class="stats" style="text-align:start">
+          <div class="panel"><div class="stat__num" id="kpiGames">0</div><div class="stat__label">משחקים פתוחים</div></div>
+          <div class="panel"><div class="stat__num" id="kpiTourn">0</div><div class="stat__label">טורנירים</div></div>
+          <div class="panel"><div class="stat__num" id="kpiRegs">0</div><div class="stat__label">נרשמים סה"כ</div></div>
+          <div class="panel"><div class="stat__num">3</div><div class="stat__label">קבוצות למשחק</div></div>
+        </div>
+        <div class="panel" style="margin-top:22px">
+          <h3 class="h-md">פעולות מהירות</h3>
+          <div class="filters">
+            <button class="btn btn--primary btn--sm" data-jump="games">+ פתח משחק חדש</button>
+            <button class="btn btn--ghost btn--sm" data-jump="tournaments">+ הוסף טורניר</button>
+            <button class="btn btn--ghost btn--sm" data-jump="teams">⚽ חלק כוחות</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- TOURNAMENTS -->
+      <section class="admin-view" id="view-tournaments">
+        <div class="admin-head"><h1 class="h-md">ניהול טורנירים</h1></div>
+        <div class="panel" style="margin-bottom:22px">
+          <h3 class="h-md" id="tFormTitle">הוספת טורניר</h3>
+          <form id="tournForm" onsubmit="return false">
+            <input type="hidden" id="tId" />
+            <div class="field-row">
+              <div class="field"><label>שם הטורניר</label><input class="input" id="tName" placeholder="טורניר בוטיק רחובות" /></div>
+              <div class="field"><label>פורמט / סוג אירוע</label>
+                <input class="input" id="tFormat" list="formatOptions" placeholder="בחר או הקלד (למשל: מרוץ אופניים)" autocomplete="off" />
+                <datalist id="formatOptions">
+                  <option value="פוטסל"></option><option value="כדורגל 7"></option>
+                  <option value="טורניר בוטיק"></option><option value="ליגה שבועית"></option>
+                  <option value="מרוץ אופניים"></option><option value="ריצה"></option>
+                </datalist>
+              </div>
+            </div>
+            <div class="field-row">
+              <div class="field"><label>תאריך</label><input class="input" id="tDate" type="date" /></div>
+              <div class="field"><label>עיר</label>
+                <select class="select" id="tCity">
+                  <option>הרצליה</option><option>רחובות</option><option>ראשל"צ</option><option>אשדוד</option>
+                  <option>מודיעין</option><option>כפר סבא</option><option>רמת גן</option><option>פתח תקווה</option>
+                  <option>באר יעקב</option><option>קריית עקרון</option>
+                </select>
+              </div>
+            </div>
+            <div class="field"><label>מחיר (₪)</label><input class="input" id="tPrice" type="number" placeholder="55" /></div>
+            <div class="filters">
+              <button class="btn btn--primary" id="tSave">שמירה</button>
+              <button class="btn btn--ghost" id="tReset" type="button">נקה טופס</button>
+            </div>
+          </form>
+        </div>
+        <div class="panel" style="overflow-x:auto">
+          <table class="admin-table">
+            <thead><tr><th>שם</th><th>פורמט</th><th>תאריך</th><th>עיר</th><th>מחיר</th><th></th></tr></thead>
+            <tbody id="tournRows"></tbody>
+          </table>
+          <div class="admin-empty" id="tournEmpty">אין טורנירים עדיין.</div>
+        </div>
+      </section>
+
+      <!-- GAMES -->
+      <section class="admin-view" id="view-games">
+        <div class="admin-head"><h1 class="h-md">פתיחת משחקים</h1></div>
+        <div class="panel" style="margin-bottom:22px">
+          <h3 class="h-md" id="gFormTitle">פתיחת משחק חדש</h3>
+          <form id="gameForm" onsubmit="return false">
+            <input type="hidden" id="gId" />
+            <div class="field-row">
+              <div class="field"><label>כותרת</label><input class="input" id="gTitle" placeholder="משחק שבועי — רחובות" /></div>
+              <div class="field"><label>פורמט / סוג אירוע</label>
+                <input class="input" id="gFormat" list="formatOptions" placeholder="בחר או הקלד" autocomplete="off" />
+              </div>
+            </div>
+            <div class="field-row">
+              <div class="field"><label>עיר</label>
+                <select class="select" id="gCity">
+                  <option>הרצליה</option><option>רחובות</option><option>ראשל"צ</option><option>אשדוד</option>
+                  <option>מודיעין</option><option>כפר סבא</option><option>רמת גן</option><option>פתח תקווה</option>
+                  <option>באר יעקב</option><option>קריית עקרון</option>
+                </select>
+              </div>
+              <div class="field"><label>מגרש</label><input class="input" id="gVenue" placeholder="ספורטק רחובות" /></div>
+            </div>
+            <div class="field-row">
+              <div class="field"><label>תאריך</label><input class="input" id="gDate" type="date" /></div>
+              <div class="field"><label>שעה</label>
+                <input class="input" id="gTime" list="timeOptions" placeholder="בחר או הקלד שעה" autocomplete="off" />
+                <datalist id="timeOptions">
+                  <option value="19:00"></option><option value="19:30"></option>
+                  <option value="20:00"></option><option value="20:30"></option>
+                  <option value="21:00"></option><option value="21:30"></option>
+                  <option value="22:00"></option>
+                </datalist>
+              </div>
+            </div>
+            <div class="field-row">
+              <div class="field"><label>מקסימום שחקנים</label><input class="input" id="gMax" type="number" placeholder="21" /></div>
+              <div class="field"><label>מחיר (₪)</label><input class="input" id="gPrice" type="number" placeholder="35" /></div>
+            </div>
+            <div class="filters">
+              <button class="btn btn--primary" id="gSave">פתח משחק</button>
+              <button class="btn btn--ghost" id="gReset" type="button">נקה טופס</button>
+            </div>
+          </form>
+        </div>
+        <div class="panel" style="overflow-x:auto">
+          <table class="admin-table">
+            <thead><tr><th>משחק</th><th>פורמט</th><th>תאריך/שעה</th><th>מגרש</th><th>נרשמו</th><th></th></tr></thead>
+            <tbody id="gameRows"></tbody>
+          </table>
+          <div class="admin-empty" id="gameEmpty">אין משחקים פתוחים.</div>
+        </div>
+      </section>
+
+      <!-- REGISTRATIONS -->
+      <section class="admin-view" id="view-regs">
+        <div class="admin-head"><h1 class="h-md">מי נרשם למשחק</h1></div>
+        <div class="teams-toolbar">
+          <div class="field" style="margin:0;min-width:260px"><label>בחר משחק</label><select class="select" id="regGameSel"></select></div>
+        </div>
+        <div class="panel" style="margin-bottom:18px">
+          <h3 class="h-md">הוספת נרשם ידנית</h3>
+          <p class="muted" style="margin-top:-4px">הנרשם יתווסף למשחק/טורניר שנבחר למעלה.</p>
+          <form id="regAddForm" onsubmit="return false" class="field-row">
+            <div class="field"><label>שם מלא</label><input class="input" id="regName" placeholder="שם הנרשם" /></div>
+            <div class="field"><label>רמה לאיזון כוחות (1-7, אופציונלי)</label><input class="input" id="regRate" type="number" min="1" max="7" placeholder="4" /></div>
+            <div class="field" style="display:flex;align-items:end"><button class="btn btn--primary btn--block" id="regAdd">הוסף</button></div>
+          </form>
+        </div>
+        <div class="panel" style="overflow-x:auto">
+          <table class="admin-table">
+            <thead><tr><th>#</th><th>שם</th><th>רמה</th><th></th></tr></thead>
+            <tbody id="regRows"></tbody>
+          </table>
+          <div class="admin-empty" id="regEmpty">בחר משחק כדי לראות נרשמים.</div>
+        </div>
+      </section>
+
+      <!-- MEMBERS (חתמו על התקנון) -->
+      <section class="admin-view" id="view-members">
+        <div class="admin-head"><h1 class="h-md">חברים — חתמו על התקנון</h1></div>
+        <p class="muted">כל מי שנרשם ואישר את התקנון, כולל טלפון לשליחת תזכורות.</p>
+        <div class="panel" style="overflow-x:auto">
+          <table class="admin-table">
+            <thead><tr><th>#</th><th>שם</th><th>טלפון</th><th>אימייל</th><th>עיר</th><th>אישר תקנון</th></tr></thead>
+            <tbody id="memberRows"></tbody>
+          </table>
+          <div class="admin-empty" id="memberEmpty">אין חברים רשומים עדיין.</div>
+        </div>
+      </section>
+
+      <!-- TEAM BUILDER -->
+      <section class="admin-view" id="view-teams">
+        <div class="admin-head"><h1 class="h-md">חלוקת כוחות — 3 קבוצות</h1></div>
+        <div class="teams-toolbar">
+          <div class="field" style="margin:0;min-width:240px"><label>מקור שחקנים</label><select class="select" id="teamGameSel"></select></div>
+          <button class="btn btn--primary" id="genTeams">⚖️ חלק כוחות מאוזנים</button>
+          <button class="btn btn--ghost" id="shuffleTeams">🔀 ערבב מחדש</button>
+        </div>
+        <p class="muted" id="teamsInfo" style="margin-top:-6px"></p>
+
+        <div class="field">
+          <label>או הדבק רשימת שחקנים ידנית (שורה לכל שחקן, אפשר "שם,דירוג")</label>
+          <textarea class="textarea" id="teamPaste" rows="3" placeholder="יוסי,3&#10;דני,5&#10;אבי,2"></textarea>
+          <div class="filters" style="margin-top:8px"><button class="btn btn--ghost btn--sm" id="loadPaste">טען רשימה</button></div>
+        </div>
+
+        <h3 class="h-md" style="margin-top:18px">שחקנים שלא שובצו</h3>
+        <div class="pool" id="pool"></div>
+
+        <div class="teams-grid">
+          <div class="team-col team-col--white"><div class="team-col__head"><span class="team-col__name">קבוצה לבנה ⚪</span><span class="team-col__sum" id="sum0"></span></div><div id="team0"></div></div>
+          <div class="team-col team-col--yellow"><div class="team-col__head"><span class="team-col__name">קבוצה צהובה 🟡</span><span class="team-col__sum" id="sum1"></span></div><div id="team1"></div></div>
+          <div class="team-col team-col--orange"><div class="team-col__head"><span class="team-col__name">קבוצה כתומה 🟠</span><span class="team-col__sum" id="sum2"></span></div><div id="team2"></div></div>
+        </div>
+
+        <div class="filters" style="margin-top:22px">
+          <button class="btn btn--primary btn--lg" id="finishTeams">✅ סיים ושלח לוואטסאפ</button>
+          <button class="btn btn--ghost" id="copyTeams">העתק הודעה</button>
+        </div>
+        <p class="hint" id="waHint" style="color:var(--text-dim);margin-top:10px"></p>
+
+        <!-- תוצאת משחק -->
+        <div class="panel" style="margin-top:24px">
+          <h3 class="h-md">תוצאת משחק (כדורגל)</h3>
+          <p class="muted">בסיום המשחק — בחרו קבוצה מנצחת ומלך שערים. הנתונים מופיעים בכרטיסיית השחקן ובטבלת מלך השערים.</p>
+          <div class="field-row">
+            <div class="field"><label>קבוצה מנצחת</label>
+              <select class="select" id="winTeam"><option value="">—</option><option value="לבנה">לבנה ⚪</option><option value="צהובה">צהובה 🟡</option><option value="כתומה">כתומה 🟠</option></select>
+            </div>
+            <div class="field"><label>מלך השערים</label>
+              <select class="select" id="kingScorer"><option value="">—</option></select>
+            </div>
+          </div>
+          <button class="btn btn--primary" id="saveResult">שמור תוצאה</button>
+          <p id="resultMsg" class="hint" style="color:var(--text-dim);margin-top:8px"></p>
+        </div>
+      </section>
+
+      <!-- GALLERY MANAGEMENT -->
+      <section class="admin-view" id="view-gallery">
+        <div class="admin-head"><h1 class="h-md">ניהול גלריה</h1></div>
+        <div class="panel" style="margin-bottom:22px">
+          <h3 class="h-md">הוספת מדיה</h3>
+          <div class="field-row">
+            <div class="field"><label>סוג</label>
+              <select class="select" id="galType"><option value="image">תמונה (העלאה מהמכשיר)</option><option value="video">וידאו (קישור YouTube/MP4)</option></select>
+            </div>
+            <div class="field"><label>שייך לטורניר/אירוע</label>
+              <input class="input" id="galTournament" list="galTournOptions" placeholder="בחר או הקלד (למשל: טורניר בוטיק)" autocomplete="off" />
+              <datalist id="galTournOptions"></datalist>
+            </div>
+          </div>
+          <div class="field" id="galFileField"><label>קובץ תמונה</label><input class="input" id="galFile" type="file" accept="image/*" /></div>
+          <div class="field" id="galUrlField" style="display:none"><label>קישור וידאו (YouTube או MP4)</label><input class="input" id="galUrl" placeholder="https://youtube.com/watch?v=..." /></div>
+          <div class="field"><label>כיתוב (לא חובה)</label><input class="input" id="galCaption" placeholder="רגע מהמשחק…" /></div>
+          <button class="btn btn--primary" id="galAdd">הוספה לגלריה</button>
+          <p id="galMsg" class="hint" style="color:var(--text-dim);margin-top:10px"></p>
+        </div>
+        <div class="panel">
+          <h3 class="h-md">פריטים בגלריה</h3>
+          <div class="gal-admin-grid" id="galAdminGrid"></div>
+          <div class="admin-empty" id="galEmpty">אין פריטים עדיין.</div>
+        </div>
+      </section>
+
+      <!-- PAYMENTS (PayPlus) -->
+      <section class="admin-view" id="view-payments">
+        <div class="admin-head"><h1 class="h-md">תשלומים — PayPlus</h1></div>
+        <div class="panel" style="margin-bottom:22px">
+          <h3 class="h-md">חיבור PayPlus</h3>
+          <div class="checkbox-row" style="margin-bottom:14px">
+            <input type="checkbox" id="payEnabled" />
+            <label for="payEnabled" style="margin:0">תשלום אונליין פעיל באתר (כפתור "תשלום מאובטח" בקופה)</label>
+          </div>
+          <p class="muted">מפתחות PayPlus נשמרים בצד-שרת בלבד (Secrets) ואינם נחשפים בקוד הדפדפן:</p>
+          <pre class="otp-secret" style="white-space:pre-wrap">firebase functions:secrets:set PAYPLUS_API_KEY
+firebase functions:secrets:set PAYPLUS_SECRET_KEY
+firebase functions:secrets:set PAYPLUS_PAGE_UID
+firebase deploy --only functions</pre>
+          <button class="btn btn--primary" id="savePay">שמור הגדרות תשלום</button>
+        </div>
+        <div class="panel" style="overflow-x:auto">
+          <h3 class="h-md">הזמנות אחרונות</h3>
+          <table class="admin-table">
+            <thead><tr><th>תאריך</th><th>לקוח</th><th>סכום</th><th>סטטוס</th></tr></thead>
+            <tbody id="orderRows"></tbody>
+          </table>
+          <div class="admin-empty" id="orderEmpty">אין הזמנות עדיין (יופיעו לאחר חיבור PayPlus).</div>
+        </div>
+      </section>
+
+      <!-- SETTINGS -->
+      <section class="admin-view" id="view-settings">
+        <div class="admin-head"><h1 class="h-md">הגדרות</h1></div>
+
+        <div class="panel" style="margin-bottom:22px">
+          <h3 class="h-md">פרטי מנהל</h3>
+          <p class="muted">השם שיוצג ב"שלום ..." ובפרופיל (במקום המייל).</p>
+          <div class="field" style="max-width:300px"><label for="setMyName">שם מלא</label><input class="input" id="setMyName" placeholder="שם פרטי ומשפחה" /></div>
+          <button class="btn btn--primary" id="saveMyName">שמור שם</button>
+        </div>
+
+        <div class="panel" style="margin-bottom:22px">
+          <h3 class="h-md">אימות דו-שלבי (OTP) — למנהל המחובר</h3>
+          <p class="muted">אבטחה נוספת בכניסה לפאנל: לאחר הסיסמה יידרש קוד מאפליקציית Authenticator (Google Authenticator / Authy).</p>
+          <p id="otpStatus" style="font-weight:700;margin:8px 0"></p>
+          <div class="filters">
+            <button class="btn btn--primary" id="otpEnableBtn">הפעלת OTP</button>
+            <button class="btn btn--ghost" id="otpDisableBtn" style="display:none">כיבוי OTP</button>
+          </div>
+          <div id="otpSetup" style="display:none">
+            <div class="otp-box">
+              <img id="otpQr" alt="QR" width="180" height="180" />
+              <div>
+                <p class="muted" style="margin:0 0 6px">סרקו עם אפליקציית Authenticator, או הזינו ידנית את הקוד:</p>
+                <div class="otp-secret" id="otpSecretText"></div>
+              </div>
+            </div>
+            <div class="field" style="max-width:220px;margin-top:14px">
+              <label for="otpVerify">קוד מהאפליקציה (6 ספרות)</label>
+              <input class="input" id="otpVerify" inputmode="numeric" maxlength="6" placeholder="000000" />
+            </div>
+            <button class="btn btn--primary" id="otpConfirmBtn">אמת והפעל</button>
+            <p id="otpMsg" class="hint" style="color:var(--text-dim);margin-top:10px"></p>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-bottom:22px">
+          <h3 class="h-md">שליחה לוואטסאפ</h3>
+          <p class="muted">בחרו יעד לשליחת הכוחות. מספר טלפון ימלא מראש את ההודעה; קישור קבוצה ייפתח וההודעה תועתק ללוח כדי שתדביקו אותה בקבוצה.</p>
+          <div class="field"><label>מספר וואטסאפ (פורמט בינלאומי, למשל 9725...)</label><input class="input" id="setWaPhone" placeholder="972541234567" /></div>
+          <div class="field"><label>או קישור קבוצת וואטסאפ</label><input class="input" id="setWaGroup" placeholder="https://chat.whatsapp.com/XXXX" /></div>
+          <button class="btn btn--primary" id="saveWa">שמור</button>
+        </div>
+        <div class="panel">
+          <h3 class="h-md">מיילים מורשים לניהול</h3>
+          <p class="muted">רק כתובות מהרשימה יכולות להיכנס לפאנל.</p>
+          <div class="field"><label>הוסף אימייל</label><input class="input" id="setAdminEmail" placeholder="manager@drimteam.co.il" /></div>
+          <button class="btn btn--ghost" id="addAdmin">הוסף מנהל</button>
+          <table class="admin-table" style="margin-top:16px"><tbody id="adminRows"></tbody></table>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Firebase (compat) — used only when firebase-config.js has a projectId -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-functions-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="assets/js/db.js"></script>
+  <script src="assets/js/otp.js"></script>
+  <script src="assets/js/admin.js"></script>
+</body>
+</html>
