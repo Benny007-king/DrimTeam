@@ -25,15 +25,17 @@
     <a href="index.html" class="logo hero-deck__logo"><span class="drim">Drim</span><span class="ball"></span><span class="team">Team</span></a>
     <p class="hero-deck__tag">בחרו את הספורט שלכם</p>
 
-    <div class="deck" id="deck" role="button" tabindex="0" aria-label="פתיחת ענפי הספורט">
-      <a class="pcard pcard--1" href="games.html"><h3>כדורגל 30+</h3><p>משחקים שבועיים בכיף, מעל גיל 30</p></a>
-      <a class="pcard pcard--2" href="games.html"><h3>חוגים לילדים</h3><p>אימונים מודרכים לכל הגילאים</p></a>
-      <a class="pcard pcard--3" href="games.html"><h3>תחרויות אופניים</h3><p>רכיבות קבוצתיות ומרוצים</p></a>
-      <a class="pcard pcard--4" href="games.html"><h3>פיצ'יבולה</h3><p>כדורגל מהיר על מגרש קטן</p></a>
-      <a class="pcard pcard--5" href="games.html"><h3>כדורסל</h3><p>ליגות ומשחקי חצי-מגרש</p></a>
-      <div class="deck__cover">
+    <div class="deck" id="deck">
+      <button type="button" class="deck__cover" id="deckCover" aria-expanded="false" aria-controls="deckCards">
         <span class="deck__cover-title">כל סוגי הספורט</span>
-        <span class="deck__cover-sub">רחפו / לחצו לפתיחה ✋</span>
+        <span class="deck__cover-sub">לחצו לבחירת ענף ✋</span>
+      </button>
+      <div class="deck__cards" id="deckCards">
+        <a class="pcard pcard--1" href="games.html"><h3>כדורגל 30+</h3><p>משחקים שבועיים בכיף, מעל גיל 30</p></a>
+        <a class="pcard pcard--2" href="games.html"><h3>חוגים לילדים</h3><p>אימונים מודרכים לכל הגילאים</p></a>
+        <a class="pcard pcard--3" href="games.html"><h3>תחרויות אופניים</h3><p>רכיבות קבוצתיות ומרוצים</p></a>
+        <a class="pcard pcard--4" href="games.html"><h3>פיצ'יבולה</h3><p>כדורגל מהיר על מגרש קטן</p></a>
+        <a class="pcard pcard--5" href="games.html"><h3>כדורסל</h3><p>ליגות ומשחקי חצי-מגרש</p></a>
       </div>
     </div>
 
@@ -215,6 +217,7 @@
           <h4>מידע</h4>
           <a href="takanon.html">תקנון האתר</a>
           <a href="health.html">הצהרת בריאות</a>
+          <a href="accessibility.html">הצהרת נגישות</a>
           <a href="tel:0545543734">054-5543734</a>
           <a href="#">בן ציון פוגל 43, רחובות</a>
           <a href="admin.html">כניסת מנהלים</a>
@@ -244,16 +247,14 @@
       var n = a.querySelector(".venue__name");
       if (n) a.href = "games.html?city=" + encodeURIComponent(n.textContent.trim());
     });
-    // חפיסת הקלפים — לחיצה/מקלדת פותחת וסוגרת (ב-hover נפתח אוטומטית בדסקטופ)
+    // חפיסת הקלפים — לחיצה על הכרטיס מסדרת את הקלפים בשורה
     (function () {
       var deck = document.getElementById("deck");
-      if (!deck) return;
-      deck.addEventListener("click", function (e) {
-        if (e.target.closest(".pcard")) return; // לחיצה על קלף → ניווט
-        deck.classList.toggle("open");
-      });
-      deck.addEventListener("keydown", function (e) {
-        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); deck.classList.toggle("open"); }
+      var cover = document.getElementById("deckCover");
+      if (!deck || !cover) return;
+      cover.addEventListener("click", function () {
+        var open = deck.classList.toggle("open");
+        cover.setAttribute("aria-expanded", open ? "true" : "false");
       });
     })();
   </script>

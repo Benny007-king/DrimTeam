@@ -1183,57 +1183,98 @@ h1, h2, h3 { line-height: 1.15; margin: 0 0 0.5em; font-weight: 800; }
 .hero-deck__tag { color: var(--text-muted); letter-spacing: 0.2em; font-weight: 600; margin: 0 0 56px; }
 .hero-deck__all { margin-top: 64px; }
 
-.deck { position: relative; width: clamp(200px, 62vw, 240px); height: clamp(280px, 84vw, 330px); }
-.deck:focus-visible { outline: none; }
+.deck { position: relative; display: flex; flex-direction: column; align-items: center; }
+
+/* closed: one cover card; click reveals the row */
+.deck__cover {
+  width: clamp(210px, 72vw, 248px); height: clamp(170px, 44vw, 196px);
+  border-radius: 18px; border: 1px solid var(--lime-500);
+  background: linear-gradient(180deg, #16110a, #0b0907);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+  cursor: pointer; box-shadow: var(--shadow-lime); position: relative; overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.25s ease;
+}
+.deck__cover:hover { transform: translateY(-3px); }
+.deck__cover::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 3px; background: var(--grad-lime); }
+.deck__cover-title { font-size: 1.4rem; font-weight: 800; background: var(--grad-gold-text); -webkit-background-clip: text; background-clip: text; color: transparent; padding: 0 16px; }
+.deck__cover-sub { color: var(--text-dim); font-size: 0.85rem; }
+.deck.open .deck__cover { display: none; }
+
+/* open: cards line up in a wrapping row */
+.deck__cards { display: none; flex-wrap: wrap; justify-content: center; gap: 16px; max-width: 1000px; }
+.deck.open .deck__cards { display: flex; }
 
 .pcard {
-  position: absolute; inset: 0; border-radius: 20px;
-  border: 1px solid var(--lime-500);
+  position: relative; width: clamp(150px, 40vw, 188px); height: clamp(212px, 56vw, 252px);
+  border-radius: 16px; border: 1px solid var(--lime-500);
   background: linear-gradient(180deg, var(--navy-700), var(--navy-800));
   background-size: cover; background-position: center;
   display: flex; flex-direction: column; justify-content: flex-end;
-  padding: 22px; text-align: start; overflow: hidden;
-  transform-origin: bottom center; transform: rotate(0) translateY(0);
-  transition: transform 0.55s cubic-bezier(0.2, 0.85, 0.25, 1), box-shadow 0.25s ease;
-  box-shadow: 0 12px 30px -14px rgba(0,0,0,0.8);
+  padding: 18px; text-align: start; overflow: hidden;
+  box-shadow: 0 12px 30px -16px rgba(0, 0, 0, 0.8);
+  transition: transform 0.18s ease, box-shadow 0.25s ease, border-color 0.2s ease;
+  -webkit-backface-visibility: hidden; backface-visibility: hidden;
 }
-.pcard::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 4px; background: var(--grad-lime); }
-.pcard h3 { margin: 0 0 6px; font-size: 1.3rem; }
-.pcard p { margin: 0; color: #e9e1ce; font-size: 0.9rem; line-height: 1.4; }
-.pcard:hover { box-shadow: var(--shadow-lime); z-index: 9; }
+.pcard::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 3px; background: var(--grad-lime); z-index: 2; }
+.pcard h3 { margin: 0 0 5px; font-size: 1.2rem; }
+.pcard p { margin: 0; color: #e9e1ce; font-size: 0.86rem; line-height: 1.4; }
+.pcard:hover { transform: translateY(-6px); border-color: var(--lime-400); box-shadow: var(--shadow-lime); }
 /* per-card background images (dark gradient at bottom keeps text readable) */
-.pcard--1 { background-image: linear-gradient(180deg, rgba(8,7,5,0.18) 26%, rgba(8,7,5,0.92) 86%), url("../img/gallery/g3.jpg"); }
-.pcard--2 { background-image: linear-gradient(180deg, rgba(8,7,5,0.18) 26%, rgba(8,7,5,0.92) 86%), url("../img/gallery/fitness.jpg"); }
-.pcard--3 { background-image: linear-gradient(180deg, rgba(8,7,5,0.18) 26%, rgba(8,7,5,0.92) 86%), url("../img/gallery/cycling.jpg"); }
-.pcard--4 { background-image: linear-gradient(180deg, rgba(8,7,5,0.18) 26%, rgba(8,7,5,0.92) 86%), url("../img/gallery/futsal.jpg"); }
-.pcard--5 { background-image: linear-gradient(180deg, rgba(8,7,5,0.18) 26%, rgba(8,7,5,0.92) 86%), url("../img/gallery/basketball.jpg"); }
+.pcard--1 { background-image: linear-gradient(180deg, rgba(8,7,5,0.15) 22%, rgba(8,7,5,0.93) 84%), url("../img/gallery/g3.jpg"); }
+.pcard--2 { background-image: linear-gradient(180deg, rgba(8,7,5,0.15) 22%, rgba(8,7,5,0.93) 84%), url("../img/gallery/fitness.jpg"); }
+.pcard--3 { background-image: linear-gradient(180deg, rgba(8,7,5,0.15) 22%, rgba(8,7,5,0.93) 84%), url("../img/gallery/cycling.jpg"); }
+.pcard--4 { background-image: linear-gradient(180deg, rgba(8,7,5,0.15) 22%, rgba(8,7,5,0.93) 84%), url("../img/gallery/futsal.jpg"); }
+.pcard--5 { background-image: linear-gradient(180deg, rgba(8,7,5,0.15) 22%, rgba(8,7,5,0.93) 84%), url("../img/gallery/basketball.jpg"); }
 
-.deck__cover {
-  position: absolute; inset: 0; z-index: 20; border-radius: 20px;
-  border: 1px solid var(--lime-500);
-  background: linear-gradient(180deg, #16110a, #0b0907);
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
-  cursor: pointer; box-shadow: var(--shadow-lime);
-  transition: opacity 0.35s ease, transform 0.45s ease;
-}
-.deck__cover::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 4px; background: var(--grad-lime); }
-.deck__cover-title { font-size: 1.5rem; font-weight: 800; background: var(--grad-gold-text); -webkit-background-clip: text; background-clip: text; color: transparent; padding: 0 16px; }
-.deck__cover-sub { color: var(--text-dim); font-size: 0.85rem; }
+/* staggered entrance when the row opens */
+.deck.open .pcard { animation: cardIn 0.4s cubic-bezier(0.2, 0.8, 0.25, 1) both; }
+.deck.open .pcard--1 { animation-delay: 0.03s; }
+.deck.open .pcard--2 { animation-delay: 0.09s; }
+.deck.open .pcard--3 { animation-delay: 0.15s; }
+.deck.open .pcard--4 { animation-delay: 0.21s; }
+.deck.open .pcard--5 { animation-delay: 0.27s; }
+@keyframes cardIn { from { opacity: 0; transform: translateY(18px) scale(0.96); } to { opacity: 1; transform: none; } }
 
-/* fan-out on hover (desktop) or .open (click/touch) */
-.deck.open .deck__cover { opacity: 0; transform: translateY(-26px) scale(0.92) rotate(-4deg); pointer-events: none; }
-.deck.open .pcard--1 { transform: rotate(-36deg) translateY(-14px); transition-delay: 0.02s; }
-.deck.open .pcard--2 { transform: rotate(-18deg) translateY(-28px); transition-delay: 0.08s; }
-.deck.open .pcard--3 { transform: rotate(0deg)   translateY(-36px); transition-delay: 0.14s; }
-.deck.open .pcard--4 { transform: rotate(18deg)  translateY(-28px); transition-delay: 0.20s; }
-.deck.open .pcard--5 { transform: rotate(36deg)  translateY(-14px); transition-delay: 0.26s; }
-@media (hover: hover) {
-  .deck:hover .deck__cover { opacity: 0; transform: translateY(-26px) scale(0.92) rotate(-4deg); pointer-events: none; }
-  .deck:hover .pcard--1 { transform: rotate(-36deg) translateY(-14px); transition-delay: 0.02s; }
-  .deck:hover .pcard--2 { transform: rotate(-18deg) translateY(-28px); transition-delay: 0.08s; }
-  .deck:hover .pcard--3 { transform: rotate(0deg)   translateY(-36px); transition-delay: 0.14s; }
-  .deck:hover .pcard--4 { transform: rotate(18deg)  translateY(-28px); transition-delay: 0.20s; }
-  .deck:hover .pcard--5 { transform: rotate(36deg)  translateY(-14px); transition-delay: 0.26s; }
+@media (max-width: 480px) { .pcard { width: 44vw; height: 62vw; } .deck__cards { gap: 12px; } }
+
+/* ============================================================
+   ACCESSIBILITY widget + modes (Israeli law / WCAG AA helpers)
+   ============================================================ */
+.a11y-btn {
+  position: fixed; inset-inline-start: 18px; bottom: 18px; z-index: 1100;
+  width: 52px; height: 52px; border-radius: 50%; border: 2px solid var(--lime-500);
+  background: var(--navy-800); color: var(--lime-400); display: grid; place-items: center;
+  box-shadow: var(--shadow); cursor: pointer;
 }
-@media (max-width: 700px) { .deck { transform: scale(0.78); } .hero-deck { padding-bottom: 60px; } }
-@media (max-width: 420px) { .deck { transform: scale(0.64); } }
+.a11y-btn svg { width: 26px; height: 26px; }
+.a11y-btn:hover { background: var(--grad-lime); color: #1c1505; border-color: transparent; }
+.a11y-panel {
+  position: fixed; inset-inline-start: 18px; bottom: 80px; z-index: 1100;
+  width: 290px; max-width: calc(100vw - 36px); max-height: 76vh; overflow-y: auto;
+  background: var(--navy-800); border: 1px solid var(--navy-line); border-radius: 16px;
+  box-shadow: var(--shadow); padding: 16px; display: none;
+}
+.a11y-panel.open { display: block; }
+.a11y-panel h2 { font-size: 1.1rem; margin: 0 0 12px; }
+.a11y-row { display: flex; gap: 8px; margin-bottom: 8px; }
+.a11y-opt {
+  flex: 1; display: flex; align-items: center; gap: 8px; justify-content: center;
+  background: var(--navy-700); border: 1px solid var(--navy-line); color: var(--text-muted);
+  padding: 11px 10px; border-radius: 10px; font-weight: 600; font-size: 0.9rem; cursor: pointer; text-align: center;
+}
+.a11y-opt:hover { color: var(--lime-400); border-color: var(--lime-500); }
+.a11y-opt.active { background: var(--grad-lime); color: #1c1505; border-color: transparent; }
+.a11y-link { display: block; text-align: center; margin-top: 10px; color: var(--lime-400); font-weight: 700; }
+.a11y-reset { width: 100%; margin-top: 4px; }
+
+/* modes (applied on <html>) */
+html.a11y-grayscale { filter: grayscale(100%); }
+html.a11y-links a { text-decoration: underline !important; font-weight: 700 !important; }
+html.a11y-readable, html.a11y-readable * { font-family: Arial, "Segoe UI", sans-serif !important; letter-spacing: 0.01em; }
+html.a11y-readable p, html.a11y-readable li, html.a11y-readable label { line-height: 1.9 !important; }
+html.a11y-nomotion *, html.a11y-nomotion *::before, html.a11y-nomotion *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+html.a11y-contrast body { background: #000 !important; }
+html.a11y-contrast :where(section,header,footer,article,aside,nav,.panel,.card,.tcol,.venue,.game-card,.pcard,.modal__box,.deck__cover,.hero-deck,.cta-band) { background: #000 !important; }
+html.a11y-contrast :where(h1,h2,h3,h4,p,span,li,td,th,label,.lead,.muted,.eyebrow) { color: #fff !important; -webkit-text-fill-color: #fff !important; background-image: none !important; }
+html.a11y-contrast a, html.a11y-contrast .link-lime, html.a11y-contrast .text-lime { color: #ff0 !important; -webkit-text-fill-color: #ff0 !important; background-image: none !important; }
+html.a11y-contrast .btn { background: #ff0 !important; color: #000 !important; -webkit-text-fill-color: #000 !important; border-color: #ff0 !important; }
