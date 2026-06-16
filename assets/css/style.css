@@ -1205,9 +1205,9 @@ h1, h2, h3 { line-height: 1.15; margin: 0 0 0.5em; font-weight: 800; }
 .pcard:hover { transform: translateY(-6px); border-color: var(--lime-400); box-shadow: var(--shadow-lime); }
 
 /* category card backgrounds */
-.pcard--1 { background-image: linear-gradient(180deg, rgba(8,7,5,0.08) 18%, rgba(8,7,5,0.92) 82%), url("../img/gallery/grass-turf.svg"); }
+.pcard--1 { background-image: linear-gradient(180deg, rgba(8,7,5,0.08) 18%, rgba(8,7,5,0.92) 82%), url("../img/gallery/pitch.jpg"); }
 .pcard--2 { background-image: linear-gradient(180deg, rgba(8,7,5,0.15) 22%, rgba(8,7,5,0.93) 84%), url("../img/gallery/fitness.jpg"); }
-.pcard--3 { background-image: linear-gradient(180deg, rgba(8,7,5,0.08) 18%, rgba(8,7,5,0.92) 82%), url("../img/gallery/sports-balls.svg"); }
+.pcard--3 { background-image: linear-gradient(180deg, rgba(8,7,5,0.08) 18%, rgba(8,7,5,0.92) 82%), url("../img/gallery/balls.jpg"); }
 .pcard--4 { background-image: linear-gradient(180deg, rgba(8,7,5,0.15) 22%, rgba(8,7,5,0.93) 84%), url("../img/gallery/futsal.jpg"); }
 .pcard--5 { background-image: linear-gradient(180deg, rgba(8,7,5,0.15) 22%, rgba(8,7,5,0.93) 84%), url("../img/gallery/basketball.jpg"); }
 
