@@ -56,7 +56,22 @@
       var dd = wrap.querySelector(".user-dropdown");
       var fi = wrap.querySelector('input[type="file"]');
 
-      av.addEventListener("click", function (e) { e.stopPropagation(); dd.classList.toggle("open"); });
+      // פתיחת התפריט תמיד לכיוון הנכון — לפי מיקום האווטאר על המסך
+      function placeDropdown() {
+        var r = av.getBoundingClientRect();
+        if (r.left + r.width / 2 > window.innerWidth / 2) {
+          // האווטאר בצד ימין → התפריט נפתח שמאלה (מיושר לקצה ימין)
+          dd.style.right = "0"; dd.style.left = "auto";
+        } else {
+          // האווטאר בצד שמאל → התפריט נפתח ימינה (מיושר לקצה שמאל)
+          dd.style.left = "0"; dd.style.right = "auto";
+        }
+      }
+      av.addEventListener("click", function (e) {
+        e.stopPropagation();
+        var open = dd.classList.toggle("open");
+        if (open) placeDropdown();
+      });
       document.addEventListener("click", function (e) { if (!wrap.contains(e.target)) dd.classList.remove("open"); });
       wrap.querySelector('[data-act="upload"]').addEventListener("click", function () { fi.click(); });
       var rb = wrap.querySelector('[data-act="reset"]');

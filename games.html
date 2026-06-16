@@ -36,6 +36,7 @@
         <span class="eyebrow">בחירת משחק</span>
         <h1 class="h-lg">לוח המשחקים הקרובים</h1>
         <p class="lead">בחרו עיר ומשחק — ושמרו מקום במגרש. המשחקים מתעדכנים בזמן אמת מהמערכת.</p>
+        <p id="catHead" class="eyebrow" style="margin-top:6px;color:var(--lime-400)"></p>
       </div>
 
       <div class="toolbar">
@@ -46,7 +47,13 @@
             <option value="רחובות">רחובות</option>
             <option value="חולון">חולון</option>
           </select>
-          <select class="select" aria-label="קטגוריה" id="fmtFilter">
+          <select class="select" aria-label="קטגוריה" id="catFilter">
+            <option value="">כל הקטגוריות</option>
+            <option>חוגים</option>
+            <option>עממי</option>
+            <option>אירועי ספורט</option>
+          </select>
+          <select class="select" aria-label="פורמט" id="fmtFilter">
             <option value="">כל הפורמטים</option>
             <option>פוטסל</option>
             <option>כדורגל 7</option>
@@ -95,15 +102,54 @@
       var months = ["ינו", "פבר", "מרץ", "אפר", "מאי", "יוני", "יולי", "אוג", "ספט", "אוק", "נוב", "דצמ"];
       function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]; }); }
       function dpart(d) { if (!d) return { day: "--", mon: "" }; var p = d.split("-"); return { day: p[2], mon: months[parseInt(p[1], 10) - 1] || "" }; }
+      // ---- סינון מאוחד (עיר + קטגוריה + פורמט) ----
+      var citySel, catSel, fmtSel;
+      function applyFilters() {
+        var city = citySel ? citySel.value : "";
+        var cat = catSel ? catSel.value : "";
+        var fmt = fmtSel ? fmtSel.value : "";
+        var cards = document.querySelectorAll("#gamesList .game-card");
+        var shown = 0;
+        cards.forEach(function (c) {
+          var ok = (!city || c.getAttribute("data-city") === city) &&
+                   (!cat || c.getAttribute("data-category") === cat) &&
+                   (!fmt || c.getAttribute("data-format") === fmt);
+          c.style.display = ok ? "" : "none";
+          if (ok) shown++;
+        });
+        var empty = document.getElementById("gamesEmpty");
+        if (empty) {
+          empty.style.display = (cards.length && shown) ? "none" : "block";
+          if (!cards.length) empty.textContent = "אין כרגע משחקים פתוחים. עקבו אחרינו — משחקים חדשים נפתחים כל שבוע! ⚽";
+          else if (!shown) empty.textContent = "לא נמצאו משחקים שתואמים את הסינון. נסו לשנות עיר/קטגוריה.";
+        }
+      }
+      // קביעת ערכים מה-URL + חיווט הסינון — רץ פעם אחת, גם כשאין משחקים עדיין
+      function initFilters() {
+        citySel = document.querySelector("[data-filter-city]");
+        catSel = document.getElementById("catFilter");
+        fmtSel = document.getElementById("fmtFilter");
+        var params = new URLSearchParams(location.search);
+        var cityParam = params.get("city"), catParam = params.get("cat");
+        if (cityParam && citySel) citySel.value = cityParam;
+        if (catParam && catSel) catSel.value = catParam;
+        var head = document.getElementById("catHead");
+        if (head) head.textContent = catParam ? ("קטגוריה: " + catParam) : "";
+        if (citySel) citySel.onchange = applyFilters;
+        if (catSel) catSel.onchange = applyFilters;
+        if (fmtSel) fmtSel.onchange = applyFilters;
+      }
+      initFilters();
+
       function render() {
         var games = (window.DTDB ? DTDB.get("games", []) : []) || [];
         games = games.slice().sort(function (a, b) { return (a.date || "").localeCompare(b.date || ""); });
         var list = document.getElementById("gamesList"), empty = document.getElementById("gamesEmpty");
-        if (!games.length) { list.innerHTML = ""; empty.style.display = "block"; return; }
+        if (!games.length) { list.innerHTML = ""; applyFilters(); return; }
         empty.style.display = "none";
         list.innerHTML = games.map(function (g) {
           var d = dpart(g.date);
-          return '<article class="game-card" data-city="' + esc(g.city) + '" data-format="' + esc(g.format) + '">' +
+          return '<article class="game-card" data-city="' + esc(g.city) + '" data-format="' + esc(g.format) + '" data-category="' + esc(g.category || "") + '">' +
             '<div class="game-date"><div class="day">' + esc(d.day) + '</div><div class="mon">' + esc(d.mon) + '</div></div>' +
             '<div class="game-info"><h3>' + esc(g.title || "משחק") + '</h3><div class="game-meta">' +
             '<span>🗓️ ' + esc(g.date || "") + " " + esc(g.time || "") + "</span>" +
@@ -141,24 +187,7 @@
           });
         });
 
-        // סינון לפי עיר מתוך ה-URL (מדף "איפה משחקים")
-        var cityParam = new URLSearchParams(location.search).get("city");
-        if (cityParam) {
-          var sel = document.querySelector("[data-filter-city]");
-          if (sel) { sel.value = cityParam; }
-          document.querySelectorAll("#gamesList .game-card").forEach(function (c) {
-            c.style.display = (c.getAttribute("data-city") === cityParam) ? "" : "none";
-          });
-        }
-
-        // סינון לפי פורמט
-        var ff = document.getElementById("fmtFilter");
-        if (ff) ff.onchange = function () {
-          var v = ff.value;
-          document.querySelectorAll("#gamesList .game-card").forEach(function (c) {
-            c.style.display = (!v || c.getAttribute("data-format") === v) ? "" : "none";
-          });
-        };
+        applyFilters();
       }
       var ready = (window.DTDB && DTDB.load) ? DTDB.load() : Promise.resolve();
       ready.then(render);

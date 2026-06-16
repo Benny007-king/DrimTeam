@@ -101,7 +101,7 @@
     $("gameEmpty").style.display = list.length ? "none" : "block";
     list.forEach(function (g) {
       var tr = document.createElement("tr");
-      tr.innerHTML = "<td><strong>" + esc(g.title) + "</strong></td><td>" + esc(g.format) + "</td><td>" + esc(g.date) + " " + esc(g.time) +
+      tr.innerHTML = "<td><strong>" + esc(g.title) + "</strong></td><td>" + (g.category ? '<span class="badge">' + esc(g.category) + "</span>" : "—") + "</td><td>" + esc(g.format) + "</td><td>" + esc(g.date) + " " + esc(g.time) +
         "</td><td>" + esc(g.venue || g.city) + "</td><td class='reg-count'>…/" + esc(g.max || "-") + "</td>" +
         '<td><div class="row-actions">' +
         '<button class="icon-btn" data-edit-g="' + g.id + '" title="עריכה"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' +
@@ -114,11 +114,11 @@
       })(tr, g);
     });
   }
-  function gameReset() { ["gId", "gTitle", "gCity", "gVenue", "gDate", "gTime", "gMax", "gPrice"].forEach(function (i) { $(i).value = ""; }); $("gFormTitle").textContent = "פתיחת משחק חדש"; }
+  function gameReset() { ["gId", "gTitle", "gFormat", "gCategory", "gCity", "gVenue", "gDate", "gTime", "gMax", "gPrice"].forEach(function (i) { $(i).value = ""; }); $("gFormTitle").textContent = "פתיחת משחק חדש"; }
   function gameSave() {
     var list = DB.get("games", []);
     var id = $("gId").value;
-    var obj = { id: id || uid(), title: $("gTitle").value || "משחק", format: $("gFormat").value, city: $("gCity").value, venue: $("gVenue").value, date: $("gDate").value, time: $("gTime").value, max: $("gMax").value || 21, price: parseInt($("gPrice").value, 10) || 0 };
+    var obj = { id: id || uid(), title: $("gTitle").value || "משחק", format: $("gFormat").value, category: $("gCategory").value, city: $("gCity").value, venue: $("gVenue").value, date: $("gDate").value, time: $("gTime").value, max: $("gMax").value || 21, price: parseInt($("gPrice").value, 10) || 0 };
     if (id) { list = list.map(function (g) { return g.id === id ? obj : g; }); }
     else { list.push(obj); }
     DB.set("games", list); gameReset(); renderGames(); renderDashboard(); fillGameSelects();
@@ -565,7 +565,7 @@
     }
     else if ((a = t.getAttribute("data-edit-g"))) {
       var gg = DB.get("games", []).filter(function (x) { return x.id === a; })[0];
-      if (gg) { $("gId").value = gg.id; $("gTitle").value = gg.title; $("gFormat").value = gg.format; $("gCity").value = gg.city; $("gVenue").value = gg.venue; $("gDate").value = gg.date; $("gTime").value = gg.time; $("gMax").value = gg.max; $("gPrice").value = gg.price || ""; $("gFormTitle").textContent = "עריכת משחק"; window.scrollTo(0, 0); }
+      if (gg) { $("gId").value = gg.id; $("gTitle").value = gg.title; $("gFormat").value = gg.format; $("gCategory").value = gg.category || ""; $("gCity").value = gg.city; $("gVenue").value = gg.venue; $("gDate").value = gg.date; $("gTime").value = gg.time; $("gMax").value = gg.max; $("gPrice").value = gg.price || ""; $("gFormTitle").textContent = "עריכת משחק"; window.scrollTo(0, 0); }
     }
     else if ((a = t.getAttribute("data-del-g"))) {
       if (confirm("למחוק את המשחק?")) { DB.set("games", DB.get("games", []).filter(function (x) { return x.id !== a; })); renderGames(); renderDashboard(); fillGameSelects(); }

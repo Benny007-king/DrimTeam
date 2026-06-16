@@ -1281,3 +1281,26 @@ html.a11y-contrast .btn { background: #ff0 !important; color: #000 !important; -
 
 .game-card--ended { opacity: 0.62; }
 .game-card--ended .game-date .day { color: var(--text-dim); }
+
+/* ============================================================
+   COOKIE consent popup (choice remembered 48h)
+   ============================================================ */
+.cookie-pop {
+  position: fixed; z-index: 1200; inset-inline: 18px; bottom: 18px;
+  max-width: 540px; margin-inline: auto;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 14px;
+  background: var(--navy-800); border: 1px solid var(--navy-line);
+  border-radius: 16px; padding: 16px 18px; box-shadow: var(--shadow);
+  transform: translateY(140%); opacity: 0;
+  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.25, 1), opacity 0.35s ease;
+}
+.cookie-pop.show { transform: none; opacity: 1; }
+.cookie-pop__text { flex: 1 1 240px; display: flex; flex-direction: column; gap: 4px; }
+.cookie-pop__text strong { color: #fff; font-size: 1rem; }
+.cookie-pop__text span { color: var(--text-muted); font-size: 0.86rem; line-height: 1.5; }
+.cookie-pop__text a { color: var(--lime-400); text-decoration: underline; }
+.cookie-pop__btns { display: flex; gap: 8px; flex: 0 0 auto; }
+@media (max-width: 480px) {
+  .cookie-pop { flex-direction: column; align-items: stretch; text-align: center; }
+  .cookie-pop__btns { justify-content: center; }
+}

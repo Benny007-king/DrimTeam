@@ -135,6 +135,17 @@
               </div>
             </div>
             <div class="field-row">
+              <div class="field"><label>קטגוריה (לתצוגה בדף הבית)</label>
+                <select class="select" id="gCategory">
+                  <option value="">— ללא קטגוריה —</option>
+                  <option>חוגים</option>
+                  <option>עממי</option>
+                  <option>אירועי ספורט</option>
+                </select>
+              </div>
+              <div class="field"></div>
+            </div>
+            <div class="field-row">
               <div class="field"><label>עיר</label>
                 <select class="select" id="gCity">
                   <option>ראשון לציון</option><option>רחובות</option><option>חולון</option>
@@ -166,7 +177,7 @@
         </div>
         <div class="panel" style="overflow-x:auto">
           <table class="admin-table">
-            <thead><tr><th>משחק</th><th>פורמט</th><th>תאריך/שעה</th><th>מגרש</th><th>נרשמו</th><th></th></tr></thead>
+            <thead><tr><th>משחק</th><th>קטגוריה</th><th>פורמט</th><th>תאריך/שעה</th><th>מגרש</th><th>נרשמו</th><th></th></tr></thead>
             <tbody id="gameRows"></tbody>
           </table>
           <div class="admin-empty" id="gameEmpty">אין משחקים פתוחים.</div>

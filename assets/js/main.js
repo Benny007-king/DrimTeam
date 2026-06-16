@@ -122,3 +122,41 @@
 
   apply();
 })();
+
+/* ============================================================
+   Cookie consent popup — choice remembered for 48 hours
+   ============================================================ */
+(function () {
+  "use strict";
+  if (document.querySelector(".cookie-pop")) return;
+  var KEY = "dt_cookie";
+  var TTL = 48 * 60 * 60 * 1000; // 48 שעות
+  var saved = (function () { try { return JSON.parse(localStorage.getItem(KEY)) || null; } catch (e) { return null; } })();
+  if (saved && saved.t && (Date.now() - saved.t) < TTL) return; // הבחירה עדיין בתוקף
+
+  function decide(choice) {
+    try { localStorage.setItem(KEY, JSON.stringify({ choice: choice, t: Date.now() })); } catch (e) {}
+    pop.classList.remove("show");
+    setTimeout(function () { if (pop.parentNode) pop.parentNode.removeChild(pop); }, 350);
+  }
+
+  var pop = document.createElement("div");
+  pop.className = "cookie-pop";
+  pop.setAttribute("role", "dialog");
+  pop.setAttribute("aria-label", "הסכמה לעוגיות");
+  pop.innerHTML =
+    '<div class="cookie-pop__text">' +
+      '<strong>🍪 אנחנו משתמשים בעוגיות</strong>' +
+      '<span>אתר DrimTeam משתמש בעוגיות כדי לשפר את חוויית הגלישה ולשמור את ההעדפות שלכם. ' +
+      'ניתן לקרוא עוד ב<a href="accessibility.html">הצהרת הנגישות</a>.</span>' +
+    "</div>" +
+    '<div class="cookie-pop__btns">' +
+      '<button type="button" class="btn btn--primary btn--sm" data-cookie="accept">אישור</button>' +
+      '<button type="button" class="btn btn--ghost btn--sm" data-cookie="decline">דחייה</button>' +
+    "</div>";
+
+  document.body.appendChild(pop);
+  requestAnimationFrame(function () { pop.classList.add("show"); });
+  pop.querySelector('[data-cookie="accept"]').addEventListener("click", function () { decide("accept"); });
+  pop.querySelector('[data-cookie="decline"]').addEventListener("click", function () { decide("decline"); });
+})();
