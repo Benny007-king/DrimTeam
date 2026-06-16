@@ -38,7 +38,7 @@
         return { id: uid(), name: n, pos: ["שוער", "בלם", "קשר", "חלוץ"][i % 4], rating: (i % 7) + 1 };
       });
       DB.set("regs", regs);
-      DB.set("settings", { waPhone: "", waGroup: "", adminEmails: [] });
+      DB.set("settings", { waGroups: [], adminEmails: [] });
       DB.set("seeded", true);
     }
   }
@@ -298,23 +298,45 @@
     }).join("\n");
     return head + body + "\n\nנתראה במגרש! 💚 DrimTeam";
   }
+  function sendToGroup(g, msg) {
+    var link = g.link || "";
+    if (/^https?:\/\//i.test(link)) {
+      window.open(link, "_blank");
+      $("waHint").textContent = "'" + esc(g.name) + "' נפתחה — ההודעה הועתקה ללוח, הדבק ושלח.";
+    } else {
+      window.open("https://wa.me/" + link.replace(/\D/g, "") + "?text=" + encodeURIComponent(msg), "_blank");
+      $("waHint").textContent = "'" + esc(g.name) + "' — וואטסאפ נפתח עם ההודעה מוכנה, לחץ שלח.";
+    }
+  }
+  function showGroupPicker(groups, msg) {
+    var picker = $("waPicker"), btns = $("waPickerBtns");
+    if (!picker || !btns) { sendToGroup(groups[0], msg); return; }
+    window.__waPendingGroups = groups;
+    window.__waPendingMsg = msg;
+    btns.innerHTML = groups.map(function (g) {
+      return '<button class="btn btn--ghost btn--sm" data-wa-group="' + esc(g.id) + '">' + esc(g.name) + '</button>';
+    }).join("");
+    picker.style.display = "";
+    $("waHint").textContent = "ההודעה הועתקה ללוח. בחר לאיזו קבוצה לשלוח:";
+  }
   function finish() {
     if (!STATE.teams.some(function (t) { return t.length; })) { alert("חלק כוחות קודם"); return; }
     var msg = buildMessage();
     var s = DB.get("settings", {});
-    copy(msg); // תמיד מעתיקים ללוח כגיבוי
-    if (s.waPhone) {
-      // פותח שיחה עם ההודעה מוכנה — לחיצה אחת על 'שלח'
-      window.open("https://wa.me/" + s.waPhone.replace(/\D/g, "") + "?text=" + encodeURIComponent(msg), "_blank");
-      $("waHint").textContent = "נפתח וואטסאפ עם ההודעה מוכנה — לחץ 'שלח'. (ההודעה גם הועתקה ללוח)";
-    } else if (s.waGroup) {
-      // קישור קבוצה: וואטסאפ לא מאפשר למלא טקסט מראש לקבוצה — לכן פותחים את הקבוצה וההודעה בלוח
-      window.open(s.waGroup, "_blank");
-      $("waHint").textContent = "הקבוצה נפתחה וההודעה הועתקה ללוח — הדבק (Ctrl+V) ולחץ שלח.";
-    } else {
-      $("waHint").textContent = "ההודעה הועתקה ללוח. הגדר מספר/קבוצת וואטסאפ ב'הגדרות'.";
-      alert("הגדר מספר או קישור קבוצת וואטסאפ ב'הגדרות'. בינתיים ההודעה הועתקה ללוח.");
+    var groups = s.waGroups || [];
+    // תמיכה אחורה בפורמט הישן
+    if (!groups.length && (s.waPhone || s.waGroup)) {
+      if (s.waPhone) groups = [{ id: "_p", name: "וואטסאפ", link: s.waPhone }];
+      else groups = [{ id: "_g", name: "קבוצה", link: s.waGroup }];
     }
+    copy(msg); // תמיד מעתיקים ללוח כגיבוי
+    if (!groups.length) {
+      $("waHint").textContent = "ההודעה הועתקה ללוח. הגדר קבוצות וואטסאפ ב'הגדרות'.";
+      alert("הגדר קבוצות וואטסאפ ב'הגדרות'. בינתיים ההודעה הועתקה ללוח.");
+      return;
+    }
+    if (groups.length === 1) { sendToGroup(groups[0], msg); return; }
+    showGroupPicker(groups, msg);
   }
   function copy(text) {
     if (navigator.clipboard) { navigator.clipboard.writeText(text).catch(function () { }); }
@@ -324,17 +346,48 @@
   /* ---- Settings ---- */
   function renderSettings() {
     var s = DB.get("settings", {});
-    $("setWaPhone").value = s.waPhone || "";
-    $("setWaGroup").value = s.waGroup || "";
+    var groups = s.waGroups || [];
+    // one-time migration from old waPhone/waGroup single fields
+    if (!groups.length && (s.waPhone || s.waGroup)) {
+      if (s.waPhone) groups.push({ id: uid(), name: "וואטסאפ", link: s.waPhone });
+      if (s.waGroup) groups.push({ id: uid(), name: "קבוצה", link: s.waGroup });
+      s.waGroups = groups; delete s.waPhone; delete s.waGroup; DB.set("settings", s);
+    }
+    var tb = $("waGroupsList");
+    if (tb) {
+      tb.innerHTML = groups.length ? groups.map(function (g) {
+        return "<tr><td><strong>" + esc(g.name) + "</strong></td><td style='word-break:break-all;font-size:.82rem'>" + esc(g.link) + "</td>" +
+          "<td><button class='icon-btn icon-btn--danger' data-del-wa='" + esc(g.id) + "'>✕</button></td></tr>";
+      }).join("") : "<tr><td colspan='3' class='muted' style='padding:8px 0'>אין קבוצות עדיין. הוסף למטה.</td></tr>";
+    }
     if (DB.getMyMember) DB.getMyMember().then(function (m) { if (m && m.name) $("setMyName").value = m.name; });
-    var tb = $("adminRows"); tb.innerHTML = "";
+    var atb = $("adminRows"); atb.innerHTML = "";
     allowedEmails().forEach(function (e) {
       var isDefault = DEFAULT_ADMINS.indexOf(e) !== -1;
       var tr = document.createElement("tr");
       tr.innerHTML = "<td>" + esc(e) + (isDefault ? ' <span class="badge">קבוע</span>' : "") + "</td>" +
         "<td style='text-align:left'>" + (isDefault ? "" : '<button class="icon-btn icon-btn--danger" data-del-admin="' + esc(e) + '">✕</button>') + "</td>";
-      tb.appendChild(tr);
+      atb.appendChild(tr);
     });
+  }
+  function addWaGroup() {
+    var name = ($("setWaName") && $("setWaName").value.trim()) || "";
+    var link = ($("setWaLink") && $("setWaLink").value.trim()) || "";
+    if (!name || !link) { alert("מלא שם וקישור/מספר"); return; }
+    var s = DB.get("settings", {});
+    var groups = s.waGroups || [];
+    groups.push({ id: uid(), name: name, link: link });
+    s.waGroups = groups;
+    DB.set("settings", s);
+    if ($("setWaName")) $("setWaName").value = "";
+    if ($("setWaLink")) $("setWaLink").value = "";
+    renderSettings();
+  }
+  function removeWaGroup(id) {
+    var s = DB.get("settings", {});
+    s.waGroups = (s.waGroups || []).filter(function (g) { return g.id !== id; });
+    DB.set("settings", s);
+    renderSettings();
   }
 
   /* ---- Payments (PayPlus orders) ---- */
@@ -572,7 +625,7 @@
 
   /* event delegation */
   document.addEventListener("click", function (e) {
-    var t = e.target.closest("[data-view],[data-jump],[data-edit-t],[data-del-t],[data-edit-g],[data-del-g],[data-del-r],[data-move],[data-del-admin],[data-del-gal]");
+    var t = e.target.closest("[data-view],[data-jump],[data-edit-t],[data-del-t],[data-edit-g],[data-del-g],[data-del-r],[data-move],[data-del-admin],[data-del-gal],[data-del-wa],[data-wa-group]");
     if (!t) return;
     var a;
     if (t.hasAttribute("data-view")) showView(t.getAttribute("data-view"));
@@ -602,6 +655,11 @@
     else if ((a = t.getAttribute("data-del-gal"))) {
       if (confirm("למחוק פריט מהגלריה?")) (DB.deleteGalleryItem ? DB.deleteGalleryItem(a) : Promise.resolve()).then(renderGalleryAdmin);
     }
+    else if ((a = t.getAttribute("data-del-wa"))) { removeWaGroup(a); }
+    else if ((a = t.getAttribute("data-wa-group"))) {
+      var pg = (window.__waPendingGroups || []).filter(function (x) { return x.id === a; })[0];
+      if (pg) { sendToGroup(pg, window.__waPendingMsg || ""); $("waPicker").style.display = "none"; }
+    }
   });
 
   /* form buttons (wired after DOM ready) */
@@ -625,7 +683,7 @@
     $("finishTeams").addEventListener("click", finish);
     $("saveResult").addEventListener("click", saveResult);
     $("copyTeams").addEventListener("click", function () { if (STATE.teams.some(function (x) { return x.length; })) { copy(buildMessage()); $("waHint").textContent = "ההודעה הועתקה ללוח ✅"; } });
-    $("saveWa").addEventListener("click", function () { var s = DB.get("settings", {}); s.waPhone = $("setWaPhone").value.trim(); s.waGroup = $("setWaGroup").value.trim(); DB.set("settings", s); alert("נשמר ✅"); });
+    $("addWaGroup").addEventListener("click", addWaGroup);
     $("addAdmin").addEventListener("click", function () { var v = $("setAdminEmail").value.trim(); if (!v) return; var s = DB.get("settings", {}); s.adminEmails = s.adminEmails || []; if (s.adminEmails.indexOf(v) === -1) s.adminEmails.push(v); DB.set("settings", s); $("setAdminEmail").value = ""; renderSettings(); });
     $("saveMyName").addEventListener("click", function () {
       var n = $("setMyName").value.trim(); if (!n) return;

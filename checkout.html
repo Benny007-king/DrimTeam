@@ -130,7 +130,7 @@
         var p = (window.DTDB && DTDB.createPayment) ? DTDB.createPayment([ITEM], customer, gameId) : Promise.resolve(null);
         p.then(function (r) {
           if (r && r.url) { window.location.href = r.url; }
-          else { msg.style.color = "var(--lime-400)"; msg.textContent = "✅ ההרשמה נקלטה! התשלום המאובטח (PayPlus) ייפתח לאחר חיבור ספק הסליקה. סה\"כ ₪" + ITEM.price + "."; }
+          else { msg.style.color = "var(--lime-400)"; msg.textContent = "✅ ההרשמה נקלטה! התשלום המאובטח (משולם) ייפתח לאחר חיבור ספק הסליקה. סה\"כ ₪" + ITEM.price + "."; }
         }).catch(function (e) { msg.style.color = "#ff8a72"; msg.textContent = "שגיאה ביצירת תשלום: " + (window.DTDB ? DTDB.authErrorText(e) : (e && e.message ? e.message : e)); });
       }
 

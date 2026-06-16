@@ -250,6 +250,10 @@
           <button class="btn btn--primary btn--lg" id="finishTeams">✅ סיים ושלח לוואטסאפ</button>
           <button class="btn btn--ghost" id="copyTeams">העתק הודעה</button>
         </div>
+        <div id="waPicker" style="display:none;margin-top:14px;padding:14px;background:var(--navy-800);border-radius:8px;border:1px solid var(--navy-line)">
+          <p class="muted" style="margin:0 0 10px">לאיזו קבוצה לשלוח?</p>
+          <div id="waPickerBtns" class="filters"></div>
+        </div>
         <p class="hint" id="waHint" style="color:var(--text-dim);margin-top:10px"></p>
 
         <!-- תוצאת משחק -->
@@ -296,20 +300,20 @@
         </div>
       </section>
 
-      <!-- PAYMENTS (PayPlus) -->
+      <!-- PAYMENTS (Meshulam) -->
       <section class="admin-view" id="view-payments">
-        <div class="admin-head"><h1 class="h-md">תשלומים — PayPlus</h1></div>
+        <div class="admin-head"><h1 class="h-md">תשלומים — משולם</h1></div>
         <div class="panel" style="margin-bottom:22px">
-          <h3 class="h-md">חיבור PayPlus</h3>
+          <h3 class="h-md">חיבור משולם פתרונות תשלום</h3>
           <div class="checkbox-row" style="margin-bottom:14px">
             <input type="checkbox" id="payEnabled" />
-            <label for="payEnabled" style="margin:0">תשלום אונליין פעיל באתר (כפתור "תשלום מאובטח" בקופה)</label>
+            <label for="payEnabled" style="margin:0">תשלום אונליין פעיל באתר (אשראי + Bit דרך משולם)</label>
           </div>
-          <p class="muted">מפתחות PayPlus נשמרים בצד-שרת בלבד (Secrets) ואינם נחשפים בקוד הדפדפן:</p>
-          <pre class="otp-secret" style="white-space:pre-wrap">firebase functions:secrets:set PAYPLUS_API_KEY
-firebase functions:secrets:set PAYPLUS_SECRET_KEY
-firebase functions:secrets:set PAYPLUS_PAGE_UID
+          <p class="muted">פרטי ההתחברות למשולם נשמרים בצד-שרת בלבד ואינם נחשפים בקוד הדפדפן. הגדרה חד-פעמית בטרמינל:</p>
+          <pre class="otp-secret" style="white-space:pre-wrap">firebase functions:secrets:set MASHOLAM_COMPANY
+firebase functions:secrets:set MASHOLAM_PASSWORD
 firebase deploy --only functions</pre>
+          <p class="muted" style="margin-top:10px">מספר חברה + סיסמה מתקבלים מלוח הבקרה של <strong>משולם פתרונות תשלום</strong>.</p>
           <button class="btn btn--primary" id="savePay">שמור הגדרות תשלום</button>
         </div>
         <div class="panel" style="overflow-x:auto">
@@ -318,7 +322,7 @@ firebase deploy --only functions</pre>
             <thead><tr><th>תאריך</th><th>לקוח</th><th>סכום</th><th>סטטוס</th></tr></thead>
             <tbody id="orderRows"></tbody>
           </table>
-          <div class="admin-empty" id="orderEmpty">אין הזמנות עדיין (יופיעו לאחר חיבור PayPlus).</div>
+          <div class="admin-empty" id="orderEmpty">אין הזמנות עדיין (יופיעו לאחר חיבור משולם).</div>
         </div>
       </section>
 
@@ -359,11 +363,14 @@ firebase deploy --only functions</pre>
         </div>
 
         <div class="panel" style="margin-bottom:22px">
-          <h3 class="h-md">שליחה לוואטסאפ</h3>
-          <p class="muted">בחרו יעד לשליחת הכוחות. מספר טלפון ימלא מראש את ההודעה; קישור קבוצה ייפתח וההודעה תועתק ללוח כדי שתדביקו אותה בקבוצה.</p>
-          <div class="field"><label>מספר וואטסאפ (פורמט בינלאומי, למשל 9725...)</label><input class="input" id="setWaPhone" placeholder="972541234567" /></div>
-          <div class="field"><label>או קישור קבוצת וואטסאפ</label><input class="input" id="setWaGroup" placeholder="https://chat.whatsapp.com/XXXX" /></div>
-          <button class="btn btn--primary" id="saveWa">שמור</button>
+          <h3 class="h-md">קבוצות וואטסאפ לשליחה</h3>
+          <p class="muted">הוסיפו כמה קבוצות/אנשי-קשר שרוצים. מספר טלפון ימלא את ההודעה מראש; קישור קבוצה ייפתח וההודעה תועתק ללוח.</p>
+          <table class="admin-table" style="margin-bottom:14px"><thead><tr><th>שם</th><th>יעד (מספר / קישור)</th><th></th></tr></thead><tbody id="waGroupsList"></tbody></table>
+          <div class="field-row">
+            <div class="field"><label>שם הקבוצה / הגורם</label><input class="input" id="setWaName" placeholder="ראשון לציון" /></div>
+            <div class="field"><label>מספר טלפון (972...) או קישור קבוצה</label><input class="input" id="setWaLink" placeholder="972541234567 או https://chat.whatsapp.com/..." /></div>
+          </div>
+          <button class="btn btn--primary" id="addWaGroup">הוסף קבוצה</button>
         </div>
         <div class="panel">
           <h3 class="h-md">מיילים מורשים לניהול</h3>

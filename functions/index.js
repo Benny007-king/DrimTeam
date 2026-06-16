@@ -1,13 +1,11 @@
 /* ============================================================
    DrimTeam — Cloud Functions
-   תשלום דרך ספק ישראלי (ברירת מחדל: PayPlus — דף תשלום מתארח,
-   תומך באשראי + Bit + חשבונית). שליחת וואטסאפ נעשית מהדפדפן
-   דרך wa.me (לא דורש שרת).
+   תשלום דרך משולם פתרונות תשלום — דף תשלום מתארח (אשראי + Bit).
 
-   הגדרת סודות (מ-PayPlus → Settings → API):
-     firebase functions:secrets:set PAYPLUS_API_KEY
-     firebase functions:secrets:set PAYPLUS_SECRET_KEY
-     firebase functions:secrets:set PAYPLUS_PAGE_UID
+   הגדרת סודות חד-פעמית (מלוח הבקרה של משולם):
+     firebase functions:secrets:set MASHOLAM_COMPANY   ← מספר חברה
+     firebase functions:secrets:set MASHOLAM_PASSWORD  ← סיסמה
+     firebase deploy --only functions
    ============================================================ */
 const { onCall, HttpsError, onRequest } = require("firebase-functions/v2/https");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
@@ -15,20 +13,18 @@ const { defineSecret } = require("firebase-functions/params");
 const admin = require("firebase-admin");
 admin.initializeApp();
 
-const PAYPLUS_API_KEY = defineSecret("PAYPLUS_API_KEY");
-const PAYPLUS_SECRET_KEY = defineSecret("PAYPLUS_SECRET_KEY");
-const PAYPLUS_PAGE_UID = defineSecret("PAYPLUS_PAGE_UID");
+const MASHOLAM_COMPANY  = defineSecret("MASHOLAM_COMPANY");
+const MASHOLAM_PASSWORD = defineSecret("MASHOLAM_PASSWORD");
 
-// סנדבוקס: https://restapidev.payplus.co.il | פרודקשן: https://restapi.payplus.co.il
-const PAYPLUS_BASE = process.env.PAYPLUS_BASE || "https://restapi.payplus.co.il";
-const SITE_URL = process.env.SITE_URL || "https://drimteam.co.il";
+const MASHOLAM_BASE = process.env.MASHOLAM_BASE || "https://eshbel.masholam.com/api";
+const SITE_URL      = process.env.SITE_URL      || "https://drimteam.co.il";
 
 /* ------------------------------------------------------------
    createPayment — יוצר הזמנה + דף תשלום מתארח ומחזיר URL
    קלט: { items:[{name,price,qty}], customer:{name,email,phone}, gameId }
    ------------------------------------------------------------ */
 exports.createPayment = onCall(
-  { secrets: [PAYPLUS_API_KEY, PAYPLUS_SECRET_KEY, PAYPLUS_PAGE_UID], region: "europe-west1" },
+  { secrets: [MASHOLAM_COMPANY, MASHOLAM_PASSWORD], region: "europe-west1" },
   async (req) => {
     const d = req.data || {};
     const items = Array.isArray(d.items) ? d.items : [];
@@ -43,35 +39,32 @@ exports.createPayment = onCall(
       createdAt: admin.firestore.FieldValue.serverTimestamp()
     });
 
-    // 2) יצירת דף תשלום ב-PayPlus
+    // 2) יצירת דף תשלום במשולם
+    const customer = d.customer || {};
     const payload = {
-      payment_page_uid: PAYPLUS_PAGE_UID.value(),
-      charge_method: 1, // חיוב רגיל
-      amount: amount,
-      currency_code: "ILS",
-      sendEmailApproval: true,
-      more_info: orderRef.id,
-      refURL_success: `${SITE_URL}/thank-you.html?order=${orderRef.id}`,
-      refURL_failure: `${SITE_URL}/checkout.html?failed=1`,
-      refURL_callback: `https://europe-west1-${process.env.GCLOUD_PROJECT}.cloudfunctions.net/paymentWebhook`,
-      customer: {
-        customer_name: (d.customer && d.customer.name) || "",
-        email: (d.customer && d.customer.email) || "",
-        phone: (d.customer && d.customer.phone) || ""
-      },
-      items: items.map((it) => ({ name: it.name, quantity: Number(it.qty) || 1, price: Number(it.price) }))
+      company:    MASHOLAM_COMPANY.value(),
+      password:   MASHOLAM_PASSWORD.value(),
+      amount:     String(amount),
+      description: items.map(it => it.name).join(", "),
+      fullName:   customer.name  || "",
+      email:      customer.email || "",
+      phone:      (customer.phone || "").replace(/\D/g, ""),
+      uid:        orderRef.id,      // מוחזר ב-webhook כמזהה הזמנה
+      bits:       1,                // 1 = אפשר גם Bit כאמצעי תשלום
+      sendEmail:  true,
+      lang:       "he",
+      successUrl: `${SITE_URL}/thank-you.html?order=${orderRef.id}`,
+      failUrl:    `${SITE_URL}/checkout.html?failed=1`,
+      notifyUrl:  `https://europe-west1-${process.env.GCLOUD_PROJECT}.cloudfunctions.net/paymentWebhook`
     };
 
-    const res = await fetch(`${PAYPLUS_BASE}/api/v1.0/PaymentPages/generateLink`, {
+    const res = await fetch(`${MASHOLAM_BASE}/createPaymentLink`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": JSON.stringify({ api_key: PAYPLUS_API_KEY.value(), secret_key: PAYPLUS_SECRET_KEY.value() })
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
     });
     const json = await res.json().catch(() => ({}));
-    const link = json && json.data && json.data.payment_page_link;
+    const link = (json && json.url) || (json && json.data && json.data.url);
     if (!link) throw new HttpsError("internal", "יצירת דף תשלום נכשלה: " + JSON.stringify(json).slice(0, 300));
 
     return { url: link, orderId: orderRef.id };
@@ -79,36 +72,35 @@ exports.createPayment = onCall(
 );
 
 /* ------------------------------------------------------------
-   paymentWebhook — אישור תשלום מ-PayPlus → סימון ההזמנה כשולמה
+   paymentWebhook — אישור תשלום ממשולם → סימון ההזמנה כשולמה
+   משולם שולח POST עם uid = מזהה ההזמנה ו-status = "approved" / "failed"
    ------------------------------------------------------------ */
 exports.paymentWebhook = onRequest({ region: "europe-west1" }, async (req, res) => {
   try {
-    const body = req.body || {};
-    const orderId = body.more_info || (body.transaction && body.transaction.more_info);
-    const status = (body.transaction && body.transaction.status_code) || body.status_code;
-    // TODO (פרודקשן): לאמת חתימת hash מ-PayPlus לפני אישור.
+    const body   = req.body || {};
+    const orderId = body.uid || body.orderId;
+    const status  = (body.status || "").toLowerCase();
     if (orderId) {
       await admin.firestore().collection("orders").doc(orderId).set({
-        status: status === "000" ? "paid" : "failed",
-        paidAt: admin.firestore.FieldValue.serverTimestamp(),
+        status:  (status === "approved" || status === "success") ? "paid" : "failed",
+        paidAt:  admin.firestore.FieldValue.serverTimestamp(),
         gateway: body
       }, { merge: true });
     }
     res.status(200).send("ok");
   } catch (e) {
     console.error(e);
-    res.status(200).send("ok"); // תמיד 200 כדי שהספק לא ינסה שוב אינסוף פעמים
+    res.status(200).send("ok"); // תמיד 200 כדי שמשולם לא ינסה לשלוח שוב
   }
 });
 
 /* ------------------------------------------------------------
-   3) תזכורת 5 שעות לפני משחק — רץ כל 30 דקות
-   דורש תוכנית Blaze + ערוץ שליחה (SMS/וואטסאפ) שתבחר.
+   תזכורת 5 שעות לפני משחק — רץ כל 30 דקות
    ------------------------------------------------------------ */
 exports.gameReminders = onSchedule(
   { schedule: "every 30 minutes", timeZone: "Asia/Jerusalem", region: "europe-west1" },
   async () => {
-    const db = admin.firestore();
+    const db  = admin.firestore();
     const now = Date.now();
     const snap = await db.collection("app").doc("games").get();
     const games = (snap.exists && snap.data().value) || [];
@@ -117,14 +109,13 @@ exports.gameReminders = onSchedule(
       if (!g.date || !g.time) continue;
       const start = new Date(g.date + "T" + g.time + ":00+03:00").getTime();
       const diffH = (start - now) / 3600000;
-      if (diffH > 4.5 && diffH < 5.0) { // ~5 שעות לפני (חלון של חצי שעה)
+      if (diffH > 4.5 && diffH < 5.0) {
         const regs = await db.collection("registrations").where("gameId", "==", g.id).get();
         for (const doc of regs.docs) {
           const p = doc.data();
           if (!p.phone) continue;
           const text = `תזכורת ⚽ DrimTeam: היום ${g.time} משחק "${g.title}" ב${g.venue || g.city}. נתראה במגרש!`;
-          // TODO: שליחה בפועל לטלפון p.phone דרך ספק SMS (למשל 019/Twilio) או WhatsApp API:
-          // await sendSms(p.phone, text);
+          // TODO: שליחה בפועל דרך ספק SMS/WhatsApp API
           console.log("[reminder]", p.phone, "->", text);
           await doc.ref.set({ remindedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
         }
