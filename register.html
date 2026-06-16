@@ -55,12 +55,12 @@
             </div>
             <div class="field-row">
               <div class="field">
-                <label for="phone">טלפון</label>
-                <input class="input" id="phone" type="tel" placeholder="050-0000000" />
+                <label for="phone">טלפון *</label>
+                <input class="input" id="phone" type="tel" placeholder="050-0000000" required />
               </div>
               <div class="field">
-                <label for="email">אימייל</label>
-                <input class="input" id="email" type="email" placeholder="name@email.com" autocomplete="email" />
+                <label for="email">אימייל *</label>
+                <input class="input" id="email" type="email" placeholder="name@email.com" autocomplete="email" required />
               </div>
             </div>
             <div class="field">
@@ -81,7 +81,7 @@
             <div class="field">
               <label for="city">עיר מועדפת</label>
               <select class="select" id="city">
-                <option>ראשון לציון</option><option>רחובות</option>
+                <option>ראשון לציון</option><option>רחובות</option><option>חולון</option>
               </select>
             </div>
 
@@ -179,28 +179,38 @@
         if (head) head.innerHTML = "נרשמים למשחק שבחרתם 🎯 מלאו פרטים ודרגו את עצמכם — נשמור לכם מקום.";
       }
 
-      // טען את מקסימום השחקנים למשחק (לחישוב רשימת המתנה)
-      window.__gameMax = 0;
+      // טען את פרטי המשחק (מקס' שחקנים + האם הסתיים)
+      window.__gameMax = 0; window.__gamePast = false;
       if (gameId && window.DTDB && DTDB.load) {
         DTDB.load().then(function () {
           var g = (DTDB.get("games", []) || []).filter(function (x) { return x.id === gameId; })[0];
-          if (g) window.__gameMax = parseInt(g.max, 10) || 0;
+          if (g) {
+            window.__gameMax = parseInt(g.max, 10) || 0;
+            window.__gamePast = !!(g.date && g.date < new Date().toISOString().slice(0, 10));
+            if (window.__gamePast) {
+              var hd = document.querySelector(".section-head .lead");
+              if (hd) hd.innerHTML = "⚠️ המשחק הזה כבר הסתיים — לא ניתן להירשם אליו.";
+            }
+          }
         });
       }
 
       // הרשמה / רישום שחקן חדש (יוצר חשבון עם סיסמה + שומר חבר)
       var reg = document.getElementById("regSubmit");
       if (reg) reg.addEventListener("click", function () {
-        var msg = document.getElementById("regMsg"); msg.style.color = "var(--text-dim)";
+        var msg = document.getElementById("regMsg"); msg.style.color = "#ff8a72";
+        if (gameId && window.__gamePast) { msg.textContent = "⚠️ המשחק הסתיים — לא ניתן להירשם אליו."; return; }
         if (!document.getElementById("terms").checked) { msg.textContent = "יש לאשר את התקנון והצהרת הבריאות."; return; }
         var name = (val("fname") + " " + val("lname")).trim();
-        var email = val("email"), pass = val("pass"), pass2 = val("pass2");
+        var email = val("email"), phone = val("phone"), pass = val("pass"), pass2 = val("pass2");
         if (!name) { msg.textContent = "נא למלא שם."; return; }
         if (!email) { msg.textContent = "נא למלא אימייל."; return; }
+        if (!phone) { msg.textContent = "נא למלא מספר טלפון."; return; }
         if (pass.length < 6) { msg.textContent = "סיסמה חייבת להכיל לפחות 6 תווים."; return; }
         if (pass !== pass2) { msg.textContent = "הסיסמאות אינן תואמות."; return; }
+        msg.style.color = "var(--text-dim)";
         var profile = {
-          name: name, phone: val("phone"), email: email, city: val("city"),
+          name: name, phone: phone, email: email, city: val("city"),
           idNumber: val("idnum"), sport: val("sport"), termsAccepted: true
         };
         var err = function (e) { msg.style.color = "#ff8a72"; msg.textContent = "⚠️ " + (window.DTDB ? DTDB.authErrorText(e) : (e.message || e)); };

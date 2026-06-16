@@ -44,6 +44,7 @@
             <option value="">כל הערים</option>
             <option value="ראשון לציון">ראשון לציון</option>
             <option value="רחובות">רחובות</option>
+            <option value="חולון">חולון</option>
           </select>
           <select class="select" aria-label="קטגוריה" id="fmtFilter">
             <option value="">כל הפורמטים</option>
@@ -72,7 +73,7 @@
     <div class="container">
       <div class="footer-cities">
         <span class="pin">📍</span> היכן אנו משחקים?
-        ראשון לציון <span>|</span> רחובות
+        ראשון לציון <span>|</span> רחובות <span>|</span> חולון
       </div>
       <div class="footer-bottom">
         <span>© 2026 DrimTeam — כל הזכויות שמורות</span>
@@ -114,11 +115,18 @@
         }).join("");
 
         // ספירת נרשמים + מקומות פנויים / רשימת המתנה — מתחת לכפתור בלבד
+        var todayStr = new Date().toISOString().slice(0, 10);
         games.forEach(function (g) {
           var cta = list.querySelector('.game-cta[data-game="' + g.id + '"]');
           if (!cta) return;
           var max = parseInt(g.max, 10) || 0;
           var regDiv = cta.querySelector(".game-reg");
+          // משחק שהסתיים — אין הרשמה
+          if (g.date && g.date < todayStr) {
+            cta.closest(".game-card").classList.add("game-card--ended");
+            regDiv.innerHTML = '<span class="badge badge--low">המשחק הסתיים</span>';
+            return;
+          }
           var statsP = (window.DTDB && DTDB.getGameStats) ? DTDB.getGameStats(g.id) : Promise.resolve({ count: 0 });
           statsP.then(function (s) {
             var count = s.count || 0;
@@ -164,12 +172,19 @@
         try { localStorage.setItem("dt_pending_game", gid); } catch (_) { }
         var uid = window.DTDB && DTDB.currentUid && DTDB.currentUid();
         if (uid) {
-          a.textContent = "רושם…";
           DTDB.getMyMember().then(function (m) {
             m = m || {};
-            return DTDB.addRegistration(gid, { name: m.name || "", phone: m.phone || "", email: m.email || "", city: m.city || "", pos: m.pos || "", rating: m.rating || 4 });
-          }).then(function () { location.href = "checkout.html?game=" + gid; })
-            .catch(function () { location.href = "checkout.html?game=" + gid; });
+            // חובת טלפון להרשמה — אם חסר, מבקשים אותו
+            var phone = m.phone || "";
+            if (!phone) {
+              phone = (prompt("מספר טלפון להרשמה למשחק:") || "").trim();
+              if (!phone) return;
+              if (DTDB.saveMember) DTDB.saveMember({ phone: phone });
+            }
+            a.textContent = "רושם…";
+            return DTDB.addRegistration(gid, { name: m.name || "", phone: phone, email: m.email || "", city: m.city || "", rating: m.rating || 4 })
+              .then(function () { location.href = "checkout.html?game=" + gid; });
+          }).catch(function () { location.href = "register.html?game=" + gid; });
         } else {
           location.href = "register.html?game=" + gid;
         }
