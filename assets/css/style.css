@@ -1185,57 +1185,34 @@ h1, h2, h3 { line-height: 1.15; margin: 0 0 0.5em; font-weight: 800; }
 
 .deck { position: relative; display: flex; flex-direction: column; align-items: center; }
 
-/* closed: one cover card; click reveals the row */
-.deck__cover {
-  width: clamp(210px, 72vw, 248px); height: clamp(170px, 44vw, 196px);
-  border-radius: 18px; border: 1px solid var(--lime-500);
-  background: linear-gradient(180deg, #16110a, #0b0907);
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
-  cursor: pointer; box-shadow: var(--shadow-lime); position: relative; overflow: hidden;
-  transition: transform 0.2s ease, box-shadow 0.25s ease;
-}
-.deck__cover:hover { transform: translateY(-3px); }
-.deck__cover::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 3px; background: var(--grad-lime); }
-.deck__cover-title { font-size: 1.4rem; font-weight: 800; background: var(--grad-gold-text); -webkit-background-clip: text; background-clip: text; color: transparent; padding: 0 16px; }
-.deck__cover-sub { color: var(--text-dim); font-size: 0.85rem; }
-.deck.open .deck__cover { display: none; }
-
-/* open: cards line up in a wrapping row */
-.deck__cards { display: none; flex-wrap: wrap; justify-content: center; gap: 16px; max-width: 1000px; }
-.deck.open .deck__cards { display: flex; }
+/* 3 category cards — always visible, no toggle */
+.deck__cards { display: flex; flex-wrap: wrap; justify-content: center; gap: 18px; max-width: 860px; }
 
 .pcard {
-  position: relative; width: clamp(150px, 40vw, 188px); height: clamp(212px, 56vw, 252px);
+  position: relative; width: clamp(150px, 25vw, 230px); height: clamp(210px, 33vw, 308px);
   border-radius: 16px; border: 1px solid var(--lime-500);
   background: linear-gradient(180deg, var(--navy-700), var(--navy-800));
   background-size: cover; background-position: center;
   display: flex; flex-direction: column; justify-content: flex-end;
-  padding: 18px; text-align: start; overflow: hidden;
+  padding: 20px; text-align: start; overflow: hidden;
   box-shadow: 0 12px 30px -16px rgba(0, 0, 0, 0.8);
   transition: transform 0.18s ease, box-shadow 0.25s ease, border-color 0.2s ease;
   -webkit-backface-visibility: hidden; backface-visibility: hidden;
 }
 .pcard::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 3px; background: var(--grad-lime); z-index: 2; }
-.pcard h3 { margin: 0 0 5px; font-size: 1.2rem; }
+.pcard h3 { margin: 0 0 6px; font-size: 1.25rem; }
 .pcard p { margin: 0; color: #e9e1ce; font-size: 0.86rem; line-height: 1.4; }
 .pcard:hover { transform: translateY(-6px); border-color: var(--lime-400); box-shadow: var(--shadow-lime); }
-/* per-card background images (dark gradient at bottom keeps text readable) */
-.pcard--1 { background-image: linear-gradient(180deg, rgba(8,7,5,0.15) 22%, rgba(8,7,5,0.93) 84%), url("../img/gallery/g3.jpg"); }
+
+/* category card backgrounds */
+.pcard--1 { background-image: linear-gradient(180deg, rgba(8,7,5,0.08) 18%, rgba(8,7,5,0.92) 82%), url("../img/gallery/grass-turf.svg"); }
 .pcard--2 { background-image: linear-gradient(180deg, rgba(8,7,5,0.15) 22%, rgba(8,7,5,0.93) 84%), url("../img/gallery/fitness.jpg"); }
-.pcard--3 { background-image: linear-gradient(180deg, rgba(8,7,5,0.15) 22%, rgba(8,7,5,0.93) 84%), url("../img/gallery/cycling.jpg"); }
+.pcard--3 { background-image: linear-gradient(180deg, rgba(8,7,5,0.08) 18%, rgba(8,7,5,0.92) 82%), url("../img/gallery/sports-balls.svg"); }
 .pcard--4 { background-image: linear-gradient(180deg, rgba(8,7,5,0.15) 22%, rgba(8,7,5,0.93) 84%), url("../img/gallery/futsal.jpg"); }
 .pcard--5 { background-image: linear-gradient(180deg, rgba(8,7,5,0.15) 22%, rgba(8,7,5,0.93) 84%), url("../img/gallery/basketball.jpg"); }
 
-/* staggered entrance when the row opens */
-.deck.open .pcard { animation: cardIn 0.4s cubic-bezier(0.2, 0.8, 0.25, 1) both; }
-.deck.open .pcard--1 { animation-delay: 0.03s; }
-.deck.open .pcard--2 { animation-delay: 0.09s; }
-.deck.open .pcard--3 { animation-delay: 0.15s; }
-.deck.open .pcard--4 { animation-delay: 0.21s; }
-.deck.open .pcard--5 { animation-delay: 0.27s; }
-@keyframes cardIn { from { opacity: 0; transform: translateY(18px) scale(0.96); } to { opacity: 1; transform: none; } }
-
-@media (max-width: 480px) { .pcard { width: 44vw; height: 62vw; } .deck__cards { gap: 12px; } }
+/* 3 cards fit side-by-side on mobile */
+@media (max-width: 540px) { .pcard { width: 29vw; height: 41vw; padding: 12px; } .pcard h3 { font-size: 0.95rem; } .pcard p { font-size: 0.78rem; } .deck__cards { gap: 10px; } }
 
 /* ============================================================
    ACCESSIBILITY widget + modes (Israeli law / WCAG AA helpers)

@@ -100,3 +100,34 @@
     });
   });
 })();
+
+/* ============================================================
+   Idle auto-logout — 15 minutes of no activity
+   ============================================================ */
+(function () {
+  "use strict";
+  if (!window.DTDB || !DTDB.onUser) return;
+  var IDLE_MS = 15 * 60 * 1000;
+  var timer = null;
+
+  function idleLogout() {
+    var done = DTDB.signOut ? DTDB.signOut() : Promise.resolve();
+    done.catch(function () {}).then(function () { location.href = "index.html?idle=1"; });
+  }
+
+  function resetTimer() {
+    clearTimeout(timer);
+    if (DTDB.currentUid && DTDB.currentUid()) {
+      timer = setTimeout(idleLogout, IDLE_MS);
+    }
+  }
+
+  ["mousemove", "keydown", "touchstart", "pointerdown", "click", "scroll"].forEach(function (ev) {
+    document.addEventListener(ev, resetTimer, { passive: true, capture: true });
+  });
+
+  DTDB.onUser(function (user) {
+    clearTimeout(timer);
+    if (user) resetTimer();
+  });
+})();

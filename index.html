@@ -25,16 +25,10 @@
     <a href="index.html" class="logo hero-deck__logo"><span class="drim">Drim</span><span class="ball"></span><span class="team">Team</span></a>
     <p class="hero-deck__tag">בחרו את הספורט שלכם</p>
 
-    <div class="deck" id="deck">
-      <button type="button" class="deck__cover" id="deckCover" aria-expanded="false" aria-controls="deckCards">
-        <span class="deck__cover-title">כל סוגי הספורט</span>
-        <span class="deck__cover-sub">לחצו לבחירת ענף ✋</span>
-      </button>
-      <div class="deck__cards" id="deckCards">
-        <a class="pcard pcard--1" href="games.html?cat=%D7%97%D7%95%D7%92%D7%99%D7%9D"><h3>חוגים</h3><p>חוגי כדורגל ל-30+ ואימונים מודרכים</p></a>
-        <a class="pcard pcard--4" href="games.html?cat=%D7%A2%D7%9E%D7%9E%D7%99"><h3>עממי</h3><p>משחקים ופעילות פתוחה לכל הקהל</p></a>
-        <a class="pcard pcard--3" href="games.html?cat=%D7%90%D7%99%D7%A8%D7%95%D7%A2%D7%99%20%D7%A1%D7%A4%D7%95%D7%A8%D7%98"><h3>אירועי ספורט</h3><p>טורנירים, מרוצים ואירועים מיוחדים</p></a>
-      </div>
+    <div class="deck__cards">
+      <a class="pcard pcard--1" href="games.html?cat=%D7%97%D7%95%D7%92%D7%99%D7%9D"><h3>חוגים</h3><p>חוגי כדורגל ל-30+ ואימונים מודרכים</p></a>
+      <a class="pcard pcard--4" href="games.html?cat=%D7%A2%D7%9E%D7%9E%D7%99"><h3>עממי</h3><p>משחקים ופעילות פתוחה לכל הקהל</p></a>
+      <a class="pcard pcard--3" href="games.html?cat=%D7%90%D7%99%D7%A8%D7%95%D7%A2%D7%99%20%D7%A1%D7%A4%D7%95%D7%A8%D7%98"><h3>אירועי ספורט</h3><p>טורנירים, מרוצים ואירועים מיוחדים</p></a>
     </div>
 
     <a href="games.html" class="btn btn--ghost btn--sm hero-deck__all">לכל האירועים ←</a>
@@ -220,16 +214,6 @@
       var n = a.querySelector(".venue__name");
       if (n) a.href = "games.html?city=" + encodeURIComponent(n.textContent.trim());
     });
-    // חפיסת הקלפים — לחיצה על הכרטיס מסדרת את הקלפים בשורה
-    (function () {
-      var deck = document.getElementById("deck");
-      var cover = document.getElementById("deckCover");
-      if (!deck || !cover) return;
-      cover.addEventListener("click", function () {
-        var open = deck.classList.toggle("open");
-        cover.setAttribute("aria-expanded", open ? "true" : "false");
-      });
-    })();
   </script>
 </body>
 </html>

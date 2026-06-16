@@ -549,6 +549,27 @@
     showView("dashboard");
   }
 
+  /* ---- Idle auto-logout (15 min) ---- */
+  (function () {
+    var IDLE_MS = 15 * 60 * 1000;
+    var timer = null;
+    function idleLogout() {
+      localStorage.removeItem("dt_session");
+      try { sessionStorage.removeItem("dt_otp_ok"); } catch (_) {}
+      var done = DB.signOut ? DB.signOut() : Promise.resolve();
+      done.catch(function () {}).then(function () { location.href = "index.html?idle=1"; });
+    }
+    function resetTimer() {
+      clearTimeout(timer);
+      if ($("appShell") && getComputedStyle($("appShell")).display !== "none") {
+        timer = setTimeout(idleLogout, IDLE_MS);
+      }
+    }
+    ["mousemove", "keydown", "touchstart", "pointerdown", "click", "scroll"].forEach(function (ev) {
+      document.addEventListener(ev, resetTimer, { passive: true, capture: true });
+    });
+  })();
+
   /* event delegation */
   document.addEventListener("click", function (e) {
     var t = e.target.closest("[data-view],[data-jump],[data-edit-t],[data-del-t],[data-edit-g],[data-del-g],[data-del-r],[data-move],[data-del-admin],[data-del-gal]");

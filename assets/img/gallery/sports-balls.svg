@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 560">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="45%" r="75%">
+      <stop offset="0%" stop-color="#1c1208"/>
+      <stop offset="100%" stop-color="#060402"/>
+    </radialGradient>
+    <radialGradient id="rSoc" cx="36%" cy="30%" r="60%">
+      <stop offset="0%" stop-color="#f2f2f2"/>
+      <stop offset="100%" stop-color="#a8a8a8"/>
+    </radialGradient>
+    <radialGradient id="rBas" cx="36%" cy="30%" r="60%">
+      <stop offset="0%" stop-color="#f57428"/>
+      <stop offset="100%" stop-color="#7a2000"/>
+    </radialGradient>
+    <radialGradient id="rVol" cx="36%" cy="30%" r="60%">
+      <stop offset="0%" stop-color="#f5f5f0"/>
+      <stop offset="100%" stop-color="#c0b8a8"/>
+    </radialGradient>
+    <clipPath id="cS"><circle cx="115" cy="225" r="94"/></clipPath>
+    <clipPath id="cB"><circle cx="228" cy="410" r="120"/></clipPath>
+    <clipPath id="cV"><circle cx="308" cy="196" r="80"/></clipPath>
+  </defs>
+
+  <!-- Background -->
+  <rect width="400" height="560" fill="url(#bg)"/>
+  <ellipse cx="200" cy="300" rx="185" ry="225" fill="#d4af37" opacity="0.025"/>
+
+  <!-- Shadows -->
+  <ellipse cx="115" cy="328" rx="86" ry="15" fill="#000" opacity="0.45"/>
+  <ellipse cx="228" cy="538" rx="112" ry="17" fill="#000" opacity="0.4"/>
+  <ellipse cx="308" cy="282" rx="73" ry="13" fill="#000" opacity="0.4"/>
+
+  <!-- ===== SOCCER BALL ===== -->
+  <circle cx="115" cy="225" r="94" fill="url(#rSoc)"/>
+  <g clip-path="url(#cS)">
+    <!-- center pentagon (r=44, angles: 270,342,54,126,198 degrees) -->
+    <polygon points="115,181 156.8,193.5 141.9,233 88.1,233 73.2,193.5" fill="#111"/>
+    <!-- 5 edge patches (simplified circles at r≈78 from center) -->
+    <circle cx="115" cy="148" r="22" fill="#111"/>
+    <circle cx="189" cy="197" r="22" fill="#111"/>
+    <circle cx="160" cy="302" r="22" fill="#111"/>
+    <circle cx="70"  cy="302" r="22" fill="#111"/>
+    <circle cx="41"  cy="197" r="22" fill="#111"/>
+  </g>
+  <!-- Shine -->
+  <ellipse cx="94" cy="196" rx="20" ry="13" fill="rgba(255,255,255,0.18)" transform="rotate(-28,94,196)"/>
+
+  <!-- ===== BASKETBALL ===== -->
+  <circle cx="228" cy="410" r="120" fill="url(#rBas)"/>
+  <g clip-path="url(#cB)">
+    <path d="M228,290 C282,340 282,480 228,530" fill="none" stroke="#5c1800" stroke-width="9" stroke-linecap="round"/>
+    <path d="M228,290 C174,340 174,480 228,530" fill="none" stroke="#5c1800" stroke-width="9" stroke-linecap="round"/>
+    <path d="M108,410 C158,358 298,358 348,410" fill="none" stroke="#5c1800" stroke-width="9" stroke-linecap="round"/>
+    <path d="M108,410 C158,462 298,462 348,410" fill="none" stroke="#5c1800" stroke-width="9" stroke-linecap="round"/>
+  </g>
+  <!-- Shine -->
+  <ellipse cx="200" cy="368" rx="28" ry="17" fill="rgba(255,200,130,0.22)" transform="rotate(-28,200,368)"/>
+
+  <!-- ===== VOLLEYBALL ===== -->
+  <circle cx="308" cy="196" r="80" fill="url(#rVol)"/>
+  <g clip-path="url(#cV)">
+    <!-- top blue panel: between the two vertical seams, above equator -->
+    <path d="M268,127 A80,80 0 0,0 348,127 C330,158 286,158 268,127 Z" fill="#1565c0" opacity="0.8"/>
+    <!-- left red panel -->
+    <path d="M228,196 A80,80 0 0,0 268,127 C286,158 286,234 268,265 A80,80 0 0,0 228,196 Z" fill="#c62828" opacity="0.75"/>
+    <!-- right gold panel -->
+    <path d="M388,196 A80,80 0 0,1 348,127 C330,158 330,234 348,265 A80,80 0 0,1 388,196 Z" fill="#d4af37" opacity="0.8"/>
+    <!-- bottom teal panel -->
+    <path d="M268,265 A80,80 0 0,1 348,265 C330,234 286,234 268,265 Z" fill="#00695c" opacity="0.75"/>
+    <!-- seam lines -->
+    <path d="M228,196 C260,166 356,166 388,196" fill="none" stroke="rgba(255,255,255,0.65)" stroke-width="3.5"/>
+    <path d="M228,196 C260,226 356,226 388,196" fill="none" stroke="rgba(255,255,255,0.65)" stroke-width="3.5"/>
+    <path d="M268,127 C288,158 288,234 268,265" fill="none" stroke="rgba(255,255,255,0.65)" stroke-width="3.5"/>
+    <path d="M348,127 C328,158 328,234 348,265" fill="none" stroke="rgba(255,255,255,0.65)" stroke-width="3.5"/>
+  </g>
+  <!-- Shine -->
+  <ellipse cx="291" cy="168" rx="18" ry="11" fill="rgba(255,255,255,0.22)" transform="rotate(-28,291,168)"/>
+
+  <!-- Gold accent dots -->
+  <circle cx="28"  cy="66"  r="2.2" fill="#d4af37" opacity="0.4"/>
+  <circle cx="375" cy="98"  r="1.8" fill="#d4af37" opacity="0.35"/>
+  <circle cx="20"  cy="495" r="1.6" fill="#d4af37" opacity="0.3"/>
+  <circle cx="378" cy="480" r="1.8" fill="#d4af37" opacity="0.3"/>
+</svg>
