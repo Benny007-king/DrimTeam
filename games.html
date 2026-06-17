@@ -143,6 +143,9 @@
 
       function render() {
         var games = (window.DTDB ? DTDB.get("games", []) : []) || [];
+        var todayStr = new Date().toISOString().slice(0, 10);
+        // משחקים שהסתיימו — מוסתרים לגמרי (נשמרים ב-DB לצורך ארכיון)
+        games = games.filter(function (g) { return !g.date || g.date >= todayStr; });
         games = games.slice().sort(function (a, b) { return (a.date || "").localeCompare(b.date || ""); });
         var list = document.getElementById("gamesList"), empty = document.getElementById("gamesEmpty");
         if (!games.length) { list.innerHTML = ""; applyFilters(); return; }
@@ -161,7 +164,6 @@
         }).join("");
 
         // ספירת נרשמים + מקומות פנויים / רשימת המתנה — מתחת לכפתור בלבד
-        var todayStr = new Date().toISOString().slice(0, 10);
         games.forEach(function (g) {
           var cta = list.querySelector('.game-cta[data-game="' + g.id + '"]');
           if (!cta) return;

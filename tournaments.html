@@ -43,6 +43,18 @@
     </div>
   </section>
 
+  <!-- UPCOMING TOURNAMENTS (dynamic from DB) -->
+  <section class="section section--tight" id="upcomingSection" style="display:none">
+    <div class="container">
+      <div class="section-head" style="margin-bottom:28px">
+        <span class="eyebrow">רשום עכשיו</span>
+        <h2 class="h-lg">טורנירים קרובים</h2>
+      </div>
+      <div class="games-list" id="tournList"></div>
+      <div class="admin-empty" id="tournEmpty" style="display:none">אין טורנירים קרובים כרגע. עקבו אחרינו לעדכונים ⚽</div>
+    </div>
+  </section>
+
   <!-- OVERVIEW COLUMNS -->
   <section class="section" style="padding-top:0">
     <div class="container">
@@ -275,5 +287,43 @@
   <script src="assets/js/db.js"></script>
   <script src="assets/js/auth-ui.js"></script>
   <script src="assets/js/main.js"></script>
+  <script>
+    (function () {
+      var months = ["ינו","פבר","מרץ","אפר","מאי","יוני","יולי","אוג","ספט","אוק","נוב","דצמ"];
+      function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[c]; }); }
+      function dpart(d) { if (!d) return {day:"--",mon:""}; var p = d.split("-"); return {day:p[2], mon:months[parseInt(p[1],10)-1]||""}; }
+
+      var ready = (window.DTDB && DTDB.load) ? DTDB.load() : Promise.resolve();
+      ready.then(function () {
+        var todayStr = new Date().toISOString().slice(0, 10);
+        var list = (window.DTDB ? DTDB.get("tournaments", []) : []) || [];
+        list = list.filter(function (t) { return !t.date || t.date >= todayStr; });
+        list.sort(function (a, b) { return (a.date || "").localeCompare(b.date || ""); });
+
+        var section = document.getElementById("upcomingSection");
+        var grid = document.getElementById("tournList");
+        var empty = document.getElementById("tournEmpty");
+        if (!section || !grid) return;
+        section.style.display = "";
+
+        if (!list.length) { if (empty) empty.style.display = "block"; return; }
+        grid.innerHTML = list.map(function (t) {
+          var d = dpart(t.date);
+          return '<article class="game-card">' +
+            '<div class="game-date"><div class="day">' + esc(d.day) + '</div><div class="mon">' + esc(d.mon) + '</div></div>' +
+            '<div class="game-info"><h3>' + esc(t.name || "טורניר") + '</h3><div class="game-meta">' +
+            '<span>🗓️ ' + esc(t.date || "") + '</span>' +
+            '<span>📍 ' + esc(t.city || "") + '</span>' +
+            '<span>⚽ ' + esc(t.format || "") + '</span>' +
+            '</div></div>' +
+            '<div class="game-cta">' +
+            '<div class="game-reg">' +
+            '<a href="register.html" class="btn btn--primary btn--sm">הרשמה לטורניר</a>' +
+            '<div class="muted" style="font-size:.82rem;margin-top:8px">₪' + esc(t.price || 0) + ' / ' + esc(t.format || "טורניר") + '</div>' +
+            '</div></div></article>';
+        }).join("");
+      });
+    })();
+  </script>
 </body>
 </html>
