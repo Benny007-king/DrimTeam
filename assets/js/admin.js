@@ -511,6 +511,8 @@
   function videoThumb(url) {
     var id = ytId(url);
     if (id) return '<img src="https://img.youtube.com/vi/' + id + '/hqdefault.jpg" alt="">';
+    if (url && (url.indexOf("firebasestorage") !== -1 || /\.mp4/i.test(url)))
+      return '<video src="' + url + '" style="width:100%;height:100%;object-fit:cover" muted preload="metadata"></video>';
     return '<div style="display:grid;place-items:center;height:100%;background:#15120d;color:var(--lime-400);font-weight:700">▶ וידאו</div>';
   }
   function fillGalleryTournaments() {
@@ -537,16 +539,18 @@
     var v = $("galType").value;
     $("galFileField").style.display = v === "image" ? "" : "none";
     $("galUrlField").style.display = v === "video" ? "" : "none";
+    $("galVideoFileField").style.display = v === "video-upload" ? "" : "none";
   }
   function galAdd() {
     var msg = $("galMsg"); msg.style.color = "var(--text-dim)";
     var type = $("galType").value;
     var tournamentName = $("galTournament").value.trim() || "כללי";
     var caption = $("galCaption").value.trim();
-    function save(url) {
-      return DB.addGalleryItem({ type: type, url: url, tournamentName: tournamentName, caption: caption }).then(function () {
+    function save(url, saveType) {
+      return DB.addGalleryItem({ type: saveType || type, url: url, tournamentName: tournamentName, caption: caption }).then(function () {
         msg.style.color = "var(--lime-400)"; msg.textContent = "✅ נוסף לגלריה";
         $("galCaption").value = ""; $("galFile").value = ""; $("galUrl").value = "";
+        if ($("galVideoFile")) $("galVideoFile").value = "";
         renderGalleryAdmin();
       }).catch(function (e) { msg.style.color = "#ff8a72"; msg.textContent = "⚠️ " + (DB.authErrorText ? DB.authErrorText(e) : e); });
     }
@@ -555,9 +559,16 @@
       if (!f) { msg.style.color = "#ff8a72"; msg.textContent = "בחר קובץ תמונה."; return; }
       msg.textContent = "מעלה…";
       DB.imageToDataUrl(f, 900).then(save).catch(function () { msg.style.color = "#ff8a72"; msg.textContent = "עיבוד התמונה נכשל."; });
+    } else if (type === "video-upload") {
+      var vf = $("galVideoFile").files[0];
+      if (!vf) { msg.style.color = "#ff8a72"; msg.textContent = "בחר קובץ MP4."; return; }
+      msg.textContent = "מעלה וידאו… (עשוי לקחת מספר שניות)";
+      DB.uploadVideoToStorage(vf).then(function (url) {
+        return save(url, "video");
+      }).catch(function (e) { msg.style.color = "#ff8a72"; msg.textContent = "⚠️ " + (e.message || "העלאת הוידאו נכשלה"); });
     } else {
       var u = $("galUrl").value.trim();
-      if (!u) { msg.style.color = "#ff8a72"; msg.textContent = "הדבק קישור וידאו."; return; }
+      if (!u) { msg.style.color = "#ff8a72"; msg.textContent = "הדבק קישור YouTube."; return; }
       msg.textContent = "שומר…"; save(u);
     }
   }

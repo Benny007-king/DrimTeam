@@ -17,13 +17,14 @@
   function lsGet(k, d) { try { var v = localStorage.getItem("dt_" + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }
   function lsSet(k, v) { try { localStorage.setItem("dt_" + k, JSON.stringify(v)); } catch (e) { } }
 
-  var fdb = null, fauth = null;
+  var fdb = null, fauth = null, fstorage = null;
   if (USE_FB && typeof firebase !== "undefined") {
     try {
       firebase.initializeApp(window.DT_FB_CONFIG);
       fdb = firebase.firestore();
       fauth = firebase.auth();
-    } catch (e) { console.warn("[DTDB] Firebase init failed, using localStorage:", e); fdb = null; fauth = null; }
+      if (typeof firebase.storage !== "undefined") fstorage = firebase.storage();
+    } catch (e) { console.warn("[DTDB] Firebase init failed, using localStorage:", e); fdb = null; fauth = null; fstorage = null; }
   }
 
   var DTDB = {
@@ -196,6 +197,12 @@
         };
         rd.readAsDataURL(file);
       });
+    },
+    uploadVideoToStorage: function (file) {
+      if (!fstorage) return Promise.reject(new Error("Firebase Storage לא זמין"));
+      var uid = (fauth && fauth.currentUser) ? fauth.currentUser.uid : "anon";
+      var ref = fstorage.ref("gallery/videos/" + uid + "_" + Date.now() + "_" + file.name);
+      return ref.put(file).then(function (snap) { return snap.ref.getDownloadURL(); });
     },
     addGalleryItem: function (item) {
       if (fdb) { return fdb.collection("gallery").add(Object.assign({ createdAt: firebase.firestore.FieldValue.serverTimestamp() }, item)); }
