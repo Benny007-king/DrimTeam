@@ -138,9 +138,17 @@
     // אף רשימת מיילים לא נחשפת בצד הלקוח.
     isCurrentUserAdmin: function (forceRefresh) {
       if (!(fauth && fauth.currentUser)) return Promise.resolve(false);
-      return fauth.currentUser.getIdTokenResult(!!forceRefresh)
-        .then(function (r) { return !!(r && r.claims && r.claims.admin === true); })
-        .catch(function () { return false; });
+      var user = fauth.currentUser;
+      return user.getIdTokenResult(!!forceRefresh).then(function (r) {
+        if (r && r.claims && r.claims.admin === true) return true;
+        // גיבוי (ללא Cloud Functions/claims): בדיקת קולקציית admins לפי אימייל
+        if (!fdb) return false;
+        var email = (user.email || "").toLowerCase().trim();
+        if (!email) return false;
+        return fdb.collection("admins").doc(email).get()
+          .then(function (s) { return s.exists; })
+          .catch(function () { return false; });
+      }).catch(function () { return false; });
     },
     // נשמר לתאימות לאחור — בכל מקומות הקריאה ה-email הוא של המשתמש המחובר.
     isAdminEmail: function (email) {
