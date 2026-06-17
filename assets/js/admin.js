@@ -38,7 +38,7 @@
         return { id: uid(), name: n, pos: ["שוער", "בלם", "קשר", "חלוץ"][i % 4], rating: (i % 7) + 1 };
       });
       DB.set("regs", regs);
-      DB.set("settings", { waGroups: [], adminEmails: [] });
+      DB.set("settings", { waGroups: [], adminEmails: DEFAULT_ADMINS.slice() });
       DB.set("seeded", true);
     }
   }
@@ -538,14 +538,10 @@
   // לאחר התחברות מוצלחת (כולל שחזור סשן) — בודקים הרשאה ואז OTP
   function gateOtp(user) {
     var uid = user.uid;
-    // בדיקה שהאימייל ברשימת המנהלים המורשים
+    // בדיקה שהאימייל ברשימת המנהלים המורשים — אחרת redirect מיידי
     if (allowedEmails().indexOf((user.email || "").toLowerCase().trim()) === -1) {
-      var done = DB.signOut ? DB.signOut() : Promise.resolve();
-      done.then(function () {
-        showLogin();
-        $("loginError").style.color = "#ff8a72";
-        $("loginError").textContent = "אימייל " + (user.email || "") + " אינו מורשה לניהול. פנה למנהל המערכת.";
-        $("loginError").style.display = "block";
+      (DB.signOut ? DB.signOut() : Promise.resolve()).catch(function () {}).then(function () {
+        location.href = "index.html";
       });
       return;
     }
@@ -568,10 +564,24 @@
     });
   }
 
+  function ensureDefaultAdmins() {
+    var s = DB.get("settings", {});
+    var emails = s.adminEmails || [];
+    var changed = false;
+    DEFAULT_ADMINS.forEach(function (e) {
+      var lc = e.toLowerCase().trim();
+      if (!emails.some(function (x) { return (x || "").toLowerCase().trim() === lc; })) {
+        emails.push(e); changed = true;
+      }
+    });
+    if (changed) { s.adminEmails = emails; DB.set("settings", s); }
+  }
+
   function boot() {
     var ready = DB.load ? DB.load() : Promise.resolve();
     ready.catch(function () { }).then(function () {
       seed();
+      ensureDefaultAdmins(); // מבטיח שהמנהל הראשי תמיד ברשימה
       // סנכרון בזמן אמת בין מנהלים — שינוי של מנהל אחד מתעדכן מיד אצל השני
       if (DB.onChange) DB.onChange(function () {
         if (currentView && $("appShell") && getComputedStyle($("appShell")).display !== "none") showView(currentView);

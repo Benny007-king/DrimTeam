@@ -118,7 +118,18 @@
     },
     isAdminEmail: function (email) {
       if (!email) return Promise.resolve(false);
-      if (fdb) { return fdb.collection("admins").doc(email).get().then(function (s) { return s.exists; }).catch(function () { return false; }); }
+      var lc = (email || "").toLowerCase().trim();
+      // בדיקה ב-settings.adminEmails (עובד גם ללא קולקציית admins בפיירסטור)
+      var s = DTDB.get("settings", {});
+      if ((s.adminEmails || []).some(function (e) { return (e || "").toLowerCase().trim() === lc; })) {
+        return Promise.resolve(true);
+      }
+      // בדיקה בקולקציית admins (מוגדרת ב-Firebase Console)
+      if (fdb) {
+        return fdb.collection("admins").doc(email).get()
+          .then(function (snap) { return snap.exists; })
+          .catch(function () { return false; });
+      }
       return Promise.resolve(false);
     },
 
