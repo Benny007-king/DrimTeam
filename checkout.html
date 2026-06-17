@@ -98,18 +98,30 @@
     (function () {
       var params = new URLSearchParams(location.search);
       var gameId = params.get("game");
+      var tournId = params.get("tournament");
+      var payId = gameId || tournId; // מזהה הפריט שמועבר ל-createPayment
       var ITEM = { name: "כרטיס למשחק", price: 35, qty: 1 };
 
-      // טען פרטי המשחק שנבחר (כותרת + מחיר)
+      function setSummary() {
+        var s = document.getElementById("sumItem"); if (s) s.textContent = ITEM.name;
+        var sp = document.getElementById("sumPrice"); if (sp) sp.textContent = "₪" + ITEM.price;
+        var st = document.getElementById("sumTotal"); if (st) st.textContent = "₪" + ITEM.price;
+      }
+
+      // טען פרטי המשחק/הטורניר שנבחר (כותרת + מחיר)
       var ready = (window.DTDB && DTDB.load) ? DTDB.load() : Promise.resolve();
       ready.then(function () {
         if (gameId && window.DTDB) {
           var g = (DTDB.get("games", []) || []).filter(function (x) { return x.id === gameId; })[0];
           if (g) {
             ITEM = { name: "כרטיס: " + (g.title || "משחק"), price: parseInt(g.price, 10) || 35, qty: 1 };
-            var s = document.getElementById("sumItem"); if (s) s.textContent = ITEM.name;
-            var sp = document.getElementById("sumPrice"); if (sp) sp.textContent = "₪" + ITEM.price;
-            var st = document.getElementById("sumTotal"); if (st) st.textContent = "₪" + ITEM.price;
+            setSummary();
+          }
+        } else if (tournId && window.DTDB) {
+          var t = (DTDB.get("tournaments", []) || []).filter(function (x) { return x.id === tournId; })[0];
+          if (t) {
+            ITEM = { name: "טורניר: " + (t.name || "טורניר"), price: parseInt(t.price, 10) || 0, qty: 1 };
+            setSummary();
           }
         }
         // מילוי פרטי לקוח מהחשבון המחובר
@@ -131,7 +143,7 @@
           email: document.getElementById("ce").value
         };
         msg.style.color = "var(--text-dim)"; msg.textContent = "יוצר תשלום מאובטח…";
-        var p = (window.DTDB && DTDB.createPayment) ? DTDB.createPayment([ITEM], customer, gameId) : Promise.resolve(null);
+        var p = (window.DTDB && DTDB.createPayment) ? DTDB.createPayment([ITEM], customer, payId) : Promise.resolve(null);
         p.then(function (r) {
           if (r && r.url) { window.location.href = r.url; }
           else { msg.style.color = "var(--lime-400)"; msg.textContent = "✅ ההרשמה נקלטה! התשלום המאובטח (משולם) ייפתח לאחר חיבור ספק הסליקה. סה\"כ ₪" + ITEM.price + "."; }

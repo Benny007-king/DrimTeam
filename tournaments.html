@@ -336,10 +336,21 @@
             '</div>' +
             '<div class="game-cta">' +
             '<div class="game-reg">' +
-            '<a href="register.html" class="btn btn--primary btn--sm">הרשמה לטורניר</a>' +
+            '<a href="register.html?tournament=' + esc(t.id) + '" class="btn btn--primary btn--sm js-reg-t" data-t="' + esc(t.id) + '">הרשמה לטורניר</a>' +
             '<div class="muted" style="font-size:.82rem;margin-top:8px">₪' + esc(t.price || 0) + ' / ' + esc(t.format || "טורניר") + '</div>' +
             '</div></div></article>';
         }).join("");
+      });
+
+      // לחיצה על הרשמה לטורניר: מחובר → ישר לתשלום; אחרת → דף הרשמה/התחברות
+      document.addEventListener("click", function (e) {
+        var a = e.target.closest(".js-reg-t"); if (!a) return;
+        e.preventDefault();
+        var tid = a.getAttribute("data-t");
+        try { localStorage.setItem("dt_pending_tournament", tid); } catch (_) { }
+        var uid = window.DTDB && DTDB.currentUid && DTDB.currentUid();
+        if (uid) { location.href = "checkout.html?tournament=" + tid; }
+        else { location.href = "register.html?tournament=" + tid; }
       });
     })();
   </script>

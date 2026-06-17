@@ -176,12 +176,15 @@
     (function () {
       var params = new URLSearchParams(location.search);
       var gameId = params.get("game");
+      var tournId = params.get("tournament");
       var val = function (id) { var e = document.getElementById(id); return e ? e.value.trim() : ""; };
 
-      // הקשר משחק (אם הגיעו מ"הרשמה למשחק")
-      if (gameId) {
+      // הקשר משחק/טורניר (אם הגיעו מ"הרשמה")
+      if (gameId || tournId) {
         var head = document.querySelector(".section-head .lead");
-        if (head) head.innerHTML = "נרשמים למשחק שבחרתם 🎯 מלאו פרטים ודרגו את עצמכם — נשמור לכם מקום.";
+        if (head) head.innerHTML = tournId
+          ? "נרשמים לטורניר שבחרתם 🏆 מלאו פרטים — ונעביר אתכם לתשלום."
+          : "נרשמים למשחק שבחרתם 🎯 מלאו פרטים ודרגו את עצמכם — נשמור לכם מקום.";
       }
 
       // טען את פרטי המשחק (מקס' שחקנים + האם הסתיים)
@@ -231,6 +234,12 @@
               try { localStorage.removeItem("dt_pending_game"); } catch (_) { }
               setTimeout(function () { location.href = "checkout.html?game=" + gameId; }, 1100);
             });
+          }
+          if (tournId) {
+            msg.style.color = "var(--lime-400)"; msg.textContent = "✅ נרשמת! מעבר לתשלום…";
+            try { localStorage.removeItem("dt_pending_tournament"); } catch (_) { }
+            setTimeout(function () { location.href = "checkout.html?tournament=" + tournId; }, 1100);
+            return;
           }
           msg.style.color = "var(--lime-400)"; msg.textContent = "✅ נרשמת בהצלחה ל-DrimTeam! נתראה במגרש.";
         }
@@ -293,6 +302,8 @@
           if (res === true) {
             var pending = gameId || (function () { try { return localStorage.getItem("dt_pending_game"); } catch (_) { return null; } })();
             if (pending) { try { localStorage.removeItem("dt_pending_game"); } catch (_) { } location.href = "checkout.html?game=" + pending; return; }
+            var pendingT = tournId || (function () { try { return localStorage.getItem("dt_pending_tournament"); } catch (_) { return null; } })();
+            if (pendingT) { try { localStorage.removeItem("dt_pending_tournament"); } catch (_) { } location.href = "checkout.html?tournament=" + pendingT; return; }
             DTDB.isAdminEmail(email).then(function (a) { location.href = a ? "admin.html" : "index.html"; });
           } else { msg.textContent = "התחברות תהיה זמינה לאחר חיבור Firebase."; }
         }).catch(function (e) { msg.style.color = "#ff8a72"; msg.textContent = "⚠️ " + (window.DTDB ? DTDB.authErrorText(e) : (e.message || e)); });
