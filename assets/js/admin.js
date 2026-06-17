@@ -46,7 +46,11 @@
   /* ---------- auth ---------- */
   function allowedEmails() {
     var s = DB.get("settings", {});
-    return DEFAULT_ADMINS.concat(s.adminEmails || []).map(function (e) { return e.toLowerCase().trim(); });
+    var all = DEFAULT_ADMINS.concat(s.adminEmails || []);
+    var seen = {};
+    return all.map(function (e) { return e.toLowerCase().trim(); }).filter(function (e) {
+      return e && !seen[e] && (seen[e] = true);
+    });
   }
   function login(email) {
     email = (email || "").toLowerCase().trim();
