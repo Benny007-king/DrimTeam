@@ -4,8 +4,8 @@
 (function () {
   "use strict";
 
-  /* ---- allowed admin emails (replace with the real one) ---- */
-  var DEFAULT_ADMINS = ["bennydaniel006@gmail.com"]; // ← אימייל אדמין (ניתן להחלפה כאן / בהגדרות / ב-Firestore)
+  /* ---- מנהל ראשי לאתחול (bootstrap). הרשאות אמיתיות נקבעות ע"י Custom Claims ---- */
+  var DEFAULT_ADMINS = ["bennydaniel006@gmail.com"]; // משמש רק כשער גישה ראשוני + אתחול
 
   /* ---------- storage helpers (Firestore via DTDB, localStorage fallback) ---------- */
   var DB = window.DTDB || {
@@ -38,19 +38,15 @@
         return { id: uid(), name: n, pos: ["שוער", "בלם", "קשר", "חלוץ"][i % 4], rating: (i % 7) + 1 };
       });
       DB.set("regs", regs);
-      DB.set("settings", { waGroups: [], adminEmails: DEFAULT_ADMINS.slice() });
+      DB.set("settings", { waGroups: [] });
       DB.set("seeded", true);
     }
   }
 
   /* ---------- auth ---------- */
+  // שער גישה ראשוני בלבד (לפני שה-claim קיים). האכיפה האמיתית ב-firestore.rules.
   function allowedEmails() {
-    var s = DB.get("settings", {});
-    var all = DEFAULT_ADMINS.concat(s.adminEmails || []);
-    var seen = {};
-    return all.map(function (e) { return e.toLowerCase().trim(); }).filter(function (e) {
-      return e && !seen[e] && (seen[e] = true);
-    });
+    return DEFAULT_ADMINS.map(function (e) { return e.toLowerCase().trim(); });
   }
   function login(email) {
     email = (email || "").toLowerCase().trim();
@@ -418,13 +414,19 @@
       }).join("") : "<tr><td colspan='3' class='muted' style='padding:8px 0'>אין קבוצות עדיין. הוסף למטה.</td></tr>";
     }
     if (DB.getMyMember) DB.getMyMember().then(function (m) { if (m && m.name) $("setMyName").value = m.name; });
-    var atb = $("adminRows"); atb.innerHTML = "";
-    allowedEmails().forEach(function (e) {
-      var isDefault = DEFAULT_ADMINS.indexOf(e) !== -1;
-      var tr = document.createElement("tr");
-      tr.innerHTML = "<td>" + esc(e) + (isDefault ? ' <span class="badge">קבוע</span>' : "") + "</td>" +
-        "<td style='text-align:left'>" + (isDefault ? "" : '<button class="icon-btn icon-btn--danger" data-del-admin="' + esc(e) + '">✕</button>') + "</td>";
-      atb.appendChild(tr);
+    var atb = $("adminRows"); atb.innerHTML = "<tr><td colspan='2' class='muted' style='padding:8px 0'>טוען…</td></tr>";
+    var defaults = DEFAULT_ADMINS.map(function (e) { return e.toLowerCase().trim(); });
+    (DB.listAdmins ? DB.listAdmins() : Promise.resolve(defaults)).then(function (emails) {
+      // ודא שהמנהל הראשי תמיד מוצג, גם אם טרם בוצע אתחול
+      defaults.forEach(function (d) { if (emails.indexOf(d) === -1) emails.unshift(d); });
+      atb.innerHTML = "";
+      emails.forEach(function (e) {
+        var isDefault = defaults.indexOf((e || "").toLowerCase().trim()) !== -1;
+        var tr = document.createElement("tr");
+        tr.innerHTML = "<td>" + esc(e) + (isDefault ? ' <span class="badge">ראשי</span>' : "") + "</td>" +
+          "<td style='text-align:left'>" + (isDefault ? "" : '<button class="icon-btn icon-btn--danger" data-del-admin="' + esc(e) + '">✕</button>') + "</td>";
+        atb.appendChild(tr);
+      });
     });
   }
   function addWaGroup() {
@@ -621,13 +623,27 @@
   // לאחר התחברות מוצלחת (כולל שחזור סשן) — בודקים הרשאה ואז OTP
   function gateOtp(user) {
     var uid = user.uid;
-    // בדיקה שהאימייל ברשימת המנהלים המורשים — אחרת redirect מיידי
-    if (allowedEmails().indexOf((user.email || "").toLowerCase().trim()) === -1) {
-      (DB.signOut ? DB.signOut() : Promise.resolve()).catch(function () {}).then(function () {
-        location.href = "index.html";
-      });
-      return;
-    }
+    var email = (user.email || "").toLowerCase().trim();
+    var isDefault = allowedEmails().indexOf(email) !== -1;
+    // הרשאה אמיתית = Custom Claim בטוקן; המנהל הראשי מורשה גם לפני אתחול
+    var check = DB.isCurrentUserAdmin ? DB.isCurrentUserAdmin() : Promise.resolve(false);
+    check.then(function (isAdmin) {
+      if (!isAdmin && !isDefault) {
+        (DB.signOut ? DB.signOut() : Promise.resolve()).catch(function () {}).then(function () {
+          location.href = "index.html";
+        });
+        return;
+      }
+      // אתחול אוטומטי של המנהל הראשי (פעם ראשונה אחרי deploy) — מעניק claim
+      if (!isAdmin && isDefault && DB.bootstrapAdmin) {
+        DB.bootstrapAdmin().catch(function () {}).then(function () { gateOtpContinue(user); });
+        return;
+      }
+      gateOtpContinue(user);
+    });
+  }
+  function gateOtpContinue(user) {
+    var uid = user.uid;
     if (sessionStorage.getItem("dt_otp_ok") === uid) { DB.set("session", user.email); startApp(); return; }
     (DB.getOtp ? DB.getOtp(uid) : Promise.resolve(null)).then(function (otp) {
       if (otp && otp.enabled && otp.secret && window.OTP) {
@@ -647,24 +663,10 @@
     });
   }
 
-  function ensureDefaultAdmins() {
-    var s = DB.get("settings", {});
-    var emails = s.adminEmails || [];
-    var changed = false;
-    DEFAULT_ADMINS.forEach(function (e) {
-      var lc = e.toLowerCase().trim();
-      if (!emails.some(function (x) { return (x || "").toLowerCase().trim() === lc; })) {
-        emails.push(e); changed = true;
-      }
-    });
-    if (changed) { s.adminEmails = emails; DB.set("settings", s); }
-  }
-
   function boot() {
     var ready = DB.load ? DB.load() : Promise.resolve();
     ready.catch(function () { }).then(function () {
       seed();
-      ensureDefaultAdmins(); // מבטיח שהמנהל הראשי תמיד ברשימה
       // סנכרון בזמן אמת בין מנהלים — שינוי של מנהל אחד מתעדכן מיד אצל השני
       if (DB.onChange) DB.onChange(function () {
         if (currentView && $("appShell") && getComputedStyle($("appShell")).display !== "none") showView(currentView);
@@ -754,7 +756,10 @@
     }
     else if ((a = t.getAttribute("data-move"))) { var pr = a.split("|"); move(pr[0], pr[1]); }
     else if ((a = t.getAttribute("data-del-admin"))) {
-      var s = DB.get("settings", {}); s.adminEmails = (s.adminEmails || []).filter(function (x) { return x.toLowerCase() !== a.toLowerCase(); }); DB.set("settings", s); renderSettings();
+      if (!confirm("לשלול הרשאת ניהול מ-" + a + "?")) return;
+      (DB.setAdminClaim ? DB.setAdminClaim(a, false) : Promise.reject(new Error("לא זמין")))
+        .then(function () { renderSettings(); })
+        .catch(function (e) { alert("⚠️ " + (DB.authErrorText ? DB.authErrorText(e) : (e.message || e))); });
     }
     else if ((a = t.getAttribute("data-del-gal"))) {
       if (confirm("למחוק פריט מהגלריה?")) (DB.deleteGalleryItem ? DB.deleteGalleryItem(a) : Promise.resolve()).then(renderGalleryAdmin);
@@ -794,7 +799,14 @@
     $("saveResult").addEventListener("click", saveResult);
     $("copyTeams").addEventListener("click", function () { if (STATE.teams.some(function (x) { return x.length; })) { copy(buildMessage()); $("waHint").textContent = "ההודעה הועתקה ללוח ✅"; } });
     $("addWaGroup").addEventListener("click", addWaGroup);
-    $("addAdmin").addEventListener("click", function () { var v = $("setAdminEmail").value.trim(); if (!v) return; var s = DB.get("settings", {}); s.adminEmails = s.adminEmails || []; if (s.adminEmails.indexOf(v) === -1) s.adminEmails.push(v); DB.set("settings", s); $("setAdminEmail").value = ""; renderSettings(); });
+    $("addAdmin").addEventListener("click", function () {
+      var v = $("setAdminEmail").value.trim(); if (!v) return;
+      var btn = $("addAdmin"); btn.disabled = true;
+      (DB.setAdminClaim ? DB.setAdminClaim(v, true) : Promise.reject(new Error("לא זמין")))
+        .then(function () { $("setAdminEmail").value = ""; renderSettings(); alert("✅ " + v + " הוגדר כמנהל"); })
+        .catch(function (e) { alert("⚠️ " + (DB.authErrorText ? DB.authErrorText(e) : (e.message || e))); })
+        .then(function () { btn.disabled = false; });
+    });
     $("saveMyName").addEventListener("click", function () {
       var n = $("setMyName").value.trim(); if (!n) return;
       (DB.saveMember ? DB.saveMember({ name: n }) : Promise.resolve()).then(function () { renderDashboard(); alert("נשמר ✅"); }).catch(function (e) { alert("שגיאה: " + (DB.authErrorText ? DB.authErrorText(e) : e)); });

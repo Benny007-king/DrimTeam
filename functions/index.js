@@ -23,6 +23,44 @@ const MASHOLAM_BASE = process.env.MASHOLAM_BASE || "https://eshbel.masholam.com/
 const SITE_URL      = process.env.SITE_URL      || "https://drimteam.co.il";
 
 /* ------------------------------------------------------------
+   ניהול מנהלים דרך Custom Claims (token.admin === true)
+   ------------------------------------------------------------ */
+const BOOTSTRAP_EMAIL = "bennydaniel006@gmail.com"; // המנהל הראשי לאתחול ראשוני
+
+// bootstrapAdmin — המנהל הראשי מעניק לעצמו הרשאה פעם אחת, רק כשאין עדיין מנהלים
+exports.bootstrapAdmin = onCall({ region: "europe-west1" }, async (req) => {
+  if (!req.auth) throw new HttpsError("unauthenticated", "התחבר תחילה");
+  const email = (req.auth.token.email || "").toLowerCase().trim();
+  if (email !== BOOTSTRAP_EMAIL) throw new HttpsError("permission-denied", "לא מורשה לאתחול");
+  const existing = await admin.firestore().collection("admins").limit(1).get();
+  if (!existing.empty) throw new HttpsError("failed-precondition", "כבר קיים מנהל — השתמש ב-setAdminClaim");
+  await admin.auth().setCustomUserClaims(req.auth.uid, { admin: true });
+  await admin.firestore().collection("admins").doc(email).set({ active: true, uid: req.auth.uid });
+  return { ok: true, email };
+});
+
+// setAdminClaim — מנהל קיים מעניק/שולל הרשאת ניהול לפי אימייל
+exports.setAdminClaim = onCall({ region: "europe-west1" }, async (req) => {
+  if (!req.auth || req.auth.token.admin !== true) {
+    throw new HttpsError("permission-denied", "רק מנהל יכול לנהל מנהלים");
+  }
+  const email = ((req.data && req.data.email) || "").toLowerCase().trim();
+  const makeAdmin = !(req.data && req.data.admin === false);
+  if (!email) throw new HttpsError("invalid-argument", "חסר אימייל");
+  if (email === BOOTSTRAP_EMAIL && !makeAdmin) {
+    throw new HttpsError("failed-precondition", "לא ניתן לשלול הרשאה מהמנהל הראשי");
+  }
+  let user;
+  try { user = await admin.auth().getUserByEmail(email); }
+  catch (e) { throw new HttpsError("not-found", "אין משתמש רשום עם האימייל הזה (שייכנס/יירשם תחילה)"); }
+  await admin.auth().setCustomUserClaims(user.uid, { admin: makeAdmin });
+  const ref = admin.firestore().collection("admins").doc(email);
+  if (makeAdmin) await ref.set({ active: true, uid: user.uid });
+  else await ref.delete().catch(() => {});
+  return { ok: true, email, admin: makeAdmin };
+});
+
+/* ------------------------------------------------------------
    createPayment — יוצר הזמנה + דף תשלום מתארח ומחזיר URL
    קלט: { items:[{name,price,qty}], customer:{name,email,phone}, gameId }
    ------------------------------------------------------------ */

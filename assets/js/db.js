@@ -21,6 +21,11 @@
   if (USE_FB && typeof firebase !== "undefined") {
     try {
       firebase.initializeApp(window.DT_FB_CONFIG);
+      // App Check — מופעל רק אם הוגדר site key (אחרת no-op, לא שובר כלום)
+      if (window.DT_APPCHECK_KEY && firebase.appCheck) {
+        try { firebase.appCheck().activate(window.DT_APPCHECK_KEY, true); }
+        catch (e) { console.warn("[DTDB] App Check init failed:", e); }
+      }
       fdb = firebase.firestore();
       fauth = firebase.auth();
       if (typeof firebase.storage !== "undefined") fstorage = firebase.storage();
@@ -117,21 +122,41 @@
       var regs = DTDB.get("regs", {}); if (regs[gameId]) regs[gameId] = regs[gameId].filter(function (p) { return p.id !== id; });
       DTDB.set("regs", regs); return Promise.resolve();
     },
+    // האם המשתמש המחובר הוא מנהל? נקבע ע"י Custom Claim בטוקן —
+    // אף רשימת מיילים לא נחשפת בצד הלקוח.
+    isCurrentUserAdmin: function (forceRefresh) {
+      if (!(fauth && fauth.currentUser)) return Promise.resolve(false);
+      return fauth.currentUser.getIdTokenResult(!!forceRefresh)
+        .then(function (r) { return !!(r && r.claims && r.claims.admin === true); })
+        .catch(function () { return false; });
+    },
+    // נשמר לתאימות לאחור — בכל מקומות הקריאה ה-email הוא של המשתמש המחובר.
     isAdminEmail: function (email) {
-      if (!email) return Promise.resolve(false);
-      var lc = (email || "").toLowerCase().trim();
-      // בדיקה ב-settings.adminEmails (עובד גם ללא קולקציית admins בפיירסטור)
-      var s = DTDB.get("settings", {});
-      if ((s.adminEmails || []).some(function (e) { return (e || "").toLowerCase().trim() === lc; })) {
-        return Promise.resolve(true);
-      }
-      // בדיקה בקולקציית admins (מוגדרת ב-Firebase Console)
+      return DTDB.isCurrentUserAdmin();
+    },
+    // מעניק/שולל הרשאת ניהול דרך Cloud Function (רק מנהל קיים מורשה)
+    setAdminClaim: function (email, makeAdmin) {
+      if (!(typeof firebase !== "undefined" && firebase.functions)) return Promise.reject(new Error("Functions לא זמין"));
+      var fn = firebase.app().functions("europe-west1").httpsCallable("setAdminClaim");
+      return fn({ email: email, admin: makeAdmin !== false }).then(function (r) { return r.data; });
+    },
+    // אתחול ראשוני — המנהל הראשי מעניק לעצמו הרשאה (פעם אחת, כשאין מנהלים)
+    bootstrapAdmin: function () {
+      if (!(typeof firebase !== "undefined" && firebase.functions)) return Promise.reject(new Error("Functions לא זמין"));
+      var fn = firebase.app().functions("europe-west1").httpsCallable("bootstrapAdmin");
+      return fn({}).then(function (r) {
+        // רענון הטוקן כדי שה-claim החדש ייכנס לתוקף מיד
+        return (fauth && fauth.currentUser) ? fauth.currentUser.getIdToken(true).then(function () { return r.data; }) : r.data;
+      });
+    },
+    // רשימת המנהלים לתצוגה בפאנל (קריאה מורשית למנהלים בלבד)
+    listAdmins: function () {
       if (fdb) {
-        return fdb.collection("admins").doc(email).get()
-          .then(function (snap) { return snap.exists; })
-          .catch(function () { return false; });
+        return fdb.collection("admins").get()
+          .then(function (qs) { var a = []; qs.forEach(function (d) { a.push(d.id); }); return a; })
+          .catch(function () { return []; });
       }
-      return Promise.resolve(false);
+      return Promise.resolve([]);
     },
 
     /* ---- members (חתמו על התקנון) — שם, טלפון, אישור תקנון ---- */
