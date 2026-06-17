@@ -535,9 +535,20 @@
     $("loginOtpField").style.display = "none";
   }
 
-  // לאחר התחברות מוצלחת (כולל שחזור סשן) — בודקים OTP לפני כניסה לפאנל
+  // לאחר התחברות מוצלחת (כולל שחזור סשן) — בודקים הרשאה ואז OTP
   function gateOtp(user) {
     var uid = user.uid;
+    // בדיקה שהאימייל ברשימת המנהלים המורשים
+    if (allowedEmails().indexOf((user.email || "").toLowerCase().trim()) === -1) {
+      var done = DB.signOut ? DB.signOut() : Promise.resolve();
+      done.then(function () {
+        showLogin();
+        $("loginError").style.color = "#ff8a72";
+        $("loginError").textContent = "אימייל " + (user.email || "") + " אינו מורשה לניהול. פנה למנהל המערכת.";
+        $("loginError").style.display = "block";
+      });
+      return;
+    }
     if (sessionStorage.getItem("dt_otp_ok") === uid) { DB.set("session", user.email); startApp(); return; }
     (DB.getOtp ? DB.getOtp(uid) : Promise.resolve(null)).then(function (otp) {
       if (otp && otp.enabled && otp.secret && window.OTP) {
