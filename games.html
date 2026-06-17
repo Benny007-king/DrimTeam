@@ -63,19 +63,6 @@
             <option>עממי</option>
             <option>אירועי ספורט</option>
           </select>
-          <select class="select" aria-label="פורמט" id="fmtFilter">
-            <option value="">כל הפורמטים</option>
-            <option>פוטסל</option>
-            <option>כדורגל 7</option>
-            <option>טורניר בוטיק</option>
-            <option>ליגה שבועית</option>
-          </select>
-        </div>
-        <div class="view-tabs">
-          <button class="active">רשימה</button>
-          <button>שבוע</button>
-          <button>יום</button>
-          <button>מפה</button>
         </div>
       </div>
 
@@ -113,18 +100,16 @@
       var months = ["ינו", "פבר", "מרץ", "אפר", "מאי", "יוני", "יולי", "אוג", "ספט", "אוק", "נוב", "דצמ"];
       function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]; }); }
       function dpart(d) { if (!d) return { day: "--", mon: "" }; var p = d.split("-"); return { day: p[2], mon: months[parseInt(p[1], 10) - 1] || "" }; }
-      // ---- סינון מאוחד (עיר + קטגוריה + פורמט) ----
-      var citySel, catSel, fmtSel;
+      // ---- סינון מאוחד (עיר + קטגוריה) ----
+      var citySel, catSel;
       function applyFilters() {
         var city = citySel ? citySel.value : "";
         var cat = catSel ? catSel.value : "";
-        var fmt = fmtSel ? fmtSel.value : "";
         var cards = document.querySelectorAll("#gamesList .game-card");
         var shown = 0;
         cards.forEach(function (c) {
           var ok = (!city || c.getAttribute("data-city") === city) &&
-                   (!cat || c.getAttribute("data-category") === cat) &&
-                   (!fmt || c.getAttribute("data-format") === fmt);
+                   (!cat || c.getAttribute("data-category") === cat);
           c.style.display = ok ? "" : "none";
           if (ok) shown++;
         });
@@ -139,7 +124,6 @@
       function initFilters() {
         citySel = document.querySelector("[data-filter-city]");
         catSel = document.getElementById("catFilter");
-        fmtSel = document.getElementById("fmtFilter");
         var params = new URLSearchParams(location.search);
         var cityParam = params.get("city"), catParam = params.get("cat");
         if (cityParam && citySel) citySel.value = cityParam;
@@ -148,7 +132,6 @@
         if (head) head.textContent = catParam ? ("קטגוריה: " + catParam) : "";
         if (citySel) citySel.onchange = applyFilters;
         if (catSel) catSel.onchange = applyFilters;
-        if (fmtSel) fmtSel.onchange = applyFilters;
       }
       initFilters();
 

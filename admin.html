@@ -93,13 +93,8 @@
             <input type="hidden" id="tId" />
             <div class="field-row">
               <div class="field"><label>שם הטורניר</label><input class="input" id="tName" placeholder="טורניר בוטיק רחובות" /></div>
-              <div class="field"><label>פורמט / סוג אירוע</label>
-                <input class="input" id="tFormat" list="formatOptions" placeholder="בחר או הקלד (למשל: מרוץ אופניים)" autocomplete="off" />
-                <datalist id="formatOptions">
-                  <option value="פוטסל"></option><option value="כדורגל 7"></option>
-                  <option value="טורניר בוטיק"></option><option value="ליגה שבועית"></option>
-                  <option value="מרוץ אופניים"></option><option value="ריצה"></option>
-                </datalist>
+              <div class="field"><label>סוג אירוע (אופציונלי)</label>
+                <input class="input" id="tFormat" placeholder="טקסט חופשי — למשל: פוטסל, טורניר בוטיק, מרוץ אופניים" autocomplete="off" />
               </div>
             </div>
             <div class="field-row">
@@ -140,8 +135,8 @@
             <input type="hidden" id="gId" />
             <div class="field-row">
               <div class="field"><label>כותרת</label><input class="input" id="gTitle" placeholder="משחק שבועי — רחובות" /></div>
-              <div class="field"><label>פורמט / סוג אירוע</label>
-                <input class="input" id="gFormat" list="formatOptions" placeholder="בחר או הקלד" autocomplete="off" />
+              <div class="field"><label>סוג אירוע (אופציונלי)</label>
+                <input class="input" id="gFormat" placeholder="טקסט חופשי — למשל: פוטסל, כדורגל 7" autocomplete="off" />
               </div>
             </div>
             <div class="field-row">
