@@ -65,9 +65,9 @@
         <div class="admin-head"><h1 class="h-md">שלום, <span id="adminName" class="text-lime"></span> 👋</h1></div>
         <div class="stats" style="text-align:start">
           <div class="panel"><div class="stat__num" id="kpiGames">0</div><div class="stat__label">משחקים פתוחים</div></div>
+          <div class="panel"><div class="stat__num" id="kpiEnded">0</div><div class="stat__label">משחקים שהסתיימו</div></div>
           <div class="panel"><div class="stat__num" id="kpiTourn">0</div><div class="stat__label">טורנירים</div></div>
           <div class="panel"><div class="stat__num" id="kpiRegs">0</div><div class="stat__label">נרשמים סה"כ</div></div>
-          <div class="panel"><div class="stat__num">3</div><div class="stat__label">קבוצות למשחק</div></div>
         </div>
         <div class="panel" style="margin-top:22px">
           <h3 class="h-md">פעולות מהירות</h3>
@@ -76,6 +76,11 @@
             <button class="btn btn--ghost btn--sm" data-jump="tournaments">+ הוסף טורניר</button>
             <button class="btn btn--ghost btn--sm" data-jump="teams">⚽ חלק כוחות</button>
           </div>
+        </div>
+        <div class="panel" id="endedGamesPanel" style="margin-top:18px;display:none">
+          <h3 class="h-md">משחקים שהסתיימו — רישום תוצאה</h3>
+          <p class="muted" style="margin-top:-4px">לחץ "רשום תוצאה" כדי לעבור לחלוקת כוחות ולרשום קבוצה מנצחת ומלך שערים.</p>
+          <div id="endedGamesList"></div>
         </div>
       </section>
 

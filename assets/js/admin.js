@@ -64,10 +64,29 @@
      ============================================================ */
   function renderDashboard() {
     var games = DB.get("games", []), tourn = DB.get("tournaments", []), regs = DB.get("regs", {});
+    var todayStr = new Date().toISOString().slice(0, 10);
+    var activeGames = games.filter(function (g) { return !g.date || g.date >= todayStr; });
+    var endedGames  = games.filter(function (g) { return g.date && g.date < todayStr; });
+    endedGames.sort(function (a, b) { return b.date.localeCompare(a.date); }); // חדש ראשון
     var total = 0; Object.keys(regs).forEach(function (k) { total += (regs[k] || []).length; });
-    $("kpiGames").textContent = games.length;
-    $("kpiTourn").textContent = tourn.length;
-    $("kpiRegs").textContent = total;
+    $("kpiGames").textContent  = activeGames.length;
+    if ($("kpiEnded")) $("kpiEnded").textContent = endedGames.length;
+    $("kpiTourn").textContent  = tourn.length;
+    $("kpiRegs").textContent   = total;
+    // רשימת משחקים שהסתיימו + כפתור "רשום תוצאה"
+    var panel = $("endedGamesPanel"), list = $("endedGamesList");
+    if (panel) panel.style.display = endedGames.length ? "" : "none";
+    if (list) {
+      list.innerHTML = endedGames.map(function (g) {
+        var saved = false;
+        try { saved = !!localStorage.getItem("dt_ts_" + g.id); } catch (e) {}
+        return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--navy-line)">' +
+          '<div><strong>' + esc(g.title) + '</strong>&nbsp;<span class="muted" style="font-size:.82rem">' + esc(g.date) + ' · ' + esc(g.city) + '</span>' +
+          (saved ? ' <span class="badge" style="font-size:.72rem">כוחות שמורים ✔</span>' : '') + '</div>' +
+          '<button class="btn btn--ghost btn--sm" data-go-result="' + esc(g.id) + '">רשום תוצאה</button>' +
+          '</div>';
+      }).join("");
+    }
     if (DB.displayFirstName) DB.displayFirstName().then(function (n) { $("adminName").textContent = n || "מנהל"; });
     else $("adminName").textContent = DB.get("session", "מנהל");
   }
@@ -211,6 +230,35 @@
     return teams;
   }
 
+  /* ---- שמירה/שחזור כוחות ב-localStorage (לרישום תוצאה בסוף משחק) ---- */
+  function saveTeamState() {
+    try {
+      var gid = $("teamGameSel") ? $("teamGameSel").value : "";
+      if (!gid) return;
+      localStorage.setItem("dt_ts_" + gid, JSON.stringify({ teams: STATE.teams, pool: STATE.pool }));
+      localStorage.setItem("dt_ts_last", gid);
+    } catch (e) {}
+  }
+  function restoreTeamState(gid) {
+    if (!gid) { try { gid = localStorage.getItem("dt_ts_last"); } catch (e) {} }
+    if (!gid) return false;
+    try {
+      var saved = JSON.parse(localStorage.getItem("dt_ts_" + gid) || "null");
+      if (!saved || !saved.teams) return false;
+      STATE.pool  = saved.pool  || [];
+      STATE.teams = saved.teams || [[], [], []];
+      while (STATE.teams.length < 3) STATE.teams.push([]);
+      var n = STATE.pool.length + STATE.teams.reduce(function (s, t) { return s + t.length; }, 0);
+      if (!n) return false;
+      renderTeams();
+      $("teamsInfo").textContent = n + " שחקנים משוחזרים — ניתן לרשום תוצאה או לחלק מחדש.";
+      return true;
+    } catch (e) { return false; }
+  }
+  function clearTeamState(gid) {
+    try { if (gid) localStorage.removeItem("dt_ts_" + gid); } catch (e) {}
+  }
+
   function applyTeams(players, shuffle) {
     if (!players.length) { $("teamsInfo").textContent = "אין שחקנים — בחר משחק עם נרשמים או הדבק רשימה."; return; }
     STATE.teams = balance(players, shuffle);
@@ -219,6 +267,7 @@
     $("teamsInfo").textContent = n + " שחקנים → " + STATE.teams.map(function (t) { return t.length; }).join(" / ") +
       (n % 3 === 0 ? "  (חלוקה שווה ✅)" : "  (לא מתחלק ב-3 — חולק כמה שיותר שווה)");
     renderTeams();
+    saveTeamState();
   }
   function genTeams(shuffle) {
     var existing = STATE.pool.concat(STATE.teams[0], STATE.teams[1], STATE.teams[2]);
@@ -247,6 +296,7 @@
     removeEverywhere(id);
     if (dest === "pool") STATE.pool.push(p); else STATE.teams[parseInt(dest, 10)].push(p);
     renderTeams();
+    saveTeamState();
   }
   function renderTeams() {
     $("pool").innerHTML = STATE.pool.length ? STATE.pool.map(function (p) { return chip(p, -1); }).join("") : '<span class="muted">— ריק —</span>';
@@ -279,6 +329,8 @@
     msg.textContent = "שומר…";
     (DB.addResult ? DB.addResult(r) : Promise.resolve()).then(function () {
       msg.style.color = "var(--lime-400)"; msg.textContent = "✅ התוצאה נשמרה — מופיעה בכרטיסיית השחקן ובמלך השערים.";
+      clearTeamState(gid); // מנקים את הכוחות השמורים — המשחק הסתיים
+      renderDashboard();   // מעדכן את הסקירה (כוחות שמורים ✔ יוסר)
     }).catch(function (e) { msg.style.color = "#ff8a72"; msg.textContent = "⚠️ " + (DB.authErrorText ? DB.authErrorText(e) : e); });
   }
   function loadPaste() {
@@ -291,6 +343,7 @@
     STATE.teams = [[], [], []];
     $("teamsInfo").textContent = STATE.pool.length + " שחקנים נטענו — לחץ 'חלק כוחות'";
     renderTeams();
+    saveTeamState();
   }
 
   function buildMessage() {
@@ -523,7 +576,14 @@
     if (name === "games") { renderGames(); }
     if (name === "regs") { fillGameSelects(); renderRegs(); }
     if (name === "members") renderMembers();
-    if (name === "teams") { fillGameSelects(); }
+    if (name === "teams") {
+      fillGameSelects();
+      try {
+        var lastGid = localStorage.getItem("dt_ts_last");
+        if (lastGid && $("teamGameSel")) $("teamGameSel").value = lastGid;
+        restoreTeamState(lastGid || null);
+      } catch (e) {}
+    }
     if (name === "gallery") { renderGalleryAdmin(); fillGalleryTournaments(); galTypeToggle(); }
     if (name === "payments") { renderOrders(); loadPaySettings(); }
     if (name === "settings") { renderSettings(); renderOtpStatus(); }
@@ -650,7 +710,7 @@
 
   /* event delegation */
   document.addEventListener("click", function (e) {
-    var t = e.target.closest("[data-view],[data-jump],[data-edit-t],[data-del-t],[data-edit-g],[data-del-g],[data-del-r],[data-move],[data-del-admin],[data-del-gal],[data-del-wa],[data-wa-group]");
+    var t = e.target.closest("[data-view],[data-jump],[data-edit-t],[data-del-t],[data-edit-g],[data-del-g],[data-del-r],[data-move],[data-del-admin],[data-del-gal],[data-del-wa],[data-wa-group],[data-go-result]");
     if (!t) return;
     var a;
     if (t.hasAttribute("data-view")) showView(t.getAttribute("data-view"));
@@ -679,6 +739,12 @@
     }
     else if ((a = t.getAttribute("data-del-gal"))) {
       if (confirm("למחוק פריט מהגלריה?")) (DB.deleteGalleryItem ? DB.deleteGalleryItem(a) : Promise.resolve()).then(renderGalleryAdmin);
+    }
+    else if ((a = t.getAttribute("data-go-result"))) {
+      // מהסקירה: פותח חלוקת כוחות עם המשחק הזה ומשחזר כוחות שמורים
+      showView("teams");
+      if ($("teamGameSel")) $("teamGameSel").value = a;
+      restoreTeamState(a);
     }
     else if ((a = t.getAttribute("data-del-wa"))) { removeWaGroup(a); }
     else if ((a = t.getAttribute("data-wa-group"))) {
