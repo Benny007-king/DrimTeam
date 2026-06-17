@@ -20,4 +20,4 @@ window.DT_FIREBASE_ENABLED = !!(window.DT_FB_CONFIG && window.DT_FB_CONFIG.proje
    הדבק כאן את ה-reCAPTCHA v3 site key מ-Firebase Console → App Check.
    כל עוד ריק — App Check כבוי ושום דבר לא נשבר.
    ============================================================ */
-window.DT_APPCHECK_KEY = "";
+window.DT_APPCHECK_KEY = "6LdtVyQtAAAAADji99lOxl9MBtF0JSZ_Rqs2DvvH";

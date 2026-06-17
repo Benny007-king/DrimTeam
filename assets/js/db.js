@@ -9,8 +9,11 @@
   "use strict";
 
   var USE_FB = window.DT_FIREBASE_ENABLED === true;
-  var KEYS = ["tournaments", "games", "regs", "settings"]; // stored as app/<key> { value: ... }
+  var PUBLIC_KEYS = ["tournaments", "games"];   // קריאים לכולם
+  var ADMIN_KEYS  = ["settings", "regs"];        // קריאים למנהלים בלבד (נטענים רק בפאנל)
+  var KEYS = PUBLIC_KEYS.concat(ADMIN_KEYS);     // stored as app/<key> { value: ... }
   var cache = {};
+  var adminLoaded = false;
   var changeCbs = []; // callbacks fired on real-time data changes
   var listening = false;
 
@@ -35,22 +38,31 @@
   var DTDB = {
     firebaseOn: !!fdb,
 
-    // real-time: live listeners keep the cache in sync across users
+    // מאזין בזמן אמת על קבוצת מפתחות נתונה
+    _subscribe: function (keys) {
+      return Promise.all(keys.map(function (k) {
+        return new Promise(function (resolve) {
+          var first = true;
+          fdb.collection("app").doc(k).onSnapshot(function (snap) {
+            cache[k] = snap.exists ? snap.data().value : undefined;
+            if (first) { first = false; resolve(); }
+            else { changeCbs.forEach(function (cb) { try { cb(k); } catch (e) { } }); }
+          }, function () { cache[k] = lsGet(k, undefined); if (first) { first = false; resolve(); } });
+        });
+      }));
+    },
+    // טעינת תוכן ציבורי (טורנירים/משחקים) — נקרא בכל עמוד
     load: function () {
-      if (fdb) {
-        listening = true;
-        return Promise.all(KEYS.map(function (k) {
-          return new Promise(function (resolve) {
-            var first = true;
-            fdb.collection("app").doc(k).onSnapshot(function (snap) {
-              cache[k] = snap.exists ? snap.data().value : undefined;
-              if (first) { first = false; resolve(); }
-              else { changeCbs.forEach(function (cb) { try { cb(k); } catch (e) { } }); }
-            }, function () { cache[k] = lsGet(k, undefined); if (first) { first = false; resolve(); } });
-          });
-        }));
-      }
+      if (fdb) { listening = true; return DTDB._subscribe(PUBLIC_KEYS); }
       KEYS.forEach(function (k) { cache[k] = lsGet(k, undefined); });
+      return Promise.resolve();
+    },
+    // טעינת נתוני מנהל (settings/regs) — נקרא רק מהפאנל לאחר אימות מנהל
+    loadAdmin: function () {
+      if (adminLoaded) return Promise.resolve();
+      adminLoaded = true;
+      if (fdb) { return DTDB._subscribe(ADMIN_KEYS); }
+      ADMIN_KEYS.forEach(function (k) { cache[k] = lsGet(k, undefined); });
       return Promise.resolve();
     },
     // נרשם לקבלת התראה כשמשתנים נתונים (סנכרון בין מנהלים)

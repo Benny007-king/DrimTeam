@@ -704,8 +704,11 @@
   function startApp() {
     $("loginScreen").style.display = "none";
     $("appShell").style.display = "grid";
-    renderDashboard(); fillGameSelects();
-    showView("dashboard");
+    // טעינת נתוני המנהל (settings/regs — קריאים למנהלים בלבד) לפני רינדור
+    (DB.loadAdmin ? DB.loadAdmin() : Promise.resolve()).catch(function () {}).then(function () {
+      renderDashboard(); fillGameSelects();
+      showView("dashboard");
+    });
   }
 
   /* ---- Idle auto-logout (15 min) ---- */

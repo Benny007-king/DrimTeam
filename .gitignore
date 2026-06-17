@@ -4,3 +4,12 @@ functions/node_modules/
 *.log
 .firebase/
 Thumbs.db
+
+# secrets / credentials — never commit these
+.env
+.env.*
+*serviceAccount*.json
+*-firebase-adminsdk-*.json
+.runtimeconfig.json
+*.pem
+*.key

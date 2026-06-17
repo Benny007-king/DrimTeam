@@ -10,9 +10,14 @@ service cloud.firestore {
             || exists(/databases/$(database)/documents/admins/$(request.auth.token.email)));
     }
 
-    // טורנירים, משחקים, הגדרות — קריאה לכולם, כתיבה למנהלים בלבד
+    // משחקים וטורנירים — קריאה לכולם (תוכן ציבורי)
+    match /app/games        { allow read: if true; }
+    match /app/tournaments  { allow read: if true; }
+    // הגדרות (כולל קישורי וואטסאפ) ורישומים מקומיים — קריאה למנהלים בלבד
+    match /app/settings     { allow read: if isAdmin(); }
+    match /app/regs         { allow read: if isAdmin(); }
+    // כתיבה לכל מסמכי app — למנהלים בלבד
     match /app/{doc} {
-      allow read: if true;
       allow write: if isAdmin();
     }
 
