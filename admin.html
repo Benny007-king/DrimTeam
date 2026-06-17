@@ -297,9 +297,9 @@
               <datalist id="galTournOptions"></datalist>
             </div>
           </div>
-          <div class="field" id="galFileField"><label>קובץ תמונה</label><input class="input" id="galFile" type="file" accept="image/*" /></div>
+          <div class="field" id="galFileField"><label>קבצי תמונה (ניתן לבחור כמה)</label><input class="input" id="galFile" type="file" accept="image/*" multiple /></div>
           <div class="field" id="galUrlField" style="display:none"><label>קישור YouTube</label><input class="input" id="galUrl" placeholder="https://youtube.com/watch?v=..." /></div>
-          <div class="field" id="galVideoFileField" style="display:none"><label>קובץ MP4</label><input class="input" id="galVideoFile" type="file" accept="video/mp4,video/*" /><p class="hint" style="margin-top:6px;font-size:.8rem">הקובץ יועלה ל-Firebase Storage. גדלים גדולים עשויים לקחת זמן.</p></div>
+          <div class="field" id="galVideoFileField" style="display:none"><label>קבצי MP4 (ניתן לבחור כמה)</label><input class="input" id="galVideoFile" type="file" accept="video/mp4,video/*" multiple /><p class="hint" style="margin-top:6px;font-size:.8rem">הקבצים יועלו ל-Firebase Storage. גדלים גדולים עשויים לקחת זמן.</p></div>
           <div class="field"><label>כיתוב (לא חובה)</label><input class="input" id="galCaption" placeholder="רגע מהמשחק…" /></div>
           <button class="btn btn--primary" id="galAdd">הוספה לגלריה</button>
           <p id="galMsg" class="hint" style="color:var(--text-dim);margin-top:10px"></p>

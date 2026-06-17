@@ -593,38 +593,61 @@
     var type = $("galType").value;
     var tournamentName = $("galTournament").value.trim() || "כללי";
     var caption = $("galCaption").value.trim();
-    function save(url, saveType) {
-      return DB.addGalleryItem({ type: saveType || type, url: url, tournamentName: tournamentName, caption: caption }).then(function () {
-        msg.style.color = "var(--lime-400)"; msg.textContent = "✅ נוסף לגלריה";
-        $("galCaption").value = ""; $("galFile").value = ""; $("galUrl").value = "";
-        if ($("galVideoFile")) $("galVideoFile").value = "";
-        renderGalleryAdmin();
-      }).catch(function (e) { msg.style.color = "#ff8a72"; msg.textContent = "⚠️ " + (DB.authErrorText ? DB.authErrorText(e) : e); });
+    var addBtn = $("galAdd");
+
+    function addItem(url, saveType) {
+      return DB.addGalleryItem({ type: saveType || type, url: url, tournamentName: tournamentName, caption: caption });
     }
+    function finishOk(ok, total, label) {
+      msg.style.color = "var(--lime-400)";
+      msg.textContent = "✅ " + ok + (total > 1 ? "/" + total : "") + " " + label + " נוספו לגלריה";
+      $("galCaption").value = "";
+      if ($("galFile")) $("galFile").value = "";
+      if ($("galUrl")) $("galUrl").value = "";
+      if ($("galVideoFile")) $("galVideoFile").value = "";
+      if (addBtn) addBtn.disabled = false;
+      renderGalleryAdmin();
+    }
+    function fail(e) {
+      msg.style.color = "#ff8a72"; msg.textContent = "⚠️ " + (DB.authErrorText ? DB.authErrorText(e) : (e.message || e));
+      if (addBtn) addBtn.disabled = false;
+    }
+
     if (type === "image") {
-      var f = $("galFile").files[0];
-      if (!f) { msg.style.color = "#ff8a72"; msg.textContent = "בחר קובץ תמונה."; return; }
-      msg.textContent = "מעלה…";
-      DB.imageToDataUrl(f, 900).then(save).catch(function () { msg.style.color = "#ff8a72"; msg.textContent = "עיבוד התמונה נכשל."; });
+      var files = Array.prototype.slice.call($("galFile").files);
+      if (!files.length) { msg.style.color = "#ff8a72"; msg.textContent = "בחר קובץ תמונה (אחד או יותר)."; return; }
+      if (addBtn) addBtn.disabled = true;
+      var i = 0, ok = 0;
+      (function next() {
+        if (i >= files.length) { finishOk(ok, files.length, "תמונות"); return; }
+        msg.style.color = "var(--text-dim)"; msg.textContent = "מעלה תמונה " + (i + 1) + "/" + files.length + "…";
+        DB.imageToDataUrl(files[i], 900)
+          .then(function (url) { return addItem(url, "image"); })
+          .then(function () { ok++; i++; next(); })
+          .catch(fail);
+      })();
     } else if (type === "video-upload") {
-      var vf = $("galVideoFile").files[0];
-      if (!vf) { msg.style.color = "#ff8a72"; msg.textContent = "בחר קובץ MP4."; return; }
-      var MB = vf.size / (1024 * 1024);
-      if (MB > 200) { msg.style.color = "#ff8a72"; msg.textContent = "הקובץ גדול מדי (" + Math.round(MB) + "MB). מקסימום 200MB — כדאי לכווץ את הוידאו."; return; }
-      var sizeNote = MB > 40 ? " (קובץ של " + Math.round(MB) + "MB — עשוי לקחת דקה)" : "";
-      var addBtn = $("galAdd"); if (addBtn) addBtn.disabled = true;
-      msg.style.color = "var(--text-dim)"; msg.textContent = "מעלה וידאו…" + sizeNote;
-      DB.uploadVideoToStorage(vf, function (pct) {
-        msg.textContent = "מעלה וידאו… " + pct + "%" + sizeNote;
-      }).then(function (url) {
-        return save(url, "video");
-      }).catch(function (e) {
-        msg.style.color = "#ff8a72"; msg.textContent = "⚠️ " + (e.message || "העלאת הוידאו נכשלה");
-      }).then(function () { if (addBtn) addBtn.disabled = false; });
+      var vfiles = Array.prototype.slice.call($("galVideoFile").files);
+      if (!vfiles.length) { msg.style.color = "#ff8a72"; msg.textContent = "בחר קובץ MP4 (אחד או יותר)."; return; }
+      var big = vfiles.filter(function (f) { return f.size / (1024 * 1024) > 200; })[0];
+      if (big) { msg.style.color = "#ff8a72"; msg.textContent = "קובץ גדול מ-200MB — כווץ אותו תחילה (" + big.name + ")."; return; }
+      if (addBtn) addBtn.disabled = true;
+      var vi = 0, vok = 0;
+      (function nextV() {
+        if (vi >= vfiles.length) { finishOk(vok, vfiles.length, "סרטונים"); return; }
+        var label = vfiles.length > 1 ? ("וידאו " + (vi + 1) + "/" + vfiles.length) : "וידאו";
+        msg.style.color = "var(--text-dim)"; msg.textContent = "מעלה " + label + "…";
+        DB.uploadVideoToStorage(vfiles[vi], function (pct) { msg.textContent = "מעלה " + label + "… " + pct + "%"; })
+          .then(function (url) { return addItem(url, "video"); })
+          .then(function () { vok++; vi++; nextV(); })
+          .catch(fail);
+      })();
     } else {
       var u = $("galUrl").value.trim();
       if (!u) { msg.style.color = "#ff8a72"; msg.textContent = "הדבק קישור YouTube."; return; }
-      msg.textContent = "שומר…"; save(u);
+      if (addBtn) addBtn.disabled = true;
+      msg.textContent = "שומר…";
+      addItem(u, "video").then(function () { finishOk(1, 1, "וידאו"); }).catch(fail);
     }
   }
 

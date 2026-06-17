@@ -250,14 +250,26 @@
       var ref = fstorage.ref("gallery/videos/" + uid + "_" + Date.now() + "_" + safeName);
       var task = ref.put(file, { contentType: file.type || "video/mp4" });
       return new Promise(function (resolve, reject) {
+        var settled = false, lastBytes = -1, stall = null;
+        function done(fn, arg) { if (settled) return; settled = true; if (stall) clearTimeout(stall); fn(arg); }
+        function armStall() {
+          if (stall) clearTimeout(stall);
+          // אם אין שום התקדמות במשך 30 שניות — כנראה Storage לא מופעל או חסומה ע"י App Check
+          stall = setTimeout(function () {
+            try { task.cancel(); } catch (e) {}
+            done(reject, new Error("ההעלאה נתקעה. ודא ש-Firebase Storage מופעל (Get Started) ושהדומיין מאושר ב-reCAPTCHA/App Check."));
+          }, 30000);
+        }
+        armStall();
         task.on("state_changed",
           function (snap) {
+            if (snap.bytesTransferred !== lastBytes) { lastBytes = snap.bytesTransferred; armStall(); }
             if (typeof onProgress === "function" && snap.totalBytes) {
               onProgress(Math.round((snap.bytesTransferred / snap.totalBytes) * 100));
             }
           },
-          reject,
-          function () { task.snapshot.ref.getDownloadURL().then(resolve).catch(reject); }
+          function (err) { done(reject, err); },
+          function () { if (settled) return; if (stall) clearTimeout(stall); task.snapshot.ref.getDownloadURL().then(function (u) { done(resolve, u); }).catch(function (e) { done(reject, e); }); }
         );
       });
     },

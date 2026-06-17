@@ -1179,6 +1179,25 @@ h1, h2, h3 { line-height: 1.15; margin: 0 0 0.5em; font-weight: 800; }
     url("../img/hero-athlete.jpg") center / cover no-repeat,
     #0a0a0a;
 }
+/* social rail — pinned to the right edge of the hero, scrolls away with it */
+.hero-socials {
+  position: absolute; top: 50%; inset-inline-start: 16px; transform: translateY(-50%);
+  display: flex; flex-direction: column; gap: 12px; z-index: 5;
+}
+.hero-socials a {
+  width: 42px; height: 42px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: rgba(255,255,255,0.06); border: 1px solid var(--navy-line);
+  color: #fff; transition: 0.18s;
+}
+.hero-socials a:hover { background: var(--grad-lime); color: #1c1505; border-color: transparent; transform: translateY(-3px); }
+.hero-socials svg { width: 20px; height: 20px; }
+@media (max-width: 640px) {
+  .hero-socials { inset-inline-start: 8px; gap: 8px; }
+  .hero-socials a { width: 36px; height: 36px; }
+  .hero-socials svg { width: 17px; height: 17px; }
+}
+
 .hero-deck__logo { font-size: clamp(2.8rem, 10vw, 5.5rem); margin-bottom: 6px; }
 .hero-deck__tag { color: var(--text-muted); letter-spacing: 0.2em; font-weight: 600; margin: 0 0 56px; }
 .hero-deck__all { margin-top: 64px; }
