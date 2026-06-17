@@ -103,7 +103,11 @@
               </div>
             </div>
             <div class="field-row">
-              <div class="field"><label>תאריך</label><input class="input" id="tDate" type="date" /></div>
+              <div class="field">
+                <label>תאריכים</label>
+                <div id="tDatesWrap"></div>
+                <button class="btn btn--ghost btn--sm" id="tAddDate" type="button" style="margin-top:6px">+ הוסף תאריך</button>
+              </div>
               <div class="field"><label>עיר</label>
                 <select class="select" id="tCity">
                   <option>ראשון לציון</option><option>רחובות</option><option>חולון</option>
@@ -111,6 +115,7 @@
               </div>
             </div>
             <div class="field"><label>מחיר (₪)</label><input class="input" id="tPrice" type="number" placeholder="55" /></div>
+            <div class="field"><label>תיאור הטורניר (אופציונלי)</label><textarea class="input" id="tDesc" rows="3" placeholder="פרטים נוספים: פורמט, פרסים, שעות, מה להביא…"></textarea></div>
             <div class="filters">
               <button class="btn btn--primary" id="tSave">שמירה</button>
               <button class="btn btn--ghost" id="tReset" type="button">נקה טופס</button>

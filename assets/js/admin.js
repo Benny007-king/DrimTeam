@@ -88,13 +88,47 @@
   }
 
   /* ---- Tournaments ---- */
+  // תאריכי הטורניר כמערך (תאימות לאחור עם date בודד)
+  function tournDates(t) {
+    if (t.dates && t.dates.length) return t.dates;
+    return t.date ? [t.date] : [];
+  }
+  function tournDatesText(t) {
+    var ds = tournDates(t);
+    if (!ds.length) return "";
+    return ds.length === 1 ? ds[0] : (ds[0] + " (+" + (ds.length - 1) + ")");
+  }
+  /* ---- date-row helpers (multiple dates per tournament) ---- */
+  function addTDateRow(value) {
+    var wrap = $("tDatesWrap"); if (!wrap) return;
+    var row = document.createElement("div");
+    row.className = "t-date-row";
+    row.style.cssText = "display:flex;gap:8px;align-items:center;margin-bottom:6px";
+    var inp = document.createElement("input");
+    inp.className = "input t-date"; inp.type = "date"; inp.value = value || ""; inp.style.flex = "1";
+    var btn = document.createElement("button");
+    btn.className = "icon-btn icon-btn--danger"; btn.type = "button";
+    btn.setAttribute("data-del-date", "1"); btn.title = "הסר תאריך"; btn.textContent = "✕";
+    row.appendChild(inp); row.appendChild(btn);
+    wrap.appendChild(row);
+  }
+  function getTDates() {
+    var arr = [];
+    document.querySelectorAll("#tDatesWrap .t-date").forEach(function (i) {
+      var v = (i.value || "").trim(); if (v && arr.indexOf(v) === -1) arr.push(v);
+    });
+    arr.sort();
+    return arr;
+  }
+  function ensureTDateRow() { if (!document.querySelectorAll("#tDatesWrap .t-date").length) addTDateRow(""); }
+
   function renderTournaments() {
     var list = DB.get("tournaments", []);
     var tb = $("tournRows"); tb.innerHTML = "";
     $("tournEmpty").style.display = list.length ? "none" : "block";
     list.forEach(function (t) {
       var tr = document.createElement("tr");
-      tr.innerHTML = "<td><strong>" + esc(t.name) + "</strong></td><td>" + esc(t.format) + "</td><td>" + esc(t.date) +
+      tr.innerHTML = "<td><strong>" + esc(t.name) + "</strong></td><td>" + esc(t.format) + "</td><td>" + esc(tournDatesText(t)) +
         "</td><td>" + esc(t.city) + "</td><td>₪" + esc(t.price) + "</td>" +
         '<td><div class="row-actions">' +
         '<button class="icon-btn" data-edit-t="' + t.id + '" title="עריכה"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' +
@@ -103,11 +137,22 @@
       tb.appendChild(tr);
     });
   }
-  function tournReset() { $("tId").value = ""; $("tName").value = ""; $("tDate").value = ""; $("tCity").value = ""; $("tPrice").value = ""; $("tFormTitle").textContent = "הוספת טורניר"; }
+  function tournReset() {
+    $("tId").value = ""; $("tName").value = ""; $("tCity").value = ""; $("tPrice").value = "";
+    if ($("tDesc")) $("tDesc").value = "";
+    var wrap = $("tDatesWrap"); if (wrap) wrap.innerHTML = "";
+    addTDateRow("");
+    $("tFormTitle").textContent = "הוספת טורניר";
+  }
   function tournSave() {
     var list = DB.get("tournaments", []);
     var id = $("tId").value;
-    var obj = { id: id || uid(), name: $("tName").value || "ללא שם", format: $("tFormat").value, date: $("tDate").value, city: $("tCity").value, price: $("tPrice").value || 0 };
+    var dates = getTDates();
+    var obj = {
+      id: id || uid(), name: $("tName").value || "ללא שם", format: $("tFormat").value,
+      dates: dates, date: dates[0] || "", city: $("tCity").value, price: $("tPrice").value || 0,
+      desc: ($("tDesc") ? $("tDesc").value.trim() : "")
+    };
     if (id) { list = list.map(function (t) { return t.id === id ? obj : t; }); }
     else { list.push(obj); }
     DB.set("tournaments", list); tournReset(); renderTournaments(); renderDashboard();
@@ -593,7 +638,7 @@
     var el = $("view-" + name); if (el) el.classList.add("active");
     document.querySelectorAll(".admin-nav-btn[data-view]").forEach(function (b) { b.classList.toggle("active", b.getAttribute("data-view") === name); });
     if (name === "dashboard") renderDashboard();
-    if (name === "tournaments") renderTournaments();
+    if (name === "tournaments") { renderTournaments(); ensureTDateRow(); }
     if (name === "games") { renderGames(); }
     if (name === "regs") { fillGameSelects(); renderRegs(); }
     if (name === "members") renderMembers();
@@ -741,7 +786,15 @@
     else if (t.hasAttribute("data-jump")) showView(t.getAttribute("data-jump"));
     else if ((a = t.getAttribute("data-edit-t"))) {
       var tt = DB.get("tournaments", []).filter(function (x) { return x.id === a; })[0];
-      if (tt) { $("tId").value = tt.id; $("tName").value = tt.name; $("tFormat").value = tt.format; $("tDate").value = tt.date; $("tCity").value = tt.city; $("tPrice").value = tt.price; $("tFormTitle").textContent = "עריכת טורניר"; window.scrollTo(0, 0); }
+      if (tt) {
+        $("tId").value = tt.id; $("tName").value = tt.name; $("tFormat").value = tt.format;
+        $("tCity").value = tt.city; $("tPrice").value = tt.price;
+        if ($("tDesc")) $("tDesc").value = tt.desc || "";
+        var wrap = $("tDatesWrap"); if (wrap) wrap.innerHTML = "";
+        var ds = tournDates(tt); if (!ds.length) ds = [""];
+        ds.forEach(function (d) { addTDateRow(d); });
+        $("tFormTitle").textContent = "עריכת טורניר"; window.scrollTo(0, 0);
+      }
     }
     else if ((a = t.getAttribute("data-del-t"))) {
       if (confirm("למחוק את הטורניר?")) { DB.set("tournaments", DB.get("tournaments", []).filter(function (x) { return x.id !== a; })); renderTournaments(); renderDashboard(); }
@@ -791,6 +844,14 @@
     });
     $("tSave").addEventListener("click", tournSave);
     $("tReset").addEventListener("click", tournReset);
+    if ($("tAddDate")) $("tAddDate").addEventListener("click", function () { addTDateRow(""); });
+    if ($("tDatesWrap")) $("tDatesWrap").addEventListener("click", function (e) {
+      var b = e.target.closest("[data-del-date]"); if (!b) return;
+      var rows = document.querySelectorAll("#tDatesWrap .t-date-row");
+      if (rows.length > 1) b.closest(".t-date-row").remove();
+      else { var inp = b.closest(".t-date-row").querySelector(".t-date"); if (inp) inp.value = ""; }
+    });
+    ensureTDateRow();
     $("gSave").addEventListener("click", gameSave);
     $("gReset").addEventListener("click", gameReset);
     $("regGameSel").addEventListener("change", renderRegs);

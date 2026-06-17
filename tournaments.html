@@ -306,9 +306,13 @@
       var ready = (window.DTDB && DTDB.load) ? DTDB.load() : Promise.resolve();
       ready.then(function () {
         var todayStr = new Date().toISOString().slice(0, 10);
+        function tDates(t) { return (t.dates && t.dates.length) ? t.dates : (t.date ? [t.date] : []); }
+        function tFirst(t) { var d = tDates(t); return d.length ? d[0] : ""; }
+        function tLast(t) { var d = tDates(t); return d.length ? d[d.length - 1] : ""; }
         var list = (window.DTDB ? DTDB.get("tournaments", []) : []) || [];
-        list = list.filter(function (t) { return !t.date || t.date >= todayStr; });
-        list.sort(function (a, b) { return (a.date || "").localeCompare(b.date || ""); });
+        // מציגים טורניר כל עוד יש לו לפחות תאריך אחד שעוד לא עבר (התאריך האחרון)
+        list = list.filter(function (t) { var last = tLast(t); return !last || last >= todayStr; });
+        list.sort(function (a, b) { return tFirst(a).localeCompare(tFirst(b)); });
 
         var section = document.getElementById("upcomingSection");
         var grid = document.getElementById("tournList");
@@ -318,14 +322,18 @@
 
         if (!list.length) { if (empty) empty.style.display = "block"; return; }
         grid.innerHTML = list.map(function (t) {
-          var d = dpart(t.date);
+          var ds = tDates(t);
+          var d = dpart(tFirst(t));
+          var datesText = ds.length ? ds.join(" · ") : (t.date || "");
           return '<article class="game-card">' +
             '<div class="game-date"><div class="day">' + esc(d.day) + '</div><div class="mon">' + esc(d.mon) + '</div></div>' +
             '<div class="game-info"><h3>' + esc(t.name || "טורניר") + '</h3><div class="game-meta">' +
-            '<span>🗓️ ' + esc(t.date || "") + '</span>' +
+            '<span>🗓️ ' + esc(datesText) + '</span>' +
             '<span>📍 ' + esc(t.city || "") + '</span>' +
             '<span>⚽ ' + esc(t.format || "") + '</span>' +
-            '</div></div>' +
+            '</div>' +
+            (t.desc ? '<p class="muted" style="margin-top:8px;font-size:.9rem;line-height:1.5">' + esc(t.desc) + '</p>' : '') +
+            '</div>' +
             '<div class="game-cta">' +
             '<div class="game-reg">' +
             '<a href="register.html" class="btn btn--primary btn--sm">הרשמה לטורניר</a>' +
