@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /admin.html
+Disallow: /checkout.html
+Disallow: /thank-you.html
+Disallow: /player.html
+Disallow: /health.html
+
+Sitemap: https://drimteam.co.il/sitemap.xml

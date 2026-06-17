@@ -15,6 +15,9 @@ admin.initializeApp();
 
 const MASHOLAM_COMPANY  = defineSecret("MASHOLAM_COMPANY");
 const MASHOLAM_PASSWORD = defineSecret("MASHOLAM_PASSWORD");
+// סוד משותף לאימות ה-webhook — מונע סימון הזמנות כ"שולמו" ע"י גורם חיצוני.
+//   firebase functions:secrets:set MASHOLAM_WEBHOOK_SECRET
+const MASHOLAM_WEBHOOK_SECRET = defineSecret("MASHOLAM_WEBHOOK_SECRET");
 
 const MASHOLAM_BASE = process.env.MASHOLAM_BASE || "https://eshbel.masholam.com/api";
 const SITE_URL      = process.env.SITE_URL      || "https://drimteam.co.il";
@@ -24,7 +27,7 @@ const SITE_URL      = process.env.SITE_URL      || "https://drimteam.co.il";
    קלט: { items:[{name,price,qty}], customer:{name,email,phone}, gameId }
    ------------------------------------------------------------ */
 exports.createPayment = onCall(
-  { secrets: [MASHOLAM_COMPANY, MASHOLAM_PASSWORD], region: "europe-west1" },
+  { secrets: [MASHOLAM_COMPANY, MASHOLAM_PASSWORD, MASHOLAM_WEBHOOK_SECRET], region: "europe-west1" },
   async (req) => {
     const d = req.data || {};
     const items = Array.isArray(d.items) ? d.items : [];
@@ -55,7 +58,7 @@ exports.createPayment = onCall(
       lang:       "he",
       successUrl: `${SITE_URL}/thank-you.html?order=${orderRef.id}`,
       failUrl:    `${SITE_URL}/checkout.html?failed=1`,
-      notifyUrl:  `https://europe-west1-${process.env.GCLOUD_PROJECT}.cloudfunctions.net/paymentWebhook`
+      notifyUrl:  `https://europe-west1-${process.env.GCLOUD_PROJECT}.cloudfunctions.net/paymentWebhook?token=${encodeURIComponent(MASHOLAM_WEBHOOK_SECRET.value())}`
     };
 
     const res = await fetch(`${MASHOLAM_BASE}/createPaymentLink`, {
@@ -75,24 +78,33 @@ exports.createPayment = onCall(
    paymentWebhook — אישור תשלום ממשולם → סימון ההזמנה כשולמה
    משולם שולח POST עם uid = מזהה ההזמנה ו-status = "approved" / "failed"
    ------------------------------------------------------------ */
-exports.paymentWebhook = onRequest({ region: "europe-west1" }, async (req, res) => {
-  try {
-    const body   = req.body || {};
-    const orderId = body.uid || body.orderId;
-    const status  = (body.status || "").toLowerCase();
-    if (orderId) {
-      await admin.firestore().collection("orders").doc(orderId).set({
-        status:  (status === "approved" || status === "success") ? "paid" : "failed",
-        paidAt:  admin.firestore.FieldValue.serverTimestamp(),
-        gateway: body
-      }, { merge: true });
+exports.paymentWebhook = onRequest(
+  { secrets: [MASHOLAM_WEBHOOK_SECRET], region: "europe-west1" },
+  async (req, res) => {
+    try {
+      // אימות שהבקשה הגיעה ממשולם (סוד משותף ב-notifyUrl) — לא לסמוך על גוף הבקשה בלבד
+      const token = req.query.token || (req.body && req.body.token);
+      if (token !== MASHOLAM_WEBHOOK_SECRET.value()) {
+        console.warn("[paymentWebhook] rejected: bad/missing token");
+        return res.status(403).send("forbidden");
+      }
+      const body   = req.body || {};
+      const orderId = body.uid || body.orderId;
+      const status  = (body.status || "").toLowerCase();
+      if (orderId) {
+        await admin.firestore().collection("orders").doc(orderId).set({
+          status:  (status === "approved" || status === "success") ? "paid" : "failed",
+          paidAt:  admin.firestore.FieldValue.serverTimestamp(),
+          gateway: body
+        }, { merge: true });
+      }
+      res.status(200).send("ok");
+    } catch (e) {
+      console.error(e);
+      res.status(200).send("ok"); // תמיד 200 כדי שמשולם לא ינסה לשלוח שוב
     }
-    res.status(200).send("ok");
-  } catch (e) {
-    console.error(e);
-    res.status(200).send("ok"); // תמיד 200 כדי שמשולם לא ינסה לשלוח שוב
   }
-});
+);
 
 /* ------------------------------------------------------------
    תזכורת 5 שעות לפני משחק — רץ כל 30 דקות

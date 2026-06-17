@@ -562,10 +562,18 @@
     } else if (type === "video-upload") {
       var vf = $("galVideoFile").files[0];
       if (!vf) { msg.style.color = "#ff8a72"; msg.textContent = "בחר קובץ MP4."; return; }
-      msg.textContent = "מעלה וידאו… (עשוי לקחת מספר שניות)";
-      DB.uploadVideoToStorage(vf).then(function (url) {
+      var MB = vf.size / (1024 * 1024);
+      if (MB > 200) { msg.style.color = "#ff8a72"; msg.textContent = "הקובץ גדול מדי (" + Math.round(MB) + "MB). מקסימום 200MB — כדאי לכווץ את הוידאו."; return; }
+      var sizeNote = MB > 40 ? " (קובץ של " + Math.round(MB) + "MB — עשוי לקחת דקה)" : "";
+      var addBtn = $("galAdd"); if (addBtn) addBtn.disabled = true;
+      msg.style.color = "var(--text-dim)"; msg.textContent = "מעלה וידאו…" + sizeNote;
+      DB.uploadVideoToStorage(vf, function (pct) {
+        msg.textContent = "מעלה וידאו… " + pct + "%" + sizeNote;
+      }).then(function (url) {
         return save(url, "video");
-      }).catch(function (e) { msg.style.color = "#ff8a72"; msg.textContent = "⚠️ " + (e.message || "העלאת הוידאו נכשלה"); });
+      }).catch(function (e) {
+        msg.style.color = "#ff8a72"; msg.textContent = "⚠️ " + (e.message || "העלאת הוידאו נכשלה");
+      }).then(function () { if (addBtn) addBtn.disabled = false; });
     } else {
       var u = $("galUrl").value.trim();
       if (!u) { msg.style.color = "#ff8a72"; msg.textContent = "הדבק קישור YouTube."; return; }

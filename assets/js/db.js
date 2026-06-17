@@ -198,11 +198,23 @@
         rd.readAsDataURL(file);
       });
     },
-    uploadVideoToStorage: function (file) {
+    uploadVideoToStorage: function (file, onProgress) {
       if (!fstorage) return Promise.reject(new Error("Firebase Storage לא זמין"));
       var uid = (fauth && fauth.currentUser) ? fauth.currentUser.uid : "anon";
-      var ref = fstorage.ref("gallery/videos/" + uid + "_" + Date.now() + "_" + file.name);
-      return ref.put(file).then(function (snap) { return snap.ref.getDownloadURL(); });
+      var safeName = (file.name || "video.mp4").replace(/[^\w.\-]+/g, "_");
+      var ref = fstorage.ref("gallery/videos/" + uid + "_" + Date.now() + "_" + safeName);
+      var task = ref.put(file, { contentType: file.type || "video/mp4" });
+      return new Promise(function (resolve, reject) {
+        task.on("state_changed",
+          function (snap) {
+            if (typeof onProgress === "function" && snap.totalBytes) {
+              onProgress(Math.round((snap.bytesTransferred / snap.totalBytes) * 100));
+            }
+          },
+          reject,
+          function () { task.snapshot.ref.getDownloadURL().then(resolve).catch(reject); }
+        );
+      });
     },
     addGalleryItem: function (item) {
       if (fdb) { return fdb.collection("gallery").add(Object.assign({ createdAt: firebase.firestore.FieldValue.serverTimestamp() }, item)); }

@@ -20,9 +20,9 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // הרשמות מהציבור — כל אחד יכול ליצור, רק מנהל קורא/מוחק
+    // הרשמות — רק משתמש מחובר יוצר (מונע ספאם אנונימי), רק מנהל קורא/מוחק
     match /registrations/{id} {
-      allow create: if true;
+      allow create: if request.auth != null;
       allow read, update, delete: if isAdmin();
     }
 
