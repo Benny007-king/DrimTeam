@@ -239,12 +239,16 @@
               msg.style.color = "var(--lime-400)";
               if (pos && max && pos > max) msg.textContent = "📋 המשחק מלא — נרשמת לרשימת המתנה, מקום " + (pos - max) + " בתור. מעבר לתשלום…";
               else msg.textContent = "✅ נרשמת! מעבר לתשלום…";
+              var g = (window.DTDB ? (DTDB.get("games", []) || []) : []).filter(function (x) { return x.id === gameId; })[0] || {};
+              try { localStorage.setItem("dt_last_reg", JSON.stringify({ title: g.title || "משחק", date: g.date || "", time: g.time || "", endTime: g.endTime || "", phone: profile.phone || "" })); } catch (_) { }
               try { localStorage.removeItem("dt_pending_game"); } catch (_) { }
               setTimeout(function () { location.href = "checkout.html?game=" + gameId; }, 1100);
             });
           }
           if (tournId) {
             msg.style.color = "var(--lime-400)"; msg.textContent = "✅ נרשמת! מעבר לתשלום…";
+            var t = (window.DTDB ? (DTDB.get("tournaments", []) || []) : []).filter(function (x) { return x.id === tournId; })[0] || {};
+            try { localStorage.setItem("dt_last_reg", JSON.stringify({ title: t.name || "טורניר", date: (t.dates && t.dates[0]) || t.date || "", time: "", endTime: "", phone: profile.phone || "" })); } catch (_) { }
             try { localStorage.removeItem("dt_pending_tournament"); } catch (_) { }
             setTimeout(function () { location.href = "checkout.html?tournament=" + tournId; }, 1100);
             return;

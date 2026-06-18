@@ -40,6 +40,7 @@
       <h1 class="h-lg">התשלום התקבל — נתראה במגרש! ⚽</h1>
       <p class="lead">אישור הזמנה נשלח למייל שלך. מספר הזמנה: <span class="text-lime" id="orderNo">—</span></p>
       <div class="hero__cta" style="margin-top:24px">
+        <a id="waConfirm" class="btn btn--primary btn--lg btn--block" target="_blank" rel="noopener" style="display:none;background:#25d366;border-color:#25d366;color:#0a2e16">📲 קבלת אישור ותזכורת בוואטסאפ</a>
         <a href="games.html" class="btn btn--primary btn--lg btn--block">למשחקים הקרובים</a>
         <a href="index.html" class="btn btn--ghost btn--lg btn--block">חזרה לדף הבית</a>
       </div>
@@ -58,6 +59,21 @@
   <script>
     var m = location.search.match(/order=([^&]+)/);
     if (m) document.getElementById("orderNo").textContent = decodeURIComponent(m[1]);
+    // כפתור וואטסאפ — אישור + תזכורת למספר של המשתמש (לחיצה ושליחה)
+    (function () {
+      var reg = null;
+      try { reg = JSON.parse(localStorage.getItem("dt_last_reg") || "null"); } catch (e) {}
+      if (!reg || !reg.phone) return;
+      var phone = (reg.phone || "").replace(/\D/g, "");
+      if (phone.indexOf("0") === 0) phone = "972" + phone.slice(1);
+      var timeRange = (reg.time || "") + (reg.endTime ? "–" + reg.endTime : "");
+      var text = "היי 👋 אישור הרשמה ל-DrimTeam:\n⚽ " + (reg.title || "פעילות") +
+        "\n🗓️ " + (reg.date || "") + " " + timeRange +
+        "\nנתראה במגרש! 💚\n(שמרו הודעה זו כתזכורת — נתראה כ-5 שעות לפני 🙌)";
+      var a = document.getElementById("waConfirm");
+      if (a && phone) { a.href = "https://wa.me/" + phone + "?text=" + encodeURIComponent(text); a.style.display = ""; }
+      try { localStorage.removeItem("dt_last_reg"); } catch (e) {}
+    })();
   </script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check-compat.js"></script>
