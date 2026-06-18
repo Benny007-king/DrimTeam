@@ -571,15 +571,40 @@
     var grid = $("galAdminGrid"); if (!grid) return; grid.innerHTML = "";
     (DB.getGallery ? DB.getGallery() : Promise.resolve([])).then(function (list) {
       $("galEmpty").style.display = list.length ? "none" : "block";
+      if ($("galBulkBar")) $("galBulkBar").style.display = list.length ? "" : "none";
+      if ($("galSelectAll")) $("galSelectAll").checked = false;
       list.forEach(function (it) {
         var media = it.type === "video" ? videoThumb(it.url) : ('<img src="' + it.url + '" alt="">');
         var div = document.createElement("div");
         div.className = "gal-admin-item";
-        div.innerHTML = '<div class="gal-admin-media">' + media + "</div>" +
+        div.innerHTML =
+          '<label class="gal-admin-check"><input type="checkbox" class="gal-sel" value="' + esc(it.id) + '"></label>' +
+          '<div class="gal-admin-media">' + media + "</div>" +
           '<div class="gal-admin-foot"><span>' + (it.type === "video" ? "▶ " : "") + esc(it.tournamentName || "כללי") + "</span>" +
           '<button class="btn btn--ghost btn--sm gal-del" data-del-gal="' + it.id + '">הסר</button></div>';
         grid.appendChild(div);
       });
+      updateGalSelCount();
+    });
+  }
+  function selectedGalIds() {
+    return Array.prototype.map.call(document.querySelectorAll(".gal-sel:checked"), function (c) { return c.value; });
+  }
+  function updateGalSelCount() {
+    var n = selectedGalIds().length;
+    if ($("galSelCount")) $("galSelCount").textContent = n ? (n + " מסומנים") : "";
+    if ($("galBulkDelete")) $("galBulkDelete").disabled = !n;
+  }
+  function bulkDeleteGallery() {
+    var ids = selectedGalIds();
+    if (!ids.length) return;
+    if (!confirm("להסיר " + ids.length + " פריטים מהגלריה? פעולה זו אינה הפיכה.")) return;
+    var btn = $("galBulkDelete"); if (btn) { btn.disabled = true; btn.textContent = "מסיר…"; }
+    Promise.all(ids.map(function (id) {
+      return (DB.deleteGalleryItem ? DB.deleteGalleryItem(id) : Promise.resolve()).catch(function () {});
+    })).then(function () {
+      if (btn) btn.textContent = "הסר מסומנים";
+      renderGalleryAdmin();
     });
   }
   function galTypeToggle() {
@@ -901,6 +926,15 @@
     $("savePay").addEventListener("click", savePaySettings);
     $("galAdd").addEventListener("click", galAdd);
     $("galType").addEventListener("change", galTypeToggle);
+    if ($("galBulkDelete")) $("galBulkDelete").addEventListener("click", bulkDeleteGallery);
+    if ($("galSelectAll")) $("galSelectAll").addEventListener("change", function () {
+      var on = this.checked;
+      document.querySelectorAll(".gal-sel").forEach(function (c) { c.checked = on; });
+      updateGalSelCount();
+    });
+    if ($("galAdminGrid")) $("galAdminGrid").addEventListener("change", function (e) {
+      if (e.target && e.target.classList.contains("gal-sel")) updateGalSelCount();
+    });
     $("otpEnableBtn").addEventListener("click", otpEnableStart);
     $("otpConfirmBtn").addEventListener("click", otpConfirm);
     $("otpDisableBtn").addEventListener("click", otpDisable);

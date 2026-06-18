@@ -300,7 +300,14 @@
           <p id="galMsg" class="hint" style="color:var(--text-dim);margin-top:10px"></p>
         </div>
         <div class="panel">
-          <h3 class="h-md">פריטים בגלריה</h3>
+          <div class="admin-head" style="margin-bottom:14px">
+            <h3 class="h-md" style="margin:0">פריטים בגלריה</h3>
+            <div class="filters" id="galBulkBar" style="display:none;gap:10px;align-items:center">
+              <label class="checkbox-row" style="margin:0"><input type="checkbox" id="galSelectAll" /> בחר הכל</label>
+              <span class="muted" id="galSelCount" style="font-size:.85rem"></span>
+              <button class="btn btn--ghost btn--sm" id="galBulkDelete" disabled>הסר מסומנים</button>
+            </div>
+          </div>
           <div class="gal-admin-grid" id="galAdminGrid"></div>
           <div class="admin-empty" id="galEmpty">אין פריטים עדיין.</div>
         </div>
