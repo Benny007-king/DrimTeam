@@ -26,23 +26,7 @@
     });
   });
 
-  // Lightbox for gallery
-  var lb = document.getElementById("lightbox");
-  if (lb) {
-    var lbImg = document.getElementById("lbImg");
-    var lbClose = document.getElementById("lbClose");
-    document.querySelectorAll(".gallery__item img").forEach(function (img) {
-      img.addEventListener("click", function () {
-        lbImg.src = img.src;
-        lbImg.alt = img.alt || "";
-        lb.classList.add("open");
-      });
-    });
-    function closeLb() { lb.classList.remove("open"); lbImg.src = ""; }
-    lbClose.addEventListener("click", closeLb);
-    lb.addEventListener("click", function (e) { if (e.target === lb) closeLb(); });
-    document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeLb(); });
-  }
+  // (Lightbox is handled per-page in gallery.html — supports images + video + arrows)
 
   // Simple client-side game filtering (demo)
   var cityFilter = document.querySelector("[data-filter-city]");
