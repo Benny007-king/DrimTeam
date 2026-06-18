@@ -589,7 +589,7 @@
         div.innerHTML =
           '<label class="gal-admin-check"><input type="checkbox" class="gal-sel" value="' + esc(it.id) + '"></label>' +
           '<div class="gal-admin-media">' + media + "</div>" +
-          '<div class="gal-admin-foot"><span>' + (it.type === "video" ? "▶ " : "") + esc(it.tournamentName || "כללי") + "</span>" +
+          '<div class="gal-admin-foot"><span>' + (it.section === "podcast" ? "🎙️ " : (it.type === "video" ? "▶ " : "")) + esc(it.tournamentName || "כללי") + "</span>" +
           '<button class="btn btn--ghost btn--sm gal-del" data-del-gal="' + it.id + '">הסר</button></div>';
         grid.appendChild(div);
       });
@@ -627,15 +627,17 @@
     var type = $("galType").value;
     var tournamentName = $("galTournament").value.trim() || "כללי";
     var caption = $("galCaption").value.trim();
+    var section = ($("galPodcast") && $("galPodcast").checked) ? "podcast" : "gallery";
     var addBtn = $("galAdd");
 
     function addItem(url, saveType) {
-      return DB.addGalleryItem({ type: saveType || type, url: url, tournamentName: tournamentName, caption: caption });
+      return DB.addGalleryItem({ type: saveType || type, url: url, tournamentName: tournamentName, caption: caption, section: section });
     }
     function finishOk(ok, total, label) {
       msg.style.color = "var(--lime-400)";
       msg.textContent = "✅ " + ok + (total > 1 ? "/" + total : "") + " " + label + " נוספו לגלריה";
       $("galCaption").value = "";
+      if ($("galPodcast")) $("galPodcast").checked = false;
       if ($("galFile")) $("galFile").value = "";
       if ($("galUrl")) $("galUrl").value = "";
       if ($("galVideoFile")) $("galVideoFile").value = "";

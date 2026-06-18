@@ -23,6 +23,7 @@
         <a href="games.html">לוח משחקים</a>
         <a href="tournaments.html">טורנירים</a>
         <a href="gallery.html">גלריה</a>
+        <a href="podcast.html">פודקאסט</a>
         <a href="cities.html">איפה משחקים</a>
         <a href="takanon.html">תקנון</a>
       </nav>
@@ -70,6 +71,10 @@
             <div class="field">
               <label for="idnum">תעודת זהות</label>
               <input class="input" id="idnum" inputmode="numeric" placeholder="000000000" />
+            </div>
+            <div class="field">
+              <label for="photo">תמונת פרופיל *</label>
+              <input class="input" id="photo" type="file" accept="image/*" required />
             </div>
             <div class="field-row">
               <div class="field">
@@ -216,6 +221,9 @@
         if (!phone) { msg.textContent = "נא למלא מספר טלפון."; return; }
         if (pass.length < 6) { msg.textContent = "סיסמה חייבת להכיל לפחות 6 תווים."; return; }
         if (pass !== pass2) { msg.textContent = "הסיסמאות אינן תואמות."; return; }
+        var photoEl = document.getElementById("photo");
+        var photoFile = photoEl && photoEl.files[0];
+        if (!photoFile) { msg.textContent = "חובה להעלות תמונת פרופיל."; return; }
         msg.style.color = "var(--text-dim)";
         var profile = {
           name: name, phone: phone, email: email, city: val("city"),
@@ -273,7 +281,12 @@
 
         function done() {
           var saveM = (window.DTDB && DTDB.saveMember) ? DTDB.saveMember(profile).catch(function () { }) : Promise.resolve();
-          return saveM.then(function () { msg.style.color = "var(--lime-400)"; msg.textContent = "✅ נוצר חשבון — חתמו על ההצהרה כדי להמשיך."; openSign(); });
+          return saveM.then(function () {
+            msg.style.color = "var(--text-dim)"; msg.textContent = "מעלה תמונה…";
+            return (photoFile && window.DTDB && DTDB.uploadAvatar) ? DTDB.uploadAvatar(photoFile).catch(function () { }) : null;
+          }).then(function () {
+            msg.style.color = "var(--lime-400)"; msg.textContent = "✅ נוצר חשבון — חתמו על ההצהרה כדי להמשיך."; openSign();
+          });
         }
         msg.style.color = "var(--text-dim)"; msg.textContent = "יוצר חשבון…";
         var su = (window.DTDB && DTDB.signUp) ? DTDB.signUp(email, pass) : Promise.resolve(null);
