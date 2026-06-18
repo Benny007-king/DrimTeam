@@ -160,15 +160,18 @@
             </div>
             <div class="field-row">
               <div class="field"><label>תאריך</label><input class="input" id="gDate" type="date" /></div>
-              <div class="field"><label>שעה</label>
+              <div class="field"><label>שעת התחלה</label>
                 <input class="input" id="gTime" list="timeOptions" placeholder="בחר או הקלד שעה" autocomplete="off" />
-                <datalist id="timeOptions">
-                  <option value="19:00"></option><option value="19:30"></option>
-                  <option value="20:00"></option><option value="20:30"></option>
-                  <option value="21:00"></option><option value="21:30"></option>
-                  <option value="22:00"></option>
-                </datalist>
               </div>
+              <div class="field"><label>שעת סיום</label>
+                <input class="input" id="gEndTime" list="timeOptions" placeholder="בחר או הקלד שעה" autocomplete="off" />
+              </div>
+              <datalist id="timeOptions">
+                <option value="19:00"></option><option value="19:30"></option>
+                <option value="20:00"></option><option value="20:30"></option>
+                <option value="21:00"></option><option value="21:30"></option>
+                <option value="22:00"></option><option value="23:00"></option>
+              </datalist>
             </div>
             <div class="field-row">
               <div class="field"><label>מקסימום שחקנים</label><input class="input" id="gMax" type="number" placeholder="21" /></div>

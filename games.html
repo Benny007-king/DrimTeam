@@ -149,7 +149,7 @@
           return '<article class="game-card" data-city="' + esc(g.city) + '" data-format="' + esc(g.format) + '" data-category="' + esc(g.category || "") + '">' +
             '<div class="game-date"><div class="day">' + esc(d.day) + '</div><div class="mon">' + esc(d.mon) + '</div></div>' +
             '<div class="game-info"><h3>' + esc(g.title || "משחק") + '</h3><div class="game-meta">' +
-            '<span>🗓️ ' + esc(g.date || "") + " " + esc(g.time || "") + "</span>" +
+            '<span>🗓️ ' + esc(g.date || "") + " " + esc(g.time || "") + (g.endTime ? "–" + esc(g.endTime) : "") + "</span>" +
             '<span>📍 ' + esc(g.venue || g.city || "") + "</span>" +
             '<span>⚽ ' + esc(g.format || "") + "</span></div></div>" +
             '<div class="game-cta" data-game="' + esc(g.id) + '" data-max="' + (parseInt(g.max, 10) || 0) + '">' +
