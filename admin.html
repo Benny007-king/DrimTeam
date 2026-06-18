@@ -148,7 +148,16 @@
                   <option>אירועי ספורט</option>
                 </select>
               </div>
-              <div class="field"></div>
+              <div class="field" id="gSportField" style="display:none"><label>ענף ספורט</label>
+                <select class="select" id="gSport">
+                  <option value="">— בחר ענף —</option>
+                  <option value="football">כדורגל</option>
+                  <option value="basketball">כדורסל</option>
+                  <option value="tennis">טניס</option>
+                  <option value="bicycle">אופניים</option>
+                  <option value="pichiballi">פיצ'יבולי</option>
+                </select>
+              </div>
             </div>
             <div class="field-row">
               <div class="field"><label>עיר</label>
@@ -176,6 +185,10 @@
             <div class="field-row">
               <div class="field"><label>מקסימום שחקנים</label><input class="input" id="gMax" type="number" placeholder="21" /></div>
               <div class="field"><label>מחיר (₪)</label><input class="input" id="gPrice" type="number" placeholder="35" /></div>
+            </div>
+            <div class="field-row">
+              <div class="field"><label>אחראי על המשחק</label><input class="input" id="gManager" placeholder="שם האחראי" /></div>
+              <div class="field"><label>כמה על כמה</label><input class="input" id="gSize" placeholder="למשל: 5 על 5" /></div>
             </div>
             <div class="field">
               <label>קישור הרשמה חיצוני (לחוגים — אופציונלי)</label>

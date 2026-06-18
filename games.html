@@ -49,7 +49,10 @@
         <p id="catHead" class="eyebrow" style="margin-top:6px;color:var(--lime-400)"></p>
       </div>
 
-      <div class="toolbar">
+      <!-- כרטיסי ענפי ספורט (לאירועי ספורט) -->
+      <div class="sport-grid" id="sportCards" style="display:none"></div>
+
+      <div class="toolbar" id="gamesToolbar">
         <div class="filters">
           <select class="select" data-filter-city aria-label="עיר">
             <option value="">כל הערים</option>
@@ -100,42 +103,75 @@
       var months = ["ינו", "פבר", "מרץ", "אפר", "מאי", "יוני", "יולי", "אוג", "ספט", "אוק", "נוב", "דצמ"];
       function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]; }); }
       function dpart(d) { if (!d) return { day: "--", mon: "" }; var p = d.split("-"); return { day: p[2], mon: months[parseInt(p[1], 10) - 1] || "" }; }
-      // ---- סינון מאוחד (עיר + קטגוריה) ----
-      var citySel, catSel;
+      // ---- ענפי ספורט (לקטגוריית "אירועי ספורט") ----
+      var SPORTS = [
+        { key: "football", label: "כדורגל" }, { key: "basketball", label: "כדורסל" },
+        { key: "tennis", label: "טניס" }, { key: "bicycle", label: "אופניים" },
+        { key: "pichiballi", label: "פיצ'יבולי" }
+      ];
+      function sportLabel(k) { var s = SPORTS.filter(function (x) { return x.key === k; })[0]; return s ? s.label : k; }
+      function renderSportCards() {
+        var wrap = document.getElementById("sportCards"); if (!wrap) return;
+        wrap.style.display = "";
+        wrap.innerHTML = SPORTS.map(function (s) {
+          return '<a class="sportcard" href="games.html?cat=' + encodeURIComponent("אירועי ספורט") + '&sport=' + s.key + '">' +
+            '<img src="assets/img/' + s.key + '.png" alt="' + esc(s.label) + '" loading="lazy">' +
+            '<h3>' + esc(s.label) + '</h3></a>';
+        }).join("");
+      }
+
+      // ---- סינון (עיר + קטגוריה + ענף) ----
+      var citySel, catSel, CATP = "", SPORTP = "", SPORT_MODE = false;
       function applyFilters() {
         var city = citySel ? citySel.value : "";
-        var cat = catSel ? catSel.value : "";
+        var cat = CATP || (catSel ? catSel.value : "");
         var cards = document.querySelectorAll("#gamesList .game-card");
         var shown = 0;
         cards.forEach(function (c) {
           var ok = (!city || c.getAttribute("data-city") === city) &&
-                   (!cat || c.getAttribute("data-category") === cat);
+                   (!cat || c.getAttribute("data-category") === cat) &&
+                   (!SPORTP || c.getAttribute("data-sport") === SPORTP);
           c.style.display = ok ? "" : "none";
           if (ok) shown++;
         });
         var empty = document.getElementById("gamesEmpty");
         if (empty) {
           empty.style.display = (cards.length && shown) ? "none" : "block";
-          if (!cards.length) empty.textContent = "אין כרגע משחקים פתוחים. עקבו אחרינו — משחקים חדשים נפתחים כל שבוע! ⚽";
-          else if (!shown) empty.textContent = "לא נמצאו משחקים שתואמים את הסינון. נסו לשנות עיר/קטגוריה.";
+          if (!cards.length) empty.textContent = "אין כרגע פעילויות פתוחות בקטגוריה הזו. עקבו אחרינו — נפתחות חדשות כל שבוע! ⚽";
+          else if (!shown) empty.textContent = "לא נמצאו פעילויות שתואמות את הסינון.";
         }
       }
-      // קביעת ערכים מה-URL + חיווט הסינון — רץ פעם אחת, גם כשאין משחקים עדיין
+      // קביעת ערכים מה-URL — רץ פעם אחת
       function initFilters() {
         citySel = document.querySelector("[data-filter-city]");
         catSel = document.getElementById("catFilter");
         var params = new URLSearchParams(location.search);
-        var cityParam = params.get("city"), catParam = params.get("cat");
-        if (cityParam && citySel) citySel.value = cityParam;
-        if (catParam && catSel) catSel.value = catParam;
+        var cityParam = params.get("city");
+        CATP = params.get("cat") || ""; SPORTP = params.get("sport") || "";
+        SPORT_MODE = (CATP === "אירועי ספורט" && !SPORTP);
         var head = document.getElementById("catHead");
-        if (head) head.textContent = catParam ? ("קטגוריה: " + catParam) : "";
+        var toolbar = document.getElementById("gamesToolbar");
+
+        if (SPORT_MODE) {
+          if (head) head.textContent = "אירועי ספורט — בחרו ענף";
+          if (toolbar) toolbar.style.display = "none";
+          var gl = document.getElementById("gamesList"); if (gl) gl.style.display = "none";
+          var ge = document.getElementById("gamesEmpty"); if (ge) ge.style.display = "none";
+          renderSportCards();
+          return;
+        }
+        if (cityParam && citySel) citySel.value = cityParam;
+        if (CATP && catSel) catSel.value = CATP;
+        if (head) head.textContent = SPORTP ? sportLabel(SPORTP) : (CATP ? CATP : "");
+        // הגענו דרך קטגוריה/ענף → רשימה בלבד, בלי בורר
+        if (toolbar) toolbar.style.display = CATP ? "none" : "";
         if (citySel) citySel.onchange = applyFilters;
         if (catSel) catSel.onchange = applyFilters;
       }
       initFilters();
 
       function render() {
+        if (SPORT_MODE) { renderSportCards(); return; }
         var games = (window.DTDB ? DTDB.get("games", []) : []) || [];
         var todayStr = new Date().toISOString().slice(0, 10);
         // משחקים שהסתיימו — מוסתרים לגמרי (נשמרים ב-DB לצורך ארכיון)
@@ -146,12 +182,15 @@
         empty.style.display = "none";
         list.innerHTML = games.map(function (g) {
           var d = dpart(g.date);
-          return '<article class="game-card" data-city="' + esc(g.city) + '" data-format="' + esc(g.format) + '" data-category="' + esc(g.category || "") + '">' +
+          return '<article class="game-card" data-city="' + esc(g.city) + '" data-format="' + esc(g.format) + '" data-category="' + esc(g.category || "") + '" data-sport="' + esc(g.sport || "") + '">' +
             '<div class="game-date"><div class="day">' + esc(d.day) + '</div><div class="mon">' + esc(d.mon) + '</div></div>' +
             '<div class="game-info"><h3>' + esc(g.title || "משחק") + '</h3><div class="game-meta">' +
             '<span>🗓️ ' + esc(g.date || "") + " " + esc(g.time || "") + (g.endTime ? "–" + esc(g.endTime) : "") + "</span>" +
             '<span>📍 ' + esc(g.venue || g.city || "") + "</span>" +
-            '<span>⚽ ' + esc(g.format || "") + "</span></div></div>" +
+            (g.format ? '<span>⚽ ' + esc(g.format) + "</span>" : "") +
+            (g.size ? '<span>🆚 ' + esc(g.size) + "</span>" : "") +
+            (g.manager ? '<span>👤 ' + esc(g.manager) + "</span>" : "") +
+            "</div></div>" +
             '<div class="game-cta" data-game="' + esc(g.id) + '" data-max="' + (parseInt(g.max, 10) || 0) + '">' +
             '<div class="game-reg"></div></div>' +
             "</article>";
