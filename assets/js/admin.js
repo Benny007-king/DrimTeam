@@ -179,11 +179,14 @@
       })(tr, g);
     });
   }
-  function gameReset() { ["gId", "gTitle", "gFormat", "gCategory", "gCity", "gVenue", "gDate", "gTime", "gEndTime", "gMax", "gPrice"].forEach(function (i) { $(i).value = ""; }); $("gFormTitle").textContent = "פתיחת משחק חדש"; }
+  function gameReset() { ["gId", "gTitle", "gFormat", "gCategory", "gCity", "gVenue", "gDate", "gTime", "gEndTime", "gMax", "gPrice", "gLink"].forEach(function (i) { $(i).value = ""; }); $("gFormTitle").textContent = "פתיחת משחק חדש"; }
   function gameSave() {
     var list = DB.get("games", []);
     var id = $("gId").value;
-    var obj = { id: id || uid(), title: $("gTitle").value || "משחק", format: $("gFormat").value, category: $("gCategory").value, city: $("gCity").value, venue: $("gVenue").value, date: $("gDate").value, time: $("gTime").value, endTime: $("gEndTime").value, max: $("gMax").value || 21, price: parseInt($("gPrice").value, 10) || 0 };
+    var link = ($("gLink").value || "").trim();
+    // משחק עם קישור חיצוני (חוג) — מסווג אוטומטית כ"חוגים", ההרשמה תפנה לקישור
+    var category = link ? "חוגים" : $("gCategory").value;
+    var obj = { id: id || uid(), title: $("gTitle").value || "משחק", format: $("gFormat").value, category: category, city: $("gCity").value, venue: $("gVenue").value, date: $("gDate").value, time: $("gTime").value, endTime: $("gEndTime").value, max: $("gMax").value || 21, price: parseInt($("gPrice").value, 10) || 0, link: link };
     if (id) { list = list.map(function (g) { return g.id === id ? obj : g; }); }
     else { list.push(obj); }
     DB.set("games", list); gameReset(); renderGames(); renderDashboard(); fillGameSelects();
@@ -851,7 +854,7 @@
     }
     else if ((a = t.getAttribute("data-edit-g"))) {
       var gg = DB.get("games", []).filter(function (x) { return x.id === a; })[0];
-      if (gg) { $("gId").value = gg.id; $("gTitle").value = gg.title; $("gFormat").value = gg.format; $("gCategory").value = gg.category || ""; $("gCity").value = gg.city; $("gVenue").value = gg.venue; $("gDate").value = gg.date; $("gTime").value = gg.time; $("gEndTime").value = gg.endTime || ""; $("gMax").value = gg.max; $("gPrice").value = gg.price || ""; $("gFormTitle").textContent = "עריכת משחק"; window.scrollTo(0, 0); }
+      if (gg) { $("gId").value = gg.id; $("gTitle").value = gg.title; $("gFormat").value = gg.format; $("gCategory").value = gg.category || ""; $("gCity").value = gg.city; $("gVenue").value = gg.venue; $("gDate").value = gg.date; $("gTime").value = gg.time; $("gEndTime").value = gg.endTime || ""; $("gMax").value = gg.max; $("gPrice").value = gg.price || ""; $("gLink").value = gg.link || ""; $("gFormTitle").textContent = "עריכת משחק"; window.scrollTo(0, 0); }
     }
     else if ((a = t.getAttribute("data-del-g"))) {
       if (confirm("למחוק את המשחק?")) { DB.set("games", DB.get("games", []).filter(function (x) { return x.id !== a; })); renderGames(); renderDashboard(); fillGameSelects(); }

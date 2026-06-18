@@ -169,6 +169,12 @@
             regDiv.innerHTML = '<span class="badge badge--low">המשחק הסתיים</span>';
             return;
           }
+          // חוג עם קישור חיצוני — הפניה לאתר חיצוני, ללא ספירת נרשמים
+          if (g.link) {
+            regDiv.innerHTML = '<a href="' + esc(g.link) + '" class="btn btn--primary btn--sm" target="_blank" rel="noopener">להרשמה ←</a>' +
+              '<div class="muted" style="font-size:.82rem;margin-top:8px">הרשמה באתר חיצוני</div>';
+            return;
+          }
           var statsP = (window.DTDB && DTDB.getGameStats) ? DTDB.getGameStats(g.id) : Promise.resolve({ count: 0 });
           statsP.then(function (s) {
             var count = s.count || 0;
