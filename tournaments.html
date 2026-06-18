@@ -59,7 +59,7 @@
         <span class="eyebrow">רשום עכשיו</span>
         <h2 class="h-lg">טורנירים קרובים</h2>
       </div>
-      <div class="games-list" id="tournList"></div>
+      <div class="tournaments" id="tournList"></div>
       <div class="admin-empty" id="tournEmpty" style="display:none">אין טורנירים קרובים כרגע. עקבו אחרינו לעדכונים ⚽</div>
     </div>
   </section>
@@ -139,24 +139,27 @@
         section.style.display = "";
 
         if (!list.length) { if (empty) empty.style.display = "block"; return; }
-        grid.innerHTML = list.map(function (t) {
+        var trophy = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4h12v3a6 6 0 0 1-12 0z"/><path d="M6 5H3v1a3 3 0 0 0 3 3M18 5h3v1a3 3 0 0 1-3 3M9 19h6M12 13v6" stroke-linecap="round"/></svg>';
+        grid.innerHTML = list.map(function (t, idx) {
           var ds = tDates(t);
-          var d = dpart(tFirst(t));
-          var datesText = ds.length ? ds.join(" · ") : (t.date || "");
-          return '<article class="game-card">' +
-            '<div class="game-date"><div class="day">' + esc(d.day) + '</div><div class="mon">' + esc(d.mon) + '</div></div>' +
-            '<div class="game-info"><h3>' + esc(t.name || "טורניר") + '</h3><div class="game-meta">' +
-            '<span>🗓️ ' + esc(datesText) + '</span>' +
-            '<span>📍 ' + esc(t.city || "") + '</span>' +
-            '<span>⚽ ' + esc(t.format || "") + '</span>' +
-            '</div>' +
-            (t.desc ? '<p class="muted" style="margin-top:8px;font-size:.9rem;line-height:1.5">' + esc(t.desc) + '</p>' : '') +
-            '</div>' +
-            '<div class="game-cta">' +
-            '<div class="game-reg">' +
-            '<a href="register.html?tournament=' + esc(t.id) + '" class="btn btn--primary btn--sm js-reg-t" data-t="' + esc(t.id) + '">הרשמה לטורניר</a>' +
-            '<div class="muted" style="font-size:.82rem;margin-top:8px">₪' + esc(t.price || 0) + ' / ' + esc(t.format || "טורניר") + '</div>' +
-            '</div></div></article>';
+          var datesText = ds.length ? ds.join(" · ") : "";
+          var featured = idx === 0; // הקרוב ביותר — מודגש בכחול
+          var sub = [t.format, t.city].filter(Boolean).join(" · ") || "טורניר";
+          var bullets = [];
+          if (datesText) bullets.push("🗓️ " + datesText);
+          if (t.desc) { t.desc.split(/\n+/).forEach(function (line) { line = line.trim(); if (line) bullets.push(line); }); }
+          if (!bullets.length) bullets.push("פרטים נוספים בקרוב");
+          var liHtml = bullets.slice(0, 4).map(function (b) { return "<li>" + esc(b) + "</li>"; }).join("");
+          return '<article class="tcol' + (featured ? ' tcol--featured' : '') + '">' +
+            (featured ? '<span class="tcol__tag">הקרוב ביותר</span>' : '') +
+            '<div class="tcol__icon">' + trophy + '</div>' +
+            '<h3>' + esc(t.name || "טורניר") + '</h3>' +
+            '<div class="tcol__sub">' + esc(sub) + '</div>' +
+            '<ul class="tcol__list">' + liHtml + '</ul>' +
+            '<div class="tcol__foot">' +
+            '<div class="tcol__price">₪' + esc(t.price || 0) + ' <span>/ טורניר</span></div>' +
+            '<a href="register.html?tournament=' + esc(t.id) + '" class="btn ' + (featured ? 'btn--primary' : 'btn--ghost') + ' btn--block js-reg-t" data-t="' + esc(t.id) + '">הרשמה לטורניר</a>' +
+            '</div></article>';
         }).join("");
       });
 
