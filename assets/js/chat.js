@@ -14,6 +14,7 @@
   var conv = null, grp = null;
   var unsub = null;
   var recentDms = [];
+  var notifPublic = 0, notifDms = 0, notifUnsubs = [];
 
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]; }); }
   function timeStr(ts) { try { var d = (ts && ts.toDate) ? ts.toDate() : (ts ? new Date(ts) : new Date()); return d.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" }); } catch (e) { return ""; } }
@@ -25,7 +26,7 @@
 
     btn = document.createElement("button");
     btn.className = "dt-chat-btn"; btn.type = "button"; btn.setAttribute("aria-label", "צ'אט קהילתי");
-    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a8 8 0 0 1-11.5 7.2L4 20l1-4.2A8 8 0 1 1 21 12z" stroke-linejoin="round"/></svg>';
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a8 8 0 0 1-11.5 7.2L4 20l1-4.2A8 8 0 1 1 21 12z" stroke-linejoin="round"/></svg><span class="dt-chat-badge" style="display:none">0</span>';
 
     panel = document.createElement("div");
     panel.className = "dt-chat-panel"; panel.setAttribute("role", "dialog"); panel.setAttribute("aria-label", "צ'אט");
@@ -58,7 +59,7 @@
     searchRow = panel.querySelector(".dt-chat-search");
     searchEl = panel.querySelector("#dtChatSearch");
 
-    btn.addEventListener("click", function () { panel.classList.toggle("open"); if (panel.classList.contains("open")) openPublic(); });
+    btn.addEventListener("click", function () { panel.classList.toggle("open"); if (panel.classList.contains("open")) { markSeen(); openPublic(); } });
     panel.querySelector(".dt-chat-close").addEventListener("click", function () { panel.classList.remove("open"); });
     backEl.addEventListener("click", function () { if (mode === "group") openGroups(); else openPublic(); });
     tabsEl.addEventListener("click", function (e) {
@@ -184,8 +185,39 @@
     scrollBottom();
   }
 
-  function show() { build(); btn.style.display = "grid"; }
-  function hide() { stopSub(); if (panel) panel.classList.remove("open"); if (btn) btn.style.display = "none"; }
+  /* ---- unread notifications badge ---- */
+  function seenKey() { return "dt_chat_seen_" + (myUid || "x"); }
+  function getSeen() { try { return parseInt(localStorage.getItem(seenKey()), 10) || 0; } catch (e) { return 0; } }
+  function setSeen(ts) { try { localStorage.setItem(seenKey(), String(ts)); } catch (e) {} }
+  function markSeen() { setSeen(Date.now()); notifPublic = 0; notifDms = 0; updateBadge(); }
+  function updateBadge() {
+    if (!btn) return;
+    var b = btn.querySelector(".dt-chat-badge");
+    if (panel && panel.classList.contains("open")) { setSeen(Date.now()); notifPublic = 0; notifDms = 0; if (b) b.style.display = "none"; return; }
+    var n = notifPublic + notifDms;
+    if (b) { if (n > 0) { b.textContent = n > 9 ? "9+" : String(n); b.style.display = ""; } else { b.style.display = "none"; } }
+  }
+  function stopNotif() { notifUnsubs.forEach(function (u) { try { u(); } catch (e) {} }); notifUnsubs = []; }
+  function startNotif() {
+    stopNotif();
+    if (!getSeen()) setSeen(Date.now()); // first run: don't flag old history
+    notifUnsubs.push(DTDB.onChatMessages(function (msgs) {
+      var s = getSeen();
+      notifPublic = msgs.filter(function (m) {
+        var ts = (m.createdAt && m.createdAt.toMillis) ? m.createdAt.toMillis() : 0;
+        return ts > s && m.uid !== myUid;
+      }).length;
+      updateBadge();
+    }, 100));
+    notifUnsubs.push(DTDB.onMyDMs(function (convs) {
+      var s = getSeen();
+      notifDms = convs.filter(function (c) { return c.ts > s && c.lastFrom && c.lastFrom !== myUid; }).length;
+      updateBadge();
+    }));
+  }
+
+  function show() { build(); btn.style.display = "grid"; startNotif(); }
+  function hide() { stopSub(); stopNotif(); if (panel) panel.classList.remove("open"); if (btn) btn.style.display = "none"; }
 
   DTDB.onUser(function (user) {
     if (!user) { myUid = null; hide(); return; }

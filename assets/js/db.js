@@ -399,7 +399,7 @@
             var ts = (m.createdAt && m.createdAt.toMillis) ? m.createdAt.toMillis() : 0;
             var cur = byConv[m.convId];
             if (!cur || ts > cur.ts) {
-              byConv[m.convId] = { convId: m.convId, partnerUid: partnerUid, partnerName: partnerName, last: m.text || "", ts: ts };
+              byConv[m.convId] = { convId: m.convId, partnerUid: partnerUid, partnerName: partnerName, last: m.text || "", ts: ts, lastFrom: m.from };
             }
           });
           var arr = Object.keys(byConv).map(function (k) { return byConv[k]; });

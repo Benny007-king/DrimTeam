@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>מפת משחקים — DrimTeam</title>
+  <meta name="description" content="מפת המשחקים והטורנירים הקרובים של DrimTeam — תצוגה שבועית או חודשית, בכל הערים או לפי עיר." />
+  <link rel="canonical" href="https://drimteam.co.il/schedule.html" />
+  <meta name="theme-color" content="#0d0d0d" />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="DrimTeam" />
+  <meta property="og:title" content="מפת משחקים — DrimTeam" />
+  <meta property="og:description" content="כל המשחקים והטורנירים הקרובים במבט אחד — שבועי או חודשי, לפי עיר." />
+  <meta property="og:url" content="https://drimteam.co.il/schedule.html" />
+  <meta property="og:image" content="https://drimteam.co.il/assets/img/hero.jpg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Rubik:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="container nav">
+      <a href="index.html" class="logo"><span class="drim">Drim</span><span class="ball"></span><span class="team">Team</span></a>
+      <nav class="nav__links">
+        <a href="index.html">בית</a>
+        <a href="games.html">לוח משחקים</a>
+        <a href="tournaments.html">טורנירים</a>
+        <a href="gallery.html">גלריה</a>
+        <a href="podcast.html">פודקאסט</a>
+        <a href="schedule.html" class="active">מפת משחקים</a>
+        <a href="takanon.html">תקנון</a>
+      </nav>
+      <div class="nav__actions">
+        <a href="register.html" class="btn btn--ghost btn--sm">התחברות</a>
+        <a href="register.html" class="btn btn--primary btn--sm show-mobile">הרשמה</a>
+        <button class="nav__toggle" aria-label="תפריט"><span></span><span></span><span></span></button>
+      </div>
+    </div>
+  </header>
+
+  <section class="section">
+    <div class="container">
+      <div class="section-head" style="margin-bottom:28px">
+        <span class="eyebrow">מבט קדימה</span>
+        <h1 class="h-lg">מפת המשחקים והטורנירים</h1>
+        <p class="lead">כל הפעילויות הקרובות במקום אחד — בחרו תצוגה שבועית או חודשית, וסננו לפי עיר.</p>
+      </div>
+
+      <div class="toolbar">
+        <div class="view-tabs" id="rangeTabs">
+          <button class="active" data-range="week">שבועי</button>
+          <button data-range="month">חודשי</button>
+        </div>
+        <div class="filters">
+          <select class="select" id="cityFilter" aria-label="עיר">
+            <option value="">כל הערים</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="scheduleList"></div>
+      <div class="admin-empty" id="scheduleEmpty" style="display:none">אין פעילויות בטווח שנבחר. נסו תצוגה חודשית או עיר אחרת ⚽</div>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-cities">
+        <span class="pin">📍</span> היכן אנו משחקים?
+        ראשון לציון <span>|</span> רחובות <span>|</span> חולון
+      </div>
+      <div class="footer-bottom">
+        <span>© 2026 DrimTeam — כל הזכויות שמורות</span>
+        <span><a href="takanon.html" class="link-lime">תקנון</a> · <a href="health.html" class="link-lime">הצהרת בריאות</a></span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="assets/js/db.js"></script>
+  <script src="assets/js/auth-ui.js"></script>
+  <script src="assets/js/chat.js"></script>
+  <script src="assets/js/main.js"></script>
+  <script>
+    (function () {
+      var DOW = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
+      function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]; }); }
+      function addDays(d, n) { var x = new Date(d); x.setDate(x.getDate() + n); return x.toISOString().slice(0, 10); }
+      function fmtDay(ds) {
+        var p = ds.split("-"); var dt = new Date(ds + "T00:00:00");
+        return "יום " + DOW[dt.getDay()] + " · " + p[2] + "." + p[1];
+      }
+
+      var range = "week", cityVal = "";
+      var listEl = document.getElementById("scheduleList");
+      var emptyEl = document.getElementById("scheduleEmpty");
+      var cityFilter = document.getElementById("cityFilter");
+
+      function tDates(t) { return (t.dates && t.dates.length) ? t.dates : (t.date ? [t.date] : []); }
+
+      function buildEvents() {
+        var games = (window.DTDB ? DTDB.get("games", []) : []) || [];
+        var tourns = (window.DTDB ? DTDB.get("tournaments", []) : []) || [];
+        var ev = [];
+        games.forEach(function (g) {
+          if (!g.date) return;
+          ev.push({ date: g.date, time: g.time || "", endTime: g.endTime || "", title: g.title || "משחק", city: g.city || "", type: "game", id: g.id, link: g.link || "" });
+        });
+        tourns.forEach(function (t) {
+          tDates(t).forEach(function (d) {
+            ev.push({ date: d, time: "", endTime: "", title: t.name || "טורניר", city: t.city || "", type: "tournament", id: t.id });
+          });
+        });
+        return ev;
+      }
+
+      function fillCities(events) {
+        var cities = [];
+        events.forEach(function (e) { if (e.city && cities.indexOf(e.city) === -1) cities.push(e.city); });
+        cities.sort();
+        var cur = cityFilter.value;
+        cityFilter.innerHTML = '<option value="">כל הערים</option>' + cities.map(function (c) { return '<option value="' + esc(c) + '">' + esc(c) + "</option>"; }).join("");
+        cityFilter.value = cur;
+      }
+
+      function render() {
+        var all = buildEvents();
+        fillCities(all);
+        var today = new Date().toISOString().slice(0, 10);
+        var maxDate = addDays(new Date(), range === "week" ? 7 : 31);
+        var ev = all.filter(function (e) {
+          return e.date >= today && e.date <= maxDate && (!cityVal || e.city === cityVal);
+        });
+        ev.sort(function (a, b) { return (a.date + (a.time || "")).localeCompare(b.date + (b.time || "")); });
+
+        if (!ev.length) { listEl.innerHTML = ""; emptyEl.style.display = "block"; return; }
+        emptyEl.style.display = "none";
+
+        var byDay = {}, order = [];
+        ev.forEach(function (e) { if (!byDay[e.date]) { byDay[e.date] = []; order.push(e.date); } byDay[e.date].push(e); });
+
+        listEl.innerHTML = order.map(function (d) {
+          var rows = byDay[d].map(function (e) {
+            var when = e.time ? (e.time + (e.endTime ? "–" + e.endTime : "")) : "";
+            var badge = e.type === "tournament" ? '<span class="badge">🏆 טורניר</span>' : '<span class="badge badge--low">⚽ משחק</span>';
+            var href = e.type === "tournament" ? ("register.html?tournament=" + e.id) : (e.link ? e.link : ("register.html?game=" + e.id));
+            var ext = (e.type === "game" && e.link) ? ' target="_blank" rel="noopener"' : "";
+            return '<a class="sched-row" href="' + esc(href) + '"' + ext + '>' +
+              '<span class="sched-badge">' + badge + '</span>' +
+              '<span class="sched-title">' + esc(e.title) + '</span>' +
+              '<span class="sched-meta">' + (when ? "🕒 " + esc(when) + " · " : "") + "📍 " + esc(e.city || "—") + "</span>" +
+              '<span class="sched-go">להרשמה ←</span></a>';
+          }).join("");
+          return '<div class="sched-day"><h3 class="sched-dayhead">' + esc(fmtDay(d)) + "</h3>" + rows + "</div>";
+        }).join("");
+      }
+
+      document.getElementById("rangeTabs").addEventListener("click", function (e) {
+        var b = e.target.closest("[data-range]"); if (!b) return;
+        this.querySelectorAll("button").forEach(function (x) { x.classList.remove("active"); });
+        b.classList.add("active"); range = b.getAttribute("data-range"); render();
+      });
+      cityFilter.addEventListener("change", function () { cityVal = this.value; render(); });
+
+      var ready = (window.DTDB && DTDB.load) ? DTDB.load() : Promise.resolve();
+      ready.then(render);
+      if (window.DTDB && DTDB.onChange) DTDB.onChange(render);
+    })();
+  </script>
+</body>
+</html>
