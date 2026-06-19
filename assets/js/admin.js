@@ -687,6 +687,51 @@
     }
   }
 
+  /* ---- Group chat management (admin) ---- */
+  var GRP_SEL = {};
+  function renderGroupMemberChecks(filter) {
+    var box = $("grpMembers"); if (!box) return;
+    (DB.getMembers ? DB.getMembers() : Promise.resolve([])).then(function (list) {
+      var f = (filter || "").toLowerCase();
+      var rows = (list || []).filter(function (m) { return m.uid && (!f || (m.name || "").toLowerCase().indexOf(f) !== -1); });
+      box.innerHTML = rows.length ? rows.map(function (m) {
+        return '<label class="checkbox-row" style="margin:0 0 6px"><input type="checkbox" class="grp-mem" value="' + esc(m.uid) + '" ' + (GRP_SEL[m.uid] ? "checked" : "") + '> ' + esc(m.name || m.uid) + "</label>";
+      }).join("") : '<div class="muted">אין חברים רשומים שתואמים.</div>';
+    });
+  }
+  function renderGroupChats() {
+    GRP_SEL = GRP_SEL || {};
+    renderGroupMemberChecks("");
+    var tb = $("grpRows"); if (!tb) return;
+    (DB.getGroups ? DB.getGroups() : Promise.resolve([])).then(function (groups) {
+      $("grpEmpty").style.display = groups.length ? "none" : "block";
+      tb.innerHTML = groups.map(function (g) {
+        return "<tr><td><strong>" + esc(g.name || "קבוצה") + "</strong></td><td>" + ((g.members || []).length) + " חברים</td>" +
+          '<td><div class="row-actions">' +
+          '<button class="btn btn--ghost btn--sm" data-edit-grp="' + g.id + '">עריכה</button> ' +
+          '<button class="btn btn--ghost btn--sm" data-del-grp="' + g.id + '">מחיקה</button>' +
+          "</div></td></tr>";
+      }).join("");
+    });
+  }
+  function grpReset() {
+    $("grpId").value = ""; $("grpName").value = ""; if ($("grpMemberSearch")) $("grpMemberSearch").value = "";
+    GRP_SEL = {}; renderGroupMemberChecks(""); $("grpFormTitle").textContent = "קבוצה חדשה";
+    if ($("grpMsg")) $("grpMsg").textContent = "";
+  }
+  function grpSave() {
+    var name = $("grpName").value.trim();
+    if (!name) { $("grpMsg").style.color = "#ff8a72"; $("grpMsg").textContent = "הזן שם קבוצה."; return; }
+    var members = Object.keys(GRP_SEL).filter(function (k) { return GRP_SEL[k]; });
+    var id = $("grpId").value;
+    var btn = $("grpSave"); btn.disabled = true;
+    $("grpMsg").style.color = "var(--text-dim)"; $("grpMsg").textContent = "שומר…";
+    var p = id ? DB.updateGroup(id, { name: name, members: members }) : DB.createGroup(name, members);
+    p.then(function () { $("grpMsg").style.color = "var(--lime-400)"; $("grpMsg").textContent = "✅ נשמר"; grpReset(); renderGroupChats(); })
+      .catch(function (e) { $("grpMsg").style.color = "#ff8a72"; $("grpMsg").textContent = "⚠️ " + (DB.authErrorText ? DB.authErrorText(e) : (e.message || e)); })
+      .then(function () { btn.disabled = false; });
+  }
+
   /* ============================================================
      NAVIGATION + EVENTS
      ============================================================ */
@@ -710,6 +755,7 @@
       } catch (e) {}
     }
     if (name === "gallery") { renderGalleryAdmin(); fillGalleryTournaments(); galTypeToggle(); }
+    if (name === "groupchat") renderGroupChats();
     if (name === "payments") { renderOrders(); loadPaySettings(); }
     if (name === "settings") { renderSettings(); renderOtpStatus(); }
   }
@@ -838,7 +884,7 @@
 
   /* event delegation */
   document.addEventListener("click", function (e) {
-    var t = e.target.closest("[data-view],[data-jump],[data-edit-t],[data-del-t],[data-edit-g],[data-del-g],[data-del-r],[data-move],[data-del-admin],[data-del-gal],[data-del-wa],[data-wa-group],[data-go-result]");
+    var t = e.target.closest("[data-view],[data-jump],[data-edit-t],[data-del-t],[data-edit-g],[data-del-g],[data-del-r],[data-move],[data-del-admin],[data-del-gal],[data-del-wa],[data-wa-group],[data-go-result],[data-edit-grp],[data-del-grp]");
     if (!t) return;
     var a;
     if (t.hasAttribute("data-view")) showView(t.getAttribute("data-view"));
@@ -890,6 +936,20 @@
       var pg = (window.__waPendingGroups || []).filter(function (x) { return x.id === a; })[0];
       if (pg) { sendToGroup(pg, window.__waPendingMsg || ""); $("waPicker").style.display = "none"; }
     }
+    else if ((a = t.getAttribute("data-edit-grp"))) {
+      (DB.getGroups ? DB.getGroups() : Promise.resolve([])).then(function (groups) {
+        var g = groups.filter(function (x) { return x.id === a; })[0]; if (!g) return;
+        $("grpId").value = g.id; $("grpName").value = g.name || "";
+        GRP_SEL = {}; (g.members || []).forEach(function (u) { GRP_SEL[u] = true; });
+        if ($("grpMemberSearch")) $("grpMemberSearch").value = "";
+        renderGroupMemberChecks(""); $("grpFormTitle").textContent = "עריכת קבוצה"; window.scrollTo(0, 0);
+      });
+    }
+    else if ((a = t.getAttribute("data-del-grp"))) {
+      if (confirm("למחוק את הקבוצה? ההודעות שלה יישארו אך הגישה תיחסם.")) {
+        (DB.deleteGroup ? DB.deleteGroup(a) : Promise.resolve()).then(renderGroupChats);
+      }
+    }
   });
 
   /* form buttons (wired after DOM ready) */
@@ -936,6 +996,12 @@
       (DB.saveMember ? DB.saveMember({ name: n }) : Promise.resolve()).then(function () { renderDashboard(); alert("נשמר ✅"); }).catch(function (e) { alert("שגיאה: " + (DB.authErrorText ? DB.authErrorText(e) : e)); });
     });
     $("savePay").addEventListener("click", savePaySettings);
+    if ($("grpSave")) $("grpSave").addEventListener("click", grpSave);
+    if ($("grpReset")) $("grpReset").addEventListener("click", grpReset);
+    if ($("grpMemberSearch")) $("grpMemberSearch").addEventListener("input", function () { renderGroupMemberChecks(this.value); });
+    if ($("grpMembers")) $("grpMembers").addEventListener("change", function (e) {
+      if (e.target && e.target.classList.contains("grp-mem")) { GRP_SEL[e.target.value] = e.target.checked; }
+    });
     $("galAdd").addEventListener("click", galAdd);
     $("galType").addEventListener("change", galTypeToggle);
     if ($("galBulkDelete")) $("galBulkDelete").addEventListener("click", bulkDeleteGallery);

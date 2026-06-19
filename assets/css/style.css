@@ -1327,6 +1327,8 @@ h1, h2, h3 { line-height: 1.15; margin: 0 0 0.5em; font-weight: 800; }
 .dt-chat-tabs { display: flex; border-bottom: 1px solid var(--navy-line); }
 .dt-chat-tab { flex: 1; background: none; border: none; color: var(--text-dim); padding: 10px; cursor: pointer; font: inherit; font-weight: 700; border-bottom: 2px solid transparent; }
 .dt-chat-tab.active { color: var(--lime-400); border-bottom-color: var(--lime-400); }
+.dt-chat-search { padding: 10px 10px 0; }
+.dt-chat-search .dt-chat-input { width: 100%; }
 .dt-chat-name { cursor: pointer; }
 .dt-chat-name:hover { text-decoration: underline; }
 .dt-chat-conv {

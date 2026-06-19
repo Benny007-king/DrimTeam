@@ -92,5 +92,28 @@ service cloud.firestore {
         && request.resource.data.text.size() <= 1000;
       allow update, delete: if false;
     }
+
+    // ספריית משתמשים (שם בלבד) — לחיפוש לשליחת הודעה. קריאה למחוברים, כתיבה לבעלים
+    match /directory/{uid} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // צ'אטים קבוצתיים — ניהול ע"י מנהל; קריאה לחברי הקבוצה
+    match /groups/{gid} {
+      allow read: if isAdmin() || (request.auth != null && request.auth.uid in resource.data.members);
+      allow create, update, delete: if isAdmin();
+      match /messages/{mid} {
+        allow read: if request.auth != null
+          && request.auth.uid in get(/databases/$(database)/documents/groups/$(gid)).data.members;
+        allow create: if request.auth != null
+          && request.auth.uid in get(/databases/$(database)/documents/groups/$(gid)).data.members
+          && request.resource.data.from == request.auth.uid
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 1000;
+        allow update, delete: if false;
+      }
+    }
   }
 }

@@ -179,6 +179,28 @@
       return Promise.resolve([]);
     },
 
+    /* ---- public member directory (name only) — for user search to DM ---- */
+    upsertDirectory: function (name) {
+      if (!(fdb && fauth && fauth.currentUser) || !name) return Promise.resolve();
+      var u = fauth.currentUser;
+      return fdb.collection("directory").doc(u.uid).set({ uid: u.uid, name: name }, { merge: true }).catch(function () {});
+    },
+    searchUsers: function (q) {
+      if (!fdb) return Promise.resolve([]);
+      var me = (fauth && fauth.currentUser) ? fauth.currentUser.uid : null;
+      q = (q || "").trim().toLowerCase();
+      return fdb.collection("directory").get().then(function (qs) {
+        var a = [];
+        qs.forEach(function (d) {
+          var x = d.data();
+          if (x.uid === me) return;
+          if (!q || (x.name || "").toLowerCase().indexOf(q) !== -1) a.push({ uid: x.uid, name: x.name || "משתמש" });
+        });
+        a.sort(function (p, r) { return (p.name || "").localeCompare(r.name || ""); });
+        return a.slice(0, 30);
+      }).catch(function () { return []; });
+    },
+
     /* ---- members (חתמו על התקנון) — שם, טלפון, אישור תקנון ---- */
     signUp: function (email, pass) {
       if (fauth) { return fauth.createUserWithEmailAndPassword(email, pass).then(function (c) { return c.user; }); }
@@ -346,12 +368,15 @@
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
     },
-    // messages of a single conversation (sorted client-side, no composite index)
+    // messages of a single conversation. Must filter by participants (rules
+    // reject a convId-only query), then narrow to the conversation client-side.
     onDM: function (convId, cb) {
-      if (!fdb) return function () {};
-      return fdb.collection("dms").where("convId", "==", convId)
+      if (!(fdb && fauth && fauth.currentUser)) { cb([]); return function () {}; }
+      var uid = fauth.currentUser.uid;
+      return fdb.collection("dms").where("participants", "array-contains", uid)
         .onSnapshot(function (qs) {
-          var a = []; qs.forEach(function (d) { a.push(Object.assign({ id: d.id }, d.data())); });
+          var a = [];
+          qs.forEach(function (d) { var m = d.data(); if (m.convId === convId) a.push(Object.assign({ id: d.id }, m)); });
           a.sort(function (x, y) {
             var tx = (x.createdAt && x.createdAt.toMillis) ? x.createdAt.toMillis() : 0;
             var ty = (y.createdAt && y.createdAt.toMillis) ? y.createdAt.toMillis() : 0;
@@ -380,6 +405,64 @@
           var arr = Object.keys(byConv).map(function (k) { return byConv[k]; });
           arr.sort(function (a, b) { return b.ts - a.ts; });
           cb(arr);
+        }, function () { cb([]); });
+    },
+
+    /* ---- group chats (admin-managed) ---- */
+    createGroup: function (name, members) {
+      if (!fdb) return Promise.reject(new Error("DB לא זמין"));
+      return fdb.collection("groups").add({
+        name: name || "קבוצה", members: members || [],
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    },
+    updateGroup: function (id, data) {
+      if (!fdb) return Promise.reject(new Error("DB לא זמין"));
+      return fdb.collection("groups").doc(id).set(data, { merge: true });
+    },
+    deleteGroup: function (id) {
+      if (!fdb) return Promise.reject(new Error("DB לא זמין"));
+      return fdb.collection("groups").doc(id).delete();
+    },
+    getGroups: function () { // admin view — all groups
+      if (!fdb) return Promise.resolve([]);
+      return fdb.collection("groups").get()
+        .then(function (qs) { var a = []; qs.forEach(function (d) { a.push(Object.assign({ id: d.id }, d.data())); }); return a; })
+        .catch(function () { return []; });
+    },
+    onMyGroups: function (cb) { // groups the current user belongs to
+      if (!(fdb && fauth && fauth.currentUser)) { cb([]); return function () {}; }
+      var uid = fauth.currentUser.uid;
+      return fdb.collection("groups").where("members", "array-contains", uid)
+        .onSnapshot(function (qs) {
+          var a = []; qs.forEach(function (d) { a.push(Object.assign({ id: d.id }, d.data())); });
+          a.sort(function (x, y) { return (x.name || "").localeCompare(y.name || ""); });
+          cb(a);
+        }, function () { cb([]); });
+    },
+    sendGroupMessage: function (groupId, text, name) {
+      text = (text || "").trim();
+      if (!text) return Promise.reject(new Error("הודעה ריקה"));
+      if (text.length > 1000) text = text.slice(0, 1000);
+      if (!(fdb && fauth && fauth.currentUser)) return Promise.reject(new Error("יש להתחבר"));
+      var u = fauth.currentUser;
+      return fdb.collection("groups").doc(groupId).collection("messages").add({
+        from: u.uid,
+        fromName: name || u.displayName || (u.email || "").split("@")[0] || "אורח",
+        text: text, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    },
+    onGroupMessages: function (groupId, cb) {
+      if (!fdb) return function () {};
+      return fdb.collection("groups").doc(groupId).collection("messages")
+        .onSnapshot(function (qs) {
+          var a = []; qs.forEach(function (d) { a.push(Object.assign({ id: d.id }, d.data())); });
+          a.sort(function (x, y) {
+            var tx = (x.createdAt && x.createdAt.toMillis) ? x.createdAt.toMillis() : 0;
+            var ty = (y.createdAt && y.createdAt.toMillis) ? y.createdAt.toMillis() : 0;
+            return tx - ty;
+          });
+          cb(a);
         }, function () { cb([]); });
     },
 
