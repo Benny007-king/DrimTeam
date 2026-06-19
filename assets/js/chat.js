@@ -15,6 +15,7 @@
   var unsub = null;
   var recentDms = [];
   var notifPublic = 0, notifDms = 0, notifUnsubs = [];
+  var notifiedPub = 0, notifiedDm = 0, toastWrap = null;
 
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]; }); }
   function timeStr(ts) { try { var d = (ts && ts.toDate) ? ts.toDate() : (ts ? new Date(ts) : new Date()); return d.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" }); } catch (e) { return ""; } }
@@ -34,6 +35,7 @@
       '<div class="dt-chat-head">' +
         '<button type="button" class="dt-chat-back" aria-label="חזרה" style="display:none">‹</button>' +
         '<span class="dt-chat-title">💬 צ\'אט הקהילה</span>' +
+        '<button type="button" class="dt-chat-mute" aria-label="השתקת התראות" title="השתקת התראות">🔔</button>' +
         '<button type="button" class="dt-chat-close" aria-label="סגור">×</button>' +
       '</div>' +
       '<div class="dt-chat-tabs">' +
@@ -59,8 +61,13 @@
     searchRow = panel.querySelector(".dt-chat-search");
     searchEl = panel.querySelector("#dtChatSearch");
 
-    btn.addEventListener("click", function () { panel.classList.toggle("open"); if (panel.classList.contains("open")) { markSeen(); openPublic(); } });
+    btn.addEventListener("click", function () {
+      panel.classList.toggle("open");
+      if (panel.classList.contains("open")) { markSeen(); openPublic(); requestNotifPermission(); }
+    });
     panel.querySelector(".dt-chat-close").addEventListener("click", function () { panel.classList.remove("open"); });
+    panel.querySelector(".dt-chat-mute").addEventListener("click", function () { setMuted(!isMuted()); reflectMute(); });
+    reflectMute();
     backEl.addEventListener("click", function () { if (mode === "group") openGroups(); else openPublic(); });
     tabsEl.addEventListener("click", function (e) {
       var t = e.target.closest("[data-tab]"); if (!t) return;
@@ -201,19 +208,66 @@
   function startNotif() {
     stopNotif();
     if (!getSeen()) setSeen(Date.now()); // first run: don't flag old history
+    notifiedPub = Date.now(); notifiedDm = Date.now(); // only toast messages that arrive after this point
     notifUnsubs.push(DTDB.onChatMessages(function (msgs) {
-      var s = getSeen();
-      notifPublic = msgs.filter(function (m) {
+      var s = getSeen(), maxTs = notifiedPub, newest = null;
+      msgs.forEach(function (m) {
         var ts = (m.createdAt && m.createdAt.toMillis) ? m.createdAt.toMillis() : 0;
-        return ts > s && m.uid !== myUid;
-      }).length;
+        if (ts > notifiedPub && m.uid !== myUid && (!newest || ts > newest.ts)) newest = { ts: ts, name: m.name || "אורח", text: m.text || "" };
+        if (ts > maxTs) maxTs = ts;
+      });
+      notifiedPub = maxTs;
+      notifPublic = msgs.filter(function (m) { var ts = (m.createdAt && m.createdAt.toMillis) ? m.createdAt.toMillis() : 0; return ts > s && m.uid !== myUid; }).length;
       updateBadge();
+      if (newest) popNotify("💬 " + newest.name, newest.text, function () { openPublic(); });
     }, 100));
     notifUnsubs.push(DTDB.onMyDMs(function (convs) {
-      var s = getSeen();
+      var s = getSeen(), maxTs = notifiedDm, newest = null;
+      convs.forEach(function (c) {
+        if (c.ts > notifiedDm && c.lastFrom && c.lastFrom !== myUid && (!newest || c.ts > newest.ts)) newest = { ts: c.ts, name: c.partnerName || "משתמש", text: c.last || "", uid: c.partnerUid };
+        if (c.ts > maxTs) maxTs = c.ts;
+      });
+      notifiedDm = maxTs;
       notifDms = convs.filter(function (c) { return c.ts > s && c.lastFrom && c.lastFrom !== myUid; }).length;
       updateBadge();
+      if (newest) popNotify("✉️ " + newest.name, newest.text, function () { openDm(newest.uid, newest.name); });
     }));
+  }
+
+  /* ---- mute + popup toast ---- */
+  function muteKey() { return "dt_chat_muted_" + (myUid || "x"); }
+  function isMuted() { try { return localStorage.getItem(muteKey()) === "1"; } catch (e) { return false; } }
+  function setMuted(v) { try { localStorage.setItem(muteKey(), v ? "1" : "0"); } catch (e) {} }
+  function reflectMute() {
+    var b = panel && panel.querySelector(".dt-chat-mute");
+    if (b) { var m = isMuted(); b.textContent = m ? "🔕" : "🔔"; b.title = m ? "התראות מושתקות — הקליקו להפעלה" : "השתקת התראות"; }
+  }
+  function requestNotifPermission() {
+    try { if ("Notification" in window && Notification.permission === "default" && !isMuted()) Notification.requestPermission(); } catch (e) {}
+  }
+  function popNotify(title, body, onClick) {
+    if (isMuted()) return;
+    if (panel && panel.classList.contains("open")) return; // already chatting
+    // OS-level popup when the tab is in the background and permission granted
+    try {
+      if ("Notification" in window && Notification.permission === "granted" && document.hidden) {
+        var n = new Notification(title, { body: (body || "").slice(0, 120), tag: "dt-chat" });
+        n.onclick = function () { window.focus(); if (onClick) onClick(); if (panel) panel.classList.add("open"); n.close(); };
+        return;
+      }
+    } catch (e) {}
+    showToast(title, body, onClick); // in-page popup
+  }
+  function showToast(title, body, onClick) {
+    if (!toastWrap) { toastWrap = document.createElement("div"); toastWrap.className = "dt-toast-wrap"; document.body.appendChild(toastWrap); }
+    var t = document.createElement("div");
+    t.className = "dt-toast";
+    t.innerHTML = '<div class="dt-toast-title">' + esc(title) + '</div><div class="dt-toast-body">' + esc((body || "").slice(0, 90)) + "</div>";
+    t.addEventListener("click", function () { if (onClick) { btn.click(); /* opens panel via markSeen+openPublic */ setTimeout(onClick, 50); } remove(); });
+    function remove() { if (t.parentNode) { t.style.opacity = "0"; setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 250); } }
+    toastWrap.appendChild(t);
+    requestAnimationFrame(function () { t.classList.add("show"); });
+    setTimeout(remove, 5500);
   }
 
   function show() { build(); btn.style.display = "grid"; startNotif(); }

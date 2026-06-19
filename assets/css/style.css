@@ -909,6 +909,7 @@ h1, h2, h3 { line-height: 1.15; margin: 0 0 0.5em; font-weight: 800; }
   padding: 24px 16px;
   position: sticky; top: 0; align-self: start; height: 100vh;
   display: flex; flex-direction: column; gap: 6px;
+  overflow-y: auto; overscroll-behavior: contain;
 }
 .admin-side .logo { margin-bottom: 22px; padding-inline: 8px; }
 .admin-nav-btn {
@@ -1342,6 +1343,13 @@ h1, h2, h3 { line-height: 1.15; margin: 0 0 0.5em; font-weight: 800; }
   color: #1c1505; font-size: 1.1rem; cursor: pointer;
 }
 .dt-chat-back { background: none; border: none; color: #1c1505; font-size: 1.6rem; line-height: 1; cursor: pointer; font-weight: 800; }
+.dt-chat-mute { background: none; border: none; color: #1c1505; font-size: 1.15rem; line-height: 1; cursor: pointer; }
+/* popup toast for new chat messages */
+.dt-toast-wrap { position: fixed; bottom: 84px; inset-inline-end: 18px; z-index: 1200; display: flex; flex-direction: column; gap: 8px; max-width: min(320px, calc(100vw - 36px)); }
+.dt-toast { background: var(--navy-800); border: 1px solid var(--lime-500); border-radius: 12px; padding: 10px 14px; box-shadow: var(--shadow); cursor: pointer; opacity: 0; transform: translateY(10px); transition: .25s; }
+.dt-toast.show { opacity: 1; transform: translateY(0); }
+.dt-toast-title { font-weight: 800; color: var(--lime-400); font-size: .9rem; }
+.dt-toast-body { color: var(--text, #fff); font-size: .85rem; margin-top: 2px; word-break: break-word; }
 .dt-chat-head .dt-chat-title { flex: 1; }
 .dt-chat-tabs { display: flex; border-bottom: 1px solid var(--navy-line); }
 .dt-chat-tab { flex: 1; background: none; border: none; color: var(--text-dim); padding: 10px; cursor: pointer; font: inherit; font-weight: 700; border-bottom: 2px solid transparent; }
