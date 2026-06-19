@@ -329,6 +329,60 @@
         }, function () { cb([]); });
     },
 
+    /* ---- 1:1 private chat (DMs) ---- */
+    dmConvId: function (a, b) { return [a, b].sort().join("__"); },
+    sendDM: function (toUid, toName, text, fromName) {
+      text = (text || "").trim();
+      if (!text) return Promise.reject(new Error("הודעה ריקה"));
+      if (text.length > 1000) text = text.slice(0, 1000);
+      if (!(fdb && fauth && fauth.currentUser)) return Promise.reject(new Error("יש להתחבר"));
+      var u = fauth.currentUser;
+      return fdb.collection("dms").add({
+        convId: DTDB.dmConvId(u.uid, toUid),
+        participants: [u.uid, toUid],
+        from: u.uid, fromName: fromName || u.displayName || (u.email || "").split("@")[0] || "אורח",
+        to: toUid, toName: toName || "",
+        text: text,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    },
+    // messages of a single conversation (sorted client-side, no composite index)
+    onDM: function (convId, cb) {
+      if (!fdb) return function () {};
+      return fdb.collection("dms").where("convId", "==", convId)
+        .onSnapshot(function (qs) {
+          var a = []; qs.forEach(function (d) { a.push(Object.assign({ id: d.id }, d.data())); });
+          a.sort(function (x, y) {
+            var tx = (x.createdAt && x.createdAt.toMillis) ? x.createdAt.toMillis() : 0;
+            var ty = (y.createdAt && y.createdAt.toMillis) ? y.createdAt.toMillis() : 0;
+            return tx - ty;
+          });
+          cb(a);
+        }, function () { cb([]); });
+    },
+    // list of my conversations (grouped by partner, latest first)
+    onMyDMs: function (cb) {
+      if (!(fdb && fauth && fauth.currentUser)) { cb([]); return function () {}; }
+      var uid = fauth.currentUser.uid;
+      return fdb.collection("dms").where("participants", "array-contains", uid)
+        .onSnapshot(function (qs) {
+          var byConv = {};
+          qs.forEach(function (d) {
+            var m = d.data();
+            var partnerUid = (m.from === uid) ? m.to : m.from;
+            var partnerName = (m.from === uid) ? (m.toName || "משתמש") : (m.fromName || "משתמש");
+            var ts = (m.createdAt && m.createdAt.toMillis) ? m.createdAt.toMillis() : 0;
+            var cur = byConv[m.convId];
+            if (!cur || ts > cur.ts) {
+              byConv[m.convId] = { convId: m.convId, partnerUid: partnerUid, partnerName: partnerName, last: m.text || "", ts: ts };
+            }
+          });
+          var arr = Object.keys(byConv).map(function (k) { return byConv[k]; });
+          arr.sort(function (a, b) { return b.ts - a.ts; });
+          cb(arr);
+        }, function () { cb([]); });
+    },
+
     /* ---- avatar (downscaled, stored as dataURL on the member doc — no Storage needed) ---- */
     uploadAvatar: function (file) {
       return new Promise(function (resolve, reject) {

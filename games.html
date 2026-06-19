@@ -190,8 +190,8 @@
             '<span>🗓️ ' + esc(g.date || "") + " " + esc(g.time || "") + (g.endTime ? "–" + esc(g.endTime) : "") + "</span>" +
             '<span>📍 ' + esc(g.venue || g.city || "") + "</span>" +
             (g.format ? '<span>⚽ ' + esc(g.format) + "</span>" : "") +
-            (g.size ? '<span>🆚 ' + esc(g.size) + "</span>" : "") +
-            (g.manager ? '<span>👤 ' + esc(g.manager) + "</span>" : "") +
+            (g.size ? '<span>' + esc(g.size) + "</span>" : "") +
+            (g.manager ? '<span>אחראי משחק: ' + esc(g.manager) + "</span>" : "") +
             "</div></div>" +
             '<div class="game-cta" data-game="' + esc(g.id) + '" data-max="' + (parseInt(g.max, 10) || 0) + '">' +
             '<div class="game-reg"></div></div>' +

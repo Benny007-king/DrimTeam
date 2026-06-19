@@ -1322,6 +1322,21 @@ h1, h2, h3 { line-height: 1.15; margin: 0 0 0.5em; font-weight: 800; }
   width: 44px; border: none; border-radius: 10px; background: var(--grad-lime);
   color: #1c1505; font-size: 1.1rem; cursor: pointer;
 }
+.dt-chat-back { background: none; border: none; color: #1c1505; font-size: 1.6rem; line-height: 1; cursor: pointer; font-weight: 800; }
+.dt-chat-head .dt-chat-title { flex: 1; }
+.dt-chat-tabs { display: flex; border-bottom: 1px solid var(--navy-line); }
+.dt-chat-tab { flex: 1; background: none; border: none; color: var(--text-dim); padding: 10px; cursor: pointer; font: inherit; font-weight: 700; border-bottom: 2px solid transparent; }
+.dt-chat-tab.active { color: var(--lime-400); border-bottom-color: var(--lime-400); }
+.dt-chat-name { cursor: pointer; }
+.dt-chat-name:hover { text-decoration: underline; }
+.dt-chat-conv {
+  display: flex; flex-direction: column; gap: 2px; text-align: start; width: 100%;
+  background: var(--navy-900, #15120d); border: 1px solid var(--navy-line);
+  border-radius: 10px; padding: 10px 12px; cursor: pointer; color: var(--text, #fff);
+}
+.dt-chat-conv:hover { border-color: var(--lime-500); }
+.dt-chat-conv-name { font-weight: 700; color: var(--lime-400); }
+.dt-chat-conv-last { font-size: .82rem; color: var(--text-dim); }
 
 .a11y-btn {
   position: fixed; inset-inline-start: 18px; bottom: 18px; z-index: 1100;
