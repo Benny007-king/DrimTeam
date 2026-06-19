@@ -1280,6 +1280,49 @@ h1, h2, h3 { line-height: 1.15; margin: 0 0 0.5em; font-weight: 800; }
 /* ============================================================
    ACCESSIBILITY widget + modes (Israeli law / WCAG AA helpers)
    ============================================================ */
+/* ---- community chat (logged-in members) — bottom-left ---- */
+.dt-chat-btn {
+  position: fixed; inset-inline-end: 18px; bottom: 18px; z-index: 1100;
+  width: 56px; height: 56px; border-radius: 50%; border: 2px solid var(--lime-500);
+  background: var(--navy-800); color: var(--lime-400); display: none; place-items: center;
+  box-shadow: var(--shadow); cursor: pointer;
+}
+.dt-chat-btn svg { width: 28px; height: 28px; }
+.dt-chat-btn:hover { background: var(--grad-lime); color: #1c1505; border-color: transparent; }
+.dt-chat-panel {
+  position: fixed; inset-inline-end: 18px; bottom: 84px; z-index: 1101;
+  width: min(360px, calc(100vw - 36px)); height: min(520px, calc(100vh - 120px));
+  background: var(--navy-800); border: 1px solid var(--navy-line); border-radius: 16px;
+  box-shadow: var(--shadow); display: none; flex-direction: column; overflow: hidden;
+}
+.dt-chat-panel.open { display: flex; }
+.dt-chat-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 16px; background: var(--grad-lime); color: #1c1505; font-weight: 800;
+}
+.dt-chat-close { background: none; border: none; color: #1c1505; font-size: 1.5rem; cursor: pointer; line-height: 1; }
+.dt-chat-list { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.dt-chat-empty { color: var(--text-dim); text-align: center; margin: auto; font-size: .92rem; }
+.dt-chat-msg { max-width: 82%; align-self: flex-start; }
+.dt-chat-msg.mine { align-self: flex-end; text-align: start; }
+.dt-chat-name { font-size: .76rem; color: var(--lime-400); margin-bottom: 2px; font-weight: 700; }
+.dt-chat-bubble {
+  background: var(--navy-900, #15120d); border: 1px solid var(--navy-line);
+  padding: 8px 12px; border-radius: 12px; color: var(--text, #fff); font-size: .92rem;
+  word-break: break-word; white-space: pre-wrap;
+}
+.dt-chat-msg.mine .dt-chat-bubble { background: var(--grad-lime); color: #1c1505; border-color: transparent; }
+.dt-chat-time { font-size: .68rem; color: var(--text-dim); margin-top: 2px; }
+.dt-chat-form { display: flex; gap: 8px; padding: 10px; border-top: 1px solid var(--navy-line); }
+.dt-chat-input {
+  flex: 1; background: var(--navy-900, #15120d); border: 1px solid var(--navy-line);
+  border-radius: 10px; padding: 10px 12px; color: var(--text, #fff); font: inherit;
+}
+.dt-chat-send {
+  width: 44px; border: none; border-radius: 10px; background: var(--grad-lime);
+  color: #1c1505; font-size: 1.1rem; cursor: pointer;
+}
+
 .a11y-btn {
   position: fixed; inset-inline-start: 18px; bottom: 18px; z-index: 1100;
   width: 52px; height: 52px; border-radius: 50%; border: 2px solid var(--lime-500);

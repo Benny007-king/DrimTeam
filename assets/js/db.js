@@ -305,6 +305,30 @@
     },
     currentUid: function () { return (fauth && fauth.currentUser) ? fauth.currentUser.uid : null; },
 
+    /* ---- community chat (logged-in members only) ---- */
+    sendChatMessage: function (text, name) {
+      text = (text || "").trim();
+      if (!text) return Promise.reject(new Error("הודעה ריקה"));
+      if (text.length > 1000) text = text.slice(0, 1000);
+      if (!(fdb && fauth && fauth.currentUser)) return Promise.reject(new Error("יש להתחבר כדי לשלוח"));
+      var u = fauth.currentUser;
+      return fdb.collection("chat").add({
+        uid: u.uid,
+        name: name || u.displayName || (u.email || "").split("@")[0] || "אורח",
+        text: text,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    },
+    // real-time listener for the last messages; returns an unsubscribe function
+    onChatMessages: function (cb, limit) {
+      if (!fdb) return function () {};
+      return fdb.collection("chat").orderBy("createdAt", "desc").limit(limit || 100)
+        .onSnapshot(function (qs) {
+          var a = []; qs.forEach(function (d) { a.push(Object.assign({ id: d.id }, d.data())); });
+          a.reverse(); cb(a);
+        }, function () { cb([]); });
+    },
+
     /* ---- avatar (downscaled, stored as dataURL on the member doc — no Storage needed) ---- */
     uploadAvatar: function (file) {
       return new Promise(function (resolve, reject) {
