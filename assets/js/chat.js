@@ -77,7 +77,7 @@
 
   function show() {
     build();
-    btn.style.display = "";
+    btn.style.display = "grid"; // "" יחזיר ל-display:none של ה-CSS
     if (!unsub) unsub = DTDB.onChatMessages(render, 100);
   }
   function hide() {
