@@ -105,9 +105,9 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
       match /messages/{mid} {
         allow read: if request.auth != null
-          && request.auth.uid in get(/databases/$(database)/documents/groups/$(gid)).data.members;
+          && (isAdmin() || request.auth.uid in get(/databases/$(database)/documents/groups/$(gid)).data.members);
         allow create: if request.auth != null
-          && request.auth.uid in get(/databases/$(database)/documents/groups/$(gid)).data.members
+          && (isAdmin() || request.auth.uid in get(/databases/$(database)/documents/groups/$(gid)).data.members)
           && request.resource.data.from == request.auth.uid
           && request.resource.data.text is string
           && request.resource.data.text.size() > 0
