@@ -48,6 +48,7 @@
         '<button type="button" data-act="reset"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 4v4h4" stroke-linecap="round" stroke-linejoin="round"/></svg> איפוס סיסמה</button>' +
         (isAdmin ? '<a href="admin.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z" stroke-linejoin="round"/></svg> ניהול</a>' : "") +
         '<button type="button" data-act="logout" class="user-logout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 12H4M9 7l-5 5 5 5M14 4h5v16h-5" stroke-linecap="round" stroke-linejoin="round"/></svg> יציאה</button>' +
+        '<button type="button" data-act="delete" class="user-del"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" stroke-linecap="round" stroke-linejoin="round"/></svg> מחיקת חשבון</button>' +
         "</div>" +
         '<input type="file" accept="image/*" hidden>';
       actions.appendChild(wrap);
@@ -83,6 +84,15 @@
       });
       wrap.querySelector('[data-act="logout"]').addEventListener("click", function () {
         DTDB.signOut().then(function () { location.href = "index.html"; });
+      });
+      var delBtn = wrap.querySelector('[data-act="delete"]');
+      if (delBtn) delBtn.addEventListener("click", function () {
+        if (!confirm("למחוק את החשבון לצמיתות? כל הנתונים האישיים יימחקו. הפעולה אינה הפיכה.")) return;
+        DTDB.deleteAccount().then(function () { alert("החשבון נמחק. נתראה! 👋"); location.href = "index.html"; })
+          .catch(function (e) {
+            if (e && e.code === "auth/requires-recent-login") alert("מטעמי אבטחה יש להתחבר מחדש לפני מחיקת החשבון:\nהתנתקו, התחברו שוב, ונסו למחוק שנית.");
+            else alert("מחיקה נכשלה: " + (DTDB.authErrorText ? DTDB.authErrorText(e) : (e && e.message ? e.message : e)));
+          });
       });
       fi.addEventListener("change", function () {
         if (!fi.files[0]) return;

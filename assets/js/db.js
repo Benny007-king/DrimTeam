@@ -543,6 +543,18 @@
     onUser: function (cb) { if (fauth) fauth.onAuthStateChanged(cb); },
     signOut: function () { return fauth ? fauth.signOut() : Promise.resolve(); },
 
+    /* ---- delete own account (profile docs + auth user) ---- */
+    deleteAccount: function () {
+      if (!(fauth && fauth.currentUser)) return Promise.reject(new Error("לא מחובר"));
+      var u = fauth.currentUser, uid = u.uid;
+      var jobs = [];
+      if (fdb) {
+        jobs.push(fdb.collection("members").doc(uid).delete().catch(function () {}));
+        jobs.push(fdb.collection("directory").doc(uid).delete().catch(function () {}));
+      }
+      return Promise.all(jobs).then(function () { return u.delete(); });
+    },
+
     /* ---- create a hosted payment page via Cloud Function (returns {url} or null if FB off) ---- */
     createPayment: function (items, customer, gameId) {
       if (fdb && typeof firebase !== "undefined" && firebase.functions) {

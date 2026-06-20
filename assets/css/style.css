@@ -1050,6 +1050,8 @@ h1, h2, h3 { line-height: 1.15; margin: 0 0 0.5em; font-weight: 800; }
 /* יציאה — אדום */
 .user-dropdown .user-logout { color: #ff6b5e; }
 .user-dropdown .user-logout:hover { background: rgba(255,107,94,0.14); color: #ff6b5e; }
+.user-dropdown .user-del { color: #ff8a72; font-size: .9rem; opacity: .85; }
+.user-dropdown .user-del:hover { background: rgba(226,59,59,0.16); color: #ff6b5e; opacity: 1; }
 
 /* התנתקות מהאדמין פאנל — אדום */
 .admin-side__foot #logoutBtn { color: #ff6b5e; }

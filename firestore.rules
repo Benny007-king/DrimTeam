@@ -33,16 +33,25 @@ service cloud.firestore {
       allow read, update, delete: if isAdmin();
     }
 
-    // חברים (חתמו על תקנון) — כל משתמש כותב/קורא את עצמו, מנהל קורא הכל
+    // חברים (חתמו על תקנון) — כל משתמש כותב/קורא/מוחק את עצמו, מנהל קורא/מוחק הכל
     match /members/{uid} {
       allow read: if request.auth != null && (request.auth.uid == uid || isAdmin());
-      allow create, update: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['uid','name','phone','email','city','idNumber','sport','termsAccepted','health','photo','rating','createdAt']);
+      allow delete: if request.auth != null && (request.auth.uid == uid || isAdmin());
     }
 
-    // מונה נרשמים לכל משחק (לציבור — מקומות פנויים/רשימת המתנה)
+    // מונה נרשמים לכל משחק (לציבור) — כתיבה רק כצעד ±1 על השדה count (מונע זיוף ספירה)
     match /gameStats/{gameId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['count'])
+        && request.resource.data.count == 1;
+      allow update: if request.auth != null
+        && request.resource.data.keys().hasOnly(['count'])
+        && (request.resource.data.count == resource.data.count + 1
+            || request.resource.data.count == resource.data.count - 1);
+      allow delete: if isAdmin();
     }
 
     // סוד OTP של מנהל — נגיש רק לבעל החשבון
