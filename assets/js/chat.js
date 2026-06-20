@@ -16,6 +16,7 @@
   var recentDms = [];
   var notifPublic = 0, notifDms = 0, notifUnsubs = [];
   var notifiedPub = 0, notifiedDm = 0, toastWrap = null;
+  var iAmAdmin = false;
 
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]; }); }
   function timeStr(ts) { try { var d = (ts && ts.toDate) ? ts.toDate() : (ts ? new Date(ts) : new Date()); return d.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" }); } catch (e) { return ""; } }
@@ -75,6 +76,14 @@
       if (tab === "public") openPublic(); else if (tab === "dmlist") openDmList(); else openGroups();
     });
     listEl.addEventListener("click", function (e) {
+      var del = e.target.closest("[data-del-msg]");
+      if (del) {
+        e.stopPropagation();
+        if (mode === "group" && grp && DTDB.deleteGroupMessage && confirm("למחוק את ההודעה?")) {
+          DTDB.deleteGroupMessage(grp.id, del.getAttribute("data-del-msg")).catch(function (err) { alert("מחיקה נכשלה: " + (DTDB.authErrorText ? DTDB.authErrorText(err) : (err.message || err))); });
+        }
+        return;
+      }
       var dm = e.target.closest("[data-dm-uid]");
       if (dm) { if (dm.getAttribute("data-dm-uid") !== myUid) openDm(dm.getAttribute("data-dm-uid"), dm.getAttribute("data-dm-name") || "משתמש"); return; }
       var g = e.target.closest("[data-group-id]");
@@ -155,9 +164,9 @@
     });
     return s;
   }
-  function bubbleRow(m, mine, nameHtml) {
+  function bubbleRow(m, mine, nameHtml, del) {
     return '<div class="dt-chat-msg' + (mine ? " mine" : "") + '">' + (mine ? "" : (nameHtml || "")) +
-      '<div class="dt-chat-bubble">' + linkify(m.text || "") + "</div>" +
+      '<div class="dt-chat-bubble">' + linkify(m.text || "") + (del || "") + "</div>" +
       '<div class="dt-chat-time">' + esc(timeStr(m.createdAt)) + "</div></div>";
   }
   function renderPublic(msgs) {
@@ -198,7 +207,8 @@
     if (!msgs.length) { listEl.innerHTML = '<div class="dt-chat-empty">אין עדיין הודעות בקבוצה — פתחו בשיחה 👋</div>'; return; }
     listEl.innerHTML = msgs.map(function (m) {
       var nameHtml = '<div class="dt-chat-name" style="cursor:default">' + esc(m.fromName || "משתמש") + "</div>";
-      return bubbleRow(m, m.from === myUid, nameHtml);
+      var del = iAmAdmin ? '<button type="button" class="dt-chat-del" data-del-msg="' + esc(m.id) + '" title="מחק הודעה">🗑</button>' : "";
+      return bubbleRow(m, m.from === myUid, nameHtml, del);
     }).join("");
     scrollBottom();
   }
@@ -288,6 +298,7 @@
     if (!user) { myUid = null; hide(); return; }
     myUid = user.uid;
     myName = (user.displayName || (user.email || "").split("@")[0] || "אורח");
+    if (DTDB.isCurrentUserAdmin) DTDB.isCurrentUserAdmin().then(function (a) { iAmAdmin = a; }).catch(function () {});
     if (DTDB.upsertDirectory) DTDB.upsertDirectory(myName);
     if (DTDB.getMyMember) DTDB.getMyMember().then(function (m) {
       if (m && m.name) { myName = m.name.trim().split(/\s+/)[0]; if (DTDB.upsertDirectory) DTDB.upsertDirectory(myName); }

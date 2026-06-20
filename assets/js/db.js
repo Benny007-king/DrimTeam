@@ -452,6 +452,10 @@
         text: text, createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
     },
+    deleteGroupMessage: function (groupId, msgId) {
+      if (!fdb) return Promise.reject(new Error("DB לא זמין"));
+      return fdb.collection("groups").doc(groupId).collection("messages").doc(msgId).delete();
+    },
     onGroupMessages: function (groupId, cb) {
       if (!fdb) return function () {};
       return fdb.collection("groups").doc(groupId).collection("messages")
