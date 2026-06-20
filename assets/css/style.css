@@ -1356,6 +1356,8 @@ h1, h2, h3 { line-height: 1.15; margin: 0 0 0.5em; font-weight: 800; }
 .dt-chat-tab.active { color: var(--lime-400); border-bottom-color: var(--lime-400); }
 .dt-chat-search { padding: 10px 10px 0; }
 .dt-chat-search .dt-chat-input { width: 100%; }
+.dt-chat-link { color: var(--lime-400); text-decoration: underline; font-weight: 700; }
+.dt-chat-msg.mine .dt-chat-link { color: #0a2e16; }
 .dt-chat-name { cursor: pointer; }
 .dt-chat-name:hover { text-decoration: underline; }
 .dt-chat-conv {

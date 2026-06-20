@@ -144,9 +144,20 @@
     unsub = DTDB.onGroupMessages(id, renderGroupMsgs); inputEl.focus();
   }
 
+  // הופך טקסט להודעה בטוחה + לינקים לחיצים: תומך ב-[טקסט](url) ובכתובות חשופות
+  function linkify(s) {
+    s = esc(s);
+    s = s.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, function (m, t, u) {
+      return '<a href="' + u + '" target="_blank" rel="noopener" class="dt-chat-link">' + t + "</a>";
+    });
+    s = s.replace(/(^|[\s])(https?:\/\/[^\s<]+)/g, function (m, pre, u) {
+      return pre + '<a href="' + u + '" target="_blank" rel="noopener" class="dt-chat-link">' + u + "</a>";
+    });
+    return s;
+  }
   function bubbleRow(m, mine, nameHtml) {
     return '<div class="dt-chat-msg' + (mine ? " mine" : "") + '">' + (mine ? "" : (nameHtml || "")) +
-      '<div class="dt-chat-bubble">' + esc(m.text || "") + "</div>" +
+      '<div class="dt-chat-bubble">' + linkify(m.text || "") + "</div>" +
       '<div class="dt-chat-time">' + esc(timeStr(m.createdAt)) + "</div></div>";
   }
   function renderPublic(msgs) {

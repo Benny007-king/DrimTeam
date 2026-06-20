@@ -193,6 +193,14 @@
       sel.value = cur;
     });
   }
+  // קישור הרשמה מדויק לפי שדות המשחק (חוג חיצוני / ענף ספורט / קטגוריה / משחק רגיל)
+  function gameRegLink(g) {
+    var base = location.origin + location.pathname.replace(/[^/]*$/, "");
+    if (g.link) return g.link;
+    if (g.category === "אירועי ספורט" && g.sport) return base + "games.html?cat=" + encodeURIComponent("אירועי ספורט") + "&sport=" + encodeURIComponent(g.sport);
+    if (g.category) return base + "games.html?cat=" + encodeURIComponent(g.category);
+    return base + "register.html?game=" + encodeURIComponent(g.id);
+  }
   function gameSave() {
     var list = DB.get("games", []);
     var id = $("gId").value;
@@ -213,7 +221,7 @@
         "\n🗓️ " + obj.date + (tRange ? " " + tRange : "") +
         "\n📍 " + (obj.venue || obj.city || "") +
         (obj.size ? "\n" + obj.size : "") +
-        "\nלהרשמה: " + (obj.link || (location.origin + "/games.html"));
+        "\n👉 [להרשמה לחצו כאן](" + gameRegLink(obj) + ")";
       DB.sendGroupMessage(chatGroupId, msg, "DrimTeam ⚽").catch(function () {});
     }
     gameReset(); renderGames(); renderDashboard(); fillGameSelects();
