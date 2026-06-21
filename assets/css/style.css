@@ -761,6 +761,8 @@ h1, h2, h3 { line-height: 1.15; margin: 0 0 0.5em; font-weight: 800; }
   .tournaments { grid-template-columns: repeat(2, 1fr); }
   .product-grid { grid-template-columns: repeat(2, 1fr); }
   .auth-grid { grid-template-columns: 1fr; }
+  /* מובייל: טופס ההתחברות (הפאנל השני) מעל טופס ההרשמה */
+  .auth-grid > .panel:nth-child(2) { order: -1; }
   .footer-top { grid-template-columns: 1fr 1fr; }
   .stats { grid-template-columns: repeat(2, 1fr); gap: 28px; }
 }
