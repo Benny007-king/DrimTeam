@@ -130,8 +130,8 @@
         function tFirst(t) { var d = tDates(t); return d.length ? d[0] : ""; }
         function tLast(t) { var d = tDates(t); return d.length ? d[d.length - 1] : ""; }
         var list = (window.DTDB ? DTDB.get("tournaments", []) : []) || [];
-        // מציגים טורניר כל עוד יש לו לפחות תאריך אחד שעוד לא עבר (התאריך האחרון)
-        list = list.filter(function (t) { var last = tLast(t); return !last || last >= todayStr; });
+        // מציגים טורניר כל עוד הוא לא הסתיים (התאריך האחרון עדיין לא עבר)
+        list = list.filter(function (t) { return !(window.DTDB && DTDB.isTournamentEnded && DTDB.isTournamentEnded(t)); });
         list.sort(function (a, b) { return tFirst(a).localeCompare(tFirst(b)); });
 
         var section = document.getElementById("upcomingSection");

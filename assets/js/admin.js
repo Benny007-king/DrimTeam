@@ -60,10 +60,10 @@
      ============================================================ */
   function renderDashboard() {
     var games = DB.get("games", []), tourn = DB.get("tournaments", []), regs = DB.get("regs", {});
-    var todayStr = new Date().toISOString().slice(0, 10);
-    var activeGames = games.filter(function (g) { return !g.date || g.date >= todayStr; });
-    var endedGames  = games.filter(function (g) { return g.date && g.date < todayStr; });
-    endedGames.sort(function (a, b) { return b.date.localeCompare(a.date); }); // חדש ראשון
+    var ended = function (g) { return DB.isGameEnded ? DB.isGameEnded(g) : (g.date && g.date < new Date().toISOString().slice(0, 10)); };
+    var activeGames = games.filter(function (g) { return !ended(g); });
+    var endedGames  = games.filter(function (g) { return ended(g); });
+    endedGames.sort(function (a, b) { return (b.date || "").localeCompare(a.date || ""); }); // חדש ראשון
     var total = 0; Object.keys(regs).forEach(function (k) { total += (regs[k] || []).length; });
     $("kpiGames").textContent  = activeGames.length;
     if ($("kpiEnded")) $("kpiEnded").textContent = endedGames.length;
@@ -234,7 +234,12 @@
       var sel = $(pair[0]); if (!sel) return;
       var prev = sel.value;
       sel.innerHTML = games.length ? "" : '<option value="">— אין משחקים —</option>';
-      games.forEach(function (g) { var o = document.createElement("option"); o.value = g.id; o.textContent = gameLabel(g); sel.appendChild(o); });
+      games.forEach(function (g) {
+        var o = document.createElement("option"); o.value = g.id;
+        var done = DB.isGameEnded ? DB.isGameEnded(g) : false;
+        o.textContent = gameLabel(g) + (done ? " (הסתיים)" : "");
+        sel.appendChild(o);
+      });
       if (prev) sel.value = prev;
     });
   }
@@ -862,6 +867,10 @@
       if (DB.onChange) DB.onChange(function () {
         if (currentView && $("appShell") && getComputedStyle($("appShell")).display !== "none") showView(currentView);
       });
+      // רענון תקופתי — כדי שמשחקים יעברו ל"הסתיימו" בשעת הסיום שלהם גם בלי שינוי נתונים
+      setInterval(function () {
+        if (currentView === "dashboard" && $("appShell") && getComputedStyle($("appShell")).display !== "none") renderDashboard();
+      }, 60000);
       if (DB.onUser) DB.onUser(function (u) { if (u) gateOtp(u); else showLogin(); });
       if (!DB.firebaseOn && DB.get("session")) startApp();
     });

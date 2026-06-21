@@ -176,8 +176,8 @@
         if (SPORT_MODE) { renderSportCards(); return; }
         var games = (window.DTDB ? DTDB.get("games", []) : []) || [];
         var todayStr = new Date().toISOString().slice(0, 10);
-        // משחקים שהסתיימו — מוסתרים לגמרי (נשמרים ב-DB לצורך ארכיון)
-        games = games.filter(function (g) { return !g.date || g.date >= todayStr; });
+        // משחקים שהסתיימו (כולל לפי שעת סיום) — מוסתרים לגמרי (נשמרים ב-DB לארכיון)
+        games = games.filter(function (g) { return !(window.DTDB && DTDB.isGameEnded && DTDB.isGameEnded(g)); });
         games = games.slice().sort(function (a, b) { return (a.date || "").localeCompare(b.date || ""); });
         var list = document.getElementById("gamesList"), empty = document.getElementById("gamesEmpty");
         if (!games.length) { list.innerHTML = ""; applyFilters(); return; }
@@ -205,7 +205,7 @@
           var max = parseInt(g.max, 10) || 0;
           var regDiv = cta.querySelector(".game-reg");
           // משחק שהסתיים — אין הרשמה
-          if (g.date && g.date < todayStr) {
+          if (window.DTDB && DTDB.isGameEnded && DTDB.isGameEnded(g)) {
             cta.closest(".game-card").classList.add("game-card--ended");
             regDiv.innerHTML = '<span class="badge badge--low">המשחק הסתיים</span>';
             return;
@@ -235,6 +235,7 @@
       var ready = (window.DTDB && DTDB.load) ? DTDB.load() : Promise.resolve();
       ready.then(render);
       if (window.DTDB && DTDB.onChange) DTDB.onChange(render); // עדכון חי כשנפתחים משחקים
+      setInterval(render, 60000); // רענון כל דקה כדי שמשחקים ייעלמו בשעת הסיום שלהם
 
       // לחיצה על הרשמה: מחובר → רישום + מעבר ישיר לתשלום; אחרת → דף הרשמה
       document.addEventListener("click", function (e) {

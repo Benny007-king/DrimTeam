@@ -111,6 +111,7 @@
         var ev = [];
         games.forEach(function (g) {
           if (!g.date) return;
+          if (window.DTDB && DTDB.isGameEnded && DTDB.isGameEnded(g)) return; // הסתיים (כולל לפי שעה)
           ev.push({ date: g.date, time: g.time || "", endTime: g.endTime || "", title: g.title || "משחק", city: g.city || "", type: "game", id: g.id, link: g.link || "" });
         });
         tourns.forEach(function (t) {
@@ -172,6 +173,7 @@
       var ready = (window.DTDB && DTDB.load) ? DTDB.load() : Promise.resolve();
       ready.then(render);
       if (window.DTDB && DTDB.onChange) DTDB.onChange(render);
+      setInterval(render, 60000); // רענון כל דקה — אירועים שהסתיימו ייעלמו
     })();
   </script>
 </body>

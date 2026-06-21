@@ -327,6 +327,20 @@
     },
     currentUid: function () { return (fauth && fauth.currentUser) ? fauth.currentUser.uid : null; },
 
+    /* ---- "ended" helpers (end-time aware) ---- */
+    isGameEnded: function (g) {
+      if (!g || !g.date) return false;
+      if (g.endTime) { return Date.now() > new Date(g.date + "T" + g.endTime + ":00").getTime(); }
+      return g.date < new Date().toISOString().slice(0, 10); // ללא שעת סיום — לפי תאריך בלבד
+    },
+    isTournamentEnded: function (t) {
+      if (!t) return false;
+      var ds = (t.dates && t.dates.length) ? t.dates : (t.date ? [t.date] : []);
+      if (!ds.length) return false;
+      var last = ds.slice().sort()[ds.length - 1];
+      return last < new Date().toISOString().slice(0, 10);
+    },
+
     /* ---- community chat (logged-in members only) ---- */
     sendChatMessage: function (text, name) {
       text = (text || "").trim();
