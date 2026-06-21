@@ -112,15 +112,24 @@
 })();
 
 /* ============================================================
-   Idle auto-logout — 15 minutes of no activity
+   Idle auto-logout — 15 minutes of no activity.
+   Persists last-activity time so it also applies after the tab/browser
+   was closed (Firebase persistence is LOCAL, so a session would otherwise
+   survive indefinitely).
    ============================================================ */
 (function () {
   "use strict";
   if (!window.DTDB || !DTDB.onUser) return;
   var IDLE_MS = 15 * 60 * 1000;
+  var KEY = "dt_last_active";
   var timer = null;
 
+  function now() { return Date.now(); }
+  function getLast() { try { return parseInt(localStorage.getItem(KEY), 10) || 0; } catch (e) { return 0; } }
+  function touch() { try { localStorage.setItem(KEY, String(now())); } catch (e) {} }
+
   function idleLogout() {
+    try { localStorage.removeItem(KEY); } catch (e) {}
     var done = DTDB.signOut ? DTDB.signOut() : Promise.resolve();
     done.catch(function () {}).then(function () { location.href = "index.html?idle=1"; });
   }
@@ -128,6 +137,7 @@
   function resetTimer() {
     clearTimeout(timer);
     if (DTDB.currentUid && DTDB.currentUid()) {
+      touch();
       timer = setTimeout(idleLogout, IDLE_MS);
     }
   }
@@ -135,9 +145,20 @@
   ["mousemove", "keydown", "touchstart", "pointerdown", "click", "scroll"].forEach(function (ev) {
     document.addEventListener(ev, resetTimer, { passive: true, capture: true });
   });
+  // ניתוק גם כשחוזרים ללשונית אחרי שהייתה ברקע מעבר לזמן הרשאה
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden && DTDB.currentUid && DTDB.currentUid()) {
+      var last = getLast();
+      if (last && now() - last > IDLE_MS) idleLogout();
+    }
+  });
 
   DTDB.onUser(function (user) {
     clearTimeout(timer);
-    if (user) resetTimer();
+    if (!user) return;
+    // בטעינת הדף — אם עברו יותר מ-15 דקות מאז הפעילות האחרונה (כולל סגירת הדפדפן), מנתקים
+    var last = getLast();
+    if (last && now() - last > IDLE_MS) { idleLogout(); return; }
+    resetTimer();
   });
 })();

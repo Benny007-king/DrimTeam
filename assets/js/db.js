@@ -203,7 +203,7 @@
 
     /* ---- members (חתמו על התקנון) — שם, טלפון, אישור תקנון ---- */
     signUp: function (email, pass) {
-      if (fauth) { return fauth.createUserWithEmailAndPassword(email, pass).then(function (c) { return c.user; }); }
+      if (fauth) { return fauth.createUserWithEmailAndPassword(email, pass).then(function (c) { try { localStorage.setItem("dt_last_active", String(Date.now())); } catch (e) {} return c.user; }); }
       return Promise.resolve(null);
     },
     saveMember: function (profile) {
@@ -537,7 +537,7 @@
 
     /* ---- auth ---- */
     signIn: function (email, pass) {
-      if (fauth) { return fauth.signInWithEmailAndPassword(email, pass).then(function () { return true; }); }
+      if (fauth) { return fauth.signInWithEmailAndPassword(email, pass).then(function () { try { localStorage.setItem("dt_last_active", String(Date.now())); } catch (e) {} return true; }); }
       return Promise.resolve(null); // null → caller uses allow-list demo
     },
     onUser: function (cb) { if (fauth) fauth.onAuthStateChanged(cb); },
