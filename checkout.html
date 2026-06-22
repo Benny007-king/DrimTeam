@@ -56,9 +56,12 @@
               <label for="cok" style="margin:0">אני מאשר/ת את <a href="takanon.html" class="link-lime">התקנון</a> ואת <a href="health.html" class="link-lime">הצהרת הבריאות</a></label>
             </div>
             <button class="btn btn--primary btn--block btn--lg" id="payBtn">המשך לתשלום מאובטח 🔒</button>
-            <div style="text-align:center;margin:10px 0;color:var(--text-dim);font-size:.85rem">— או —</div>
-            <button class="btn btn--ghost btn--block btn--lg" id="cashBtn">תשלום במזומן במגרש 💵</button>
-            <p class="hint" style="color:var(--text-dim);margin-top:8px;font-size:.8rem">בבחירת תשלום במזומן ההרשמה תיקלט מיד — התשלום יתבצע במגרש לפני המשחק.</p>
+            <!-- תשלום במזומן — מוסתר כרגע (לא מופעל). להפעלה: הסר את ה-display:none -->
+            <div id="cashOption" style="display:none">
+              <div style="text-align:center;margin:10px 0;color:var(--text-dim);font-size:.85rem">— או —</div>
+              <button class="btn btn--ghost btn--block btn--lg" id="cashBtn">תשלום במזומן במגרש 💵</button>
+              <p class="hint" style="color:var(--text-dim);margin-top:8px;font-size:.8rem">בבחירת תשלום במזומן ההרשמה תיקלט מיד — התשלום יתבצע במגרש לפני המשחק.</p>
+            </div>
             <p id="payMsg" class="hint" style="color:var(--text-dim);margin-top:12px"></p>
           </form>
         </div>
