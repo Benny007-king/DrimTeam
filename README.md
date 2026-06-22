@@ -44,9 +44,7 @@ python -m http.server 5500
 | `checkout.html` · `thank-you.html` | תשלום מאובטח (משולם) · תודה + כפתור אישור בוואטסאפ |
 | `player.html` | כרטיסיית שחקן + טבלת מלך השערים |
 | `shop.html` · `takanon.html` · `health.html` · `accessibility.html` · `privacy.html` | חנות · תקנון · הצהרת בריאות · הצהרת נגישות · מדיניות פרטיות |
-| `cities.html` | "איפה משחקים" — קיים אך הוחלף בתפריט ב-"מפת משחקים" |
 | `admin.html` | פאנל ניהול (כניסה מוגנת) |
-| `format-futsal/7/boutique/league.html` | דפי הסבר לפורמטים (לא מקושרים מהתפריט) |
 
 תפריט ראשי: בית · לוח משחקים · טורנירים · גלריה · פודקאסט · מפת משחקים · תקנון.
 
