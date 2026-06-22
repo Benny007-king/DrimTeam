@@ -204,6 +204,12 @@
           if (!cta) return;
           var max = parseInt(g.max, 10) || 0;
           var regDiv = cta.querySelector(".game-reg");
+          // משחק מבוטל (שבוע שבוטל בלולאה) — מסומן "מבוטל", ללא הרשמה
+          if (g.status === "cancelled") {
+            cta.closest(".game-card").classList.add("game-card--ended");
+            regDiv.innerHTML = '<span class="badge badge--low">מבוטל</span>';
+            return;
+          }
           // משחק שהסתיים — אין הרשמה
           if (window.DTDB && DTDB.isGameEnded && DTDB.isGameEnded(g)) {
             cta.closest(".game-card").classList.add("game-card--ended");

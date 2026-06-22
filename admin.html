@@ -214,6 +214,81 @@
           </table>
           <div class="admin-empty" id="gameEmpty">אין משחקים פתוחים.</div>
         </div>
+
+        <!-- RECURRING SERIES (לולאת משחקים קבועה) -->
+        <div class="admin-head" style="margin-top:34px"><h2 class="h-md">🔁 לולאת משחקים קבועה</h2></div>
+        <div class="panel" style="margin-bottom:22px">
+          <h3 class="h-md" id="rFormTitle">הגדרת לולאה חדשה</h3>
+          <p class="hint" style="margin-top:-4px;margin-bottom:14px">הגדירו משחק שחוזר באותו יום ושעה בכל שבוע. ברגע שהמשחק הנוכחי מסתיים, נפתח אוטומטית משחק לשבוע הבא — ותישלח הודעה לקבוצה שנבחרה. אפשר לבטל שבוע ספציפי (יסומן כ"מבוטל").</p>
+          <form id="recurForm" onsubmit="return false">
+            <input type="hidden" id="rId" />
+            <div class="field-row">
+              <div class="field"><label>כותרת</label><input class="input" id="rTitle" placeholder="משחק שבועי — רחובות" /></div>
+              <div class="field"><label>יום בשבוע</label>
+                <select class="select" id="rDow">
+                  <option value="0">ראשון</option><option value="1">שני</option><option value="2">שלישי</option>
+                  <option value="3">רביעי</option><option value="4">חמישי</option><option value="5">שישי</option><option value="6">שבת</option>
+                </select>
+              </div>
+            </div>
+            <div class="field-row">
+              <div class="field"><label>קטגוריה (לתצוגה בדף הבית)</label>
+                <select class="select" id="rCategory">
+                  <option value="">— ללא קטגוריה —</option>
+                  <option>חוגים</option><option>עממי</option><option>אירועי ספורט</option>
+                </select>
+              </div>
+              <div class="field" id="rSportField" style="display:none"><label>ענף ספורט</label>
+                <select class="select" id="rSport">
+                  <option value="">— בחר ענף —</option>
+                  <option value="football">כדורגל</option><option value="basketball">כדורסל</option>
+                  <option value="tennis">טניס</option><option value="bicycle">אופניים</option><option value="pichiballi">פיצ'יבולי</option>
+                </select>
+              </div>
+            </div>
+            <div class="field-row">
+              <div class="field"><label>עיר</label>
+                <select class="select" id="rCity"><option>ראשון לציון</option><option>רחובות</option><option>חולון</option></select>
+              </div>
+              <div class="field"><label>מגרש</label><input class="input" id="rVenue" placeholder="ספורטק רחובות" /></div>
+            </div>
+            <div class="field-row">
+              <div class="field"><label>שעת התחלה</label><input class="input" id="rTime" list="timeOptions" placeholder="20:00" autocomplete="off" /></div>
+              <div class="field"><label>שעת סיום</label><input class="input" id="rEndTime" list="timeOptions" placeholder="21:30" autocomplete="off" /></div>
+            </div>
+            <div class="field-row">
+              <div class="field"><label>מקסימום שחקנים</label><input class="input" id="rMax" type="number" placeholder="21" /></div>
+              <div class="field"><label>מחיר (₪)</label><input class="input" id="rPrice" type="number" placeholder="35" /></div>
+            </div>
+            <div class="field-row">
+              <div class="field"><label>אחראי על המשחק</label><input class="input" id="rManager" placeholder="שם האחראי" /></div>
+              <div class="field"><label>כמה על כמה</label><input class="input" id="rSize" placeholder="למשל: 5 על 5" /></div>
+            </div>
+            <div class="field"><label>סוג אירוע (אופציונלי)</label><input class="input" id="rFormat" placeholder="פוטסל, כדורגל 7…" autocomplete="off" /></div>
+            <div class="field">
+              <label>שליחת הודעה לקבוצת צ'אט</label>
+              <select class="select" id="rChatGroup"><option value="">— ללא —</option></select>
+            </div>
+            <div class="filters">
+              <button class="btn btn--primary" id="rSave">שמירת לולאה</button>
+              <button class="btn btn--ghost" id="rReset" type="button">נקה טופס</button>
+            </div>
+
+            <!-- ביטול / החזרת שבועות (מוצג בעריכה) -->
+            <div id="rCancelWrap" style="display:none;margin-top:18px;border-top:1px solid var(--navy-line);padding-top:16px">
+              <h4 class="h-sm" style="margin:0 0 4px">ניהול שבועות קרובים</h4>
+              <p class="hint" style="margin:0 0 12px">לחצו על שבוע כדי לבטל אותו (או להחזיר). ביטול שולח הודעה לקבוצה ופותח את השבוע הבא.</p>
+              <div id="rWeeks" class="filters" style="flex-wrap:wrap;gap:8px"></div>
+            </div>
+          </form>
+        </div>
+        <div class="panel" style="overflow-x:auto">
+          <table class="admin-table">
+            <thead><tr><th>לולאה</th><th>יום</th><th>שעה</th><th>מגרש</th><th>סטטוס</th><th></th></tr></thead>
+            <tbody id="recurRows"></tbody>
+          </table>
+          <div class="admin-empty" id="recurEmpty">אין לולאות משחקים מוגדרות.</div>
+        </div>
       </section>
 
       <!-- REGISTRATIONS -->

@@ -56,6 +56,9 @@
               <label for="cok" style="margin:0">אני מאשר/ת את <a href="takanon.html" class="link-lime">התקנון</a> ואת <a href="health.html" class="link-lime">הצהרת הבריאות</a></label>
             </div>
             <button class="btn btn--primary btn--block btn--lg" id="payBtn">המשך לתשלום מאובטח 🔒</button>
+            <div style="text-align:center;margin:10px 0;color:var(--text-dim);font-size:.85rem">— או —</div>
+            <button class="btn btn--ghost btn--block btn--lg" id="cashBtn">תשלום במזומן במגרש 💵</button>
+            <p class="hint" style="color:var(--text-dim);margin-top:8px;font-size:.8rem">בבחירת תשלום במזומן ההרשמה תיקלט מיד — התשלום יתבצע במגרש לפני המשחק.</p>
             <p id="payMsg" class="hint" style="color:var(--text-dim);margin-top:12px"></p>
           </form>
         </div>
@@ -103,6 +106,7 @@
       var tournId = params.get("tournament");
       var payId = gameId || tournId; // מזהה הפריט שמועבר ל-createPayment
       var ITEM = { name: "כרטיס למשחק", price: 35, qty: 1 };
+      var LOADED = null; // אובייקט המשחק/הטורניר שנטען (לשימוש בתזכורת וואטסאפ)
 
       function setSummary() {
         var s = document.getElementById("sumItem"); if (s) s.textContent = ITEM.name;
@@ -116,12 +120,14 @@
         if (gameId && window.DTDB) {
           var g = (DTDB.get("games", []) || []).filter(function (x) { return x.id === gameId; })[0];
           if (g) {
+            LOADED = g;
             ITEM = { name: "כרטיס: " + (g.title || "משחק"), price: parseInt(g.price, 10) || 35, qty: 1 };
             setSummary();
           }
         } else if (tournId && window.DTDB) {
           var t = (DTDB.get("tournaments", []) || []).filter(function (x) { return x.id === tournId; })[0];
           if (t) {
+            LOADED = t;
             ITEM = { name: "טורניר: " + (t.name || "טורניר"), price: parseInt(t.price, 10) || 0, qty: 1 };
             setSummary();
           }
@@ -136,6 +142,7 @@
       });
 
       var btn = document.getElementById("payBtn");
+      var cashBtn = document.getElementById("cashBtn");
       if (!btn) return;
       function pay() {
         var msg = document.getElementById("payMsg");
@@ -151,51 +158,70 @@
           else { msg.style.color = "var(--lime-400)"; msg.textContent = "✅ ההרשמה נקלטה! התשלום המאובטח (משולם) ייפתח לאחר חיבור ספק הסליקה. סה\"כ ₪" + ITEM.price + "."; }
         }).catch(function (e) { msg.style.color = "#ff8a72"; msg.textContent = "שגיאה ביצירת תשלום: " + (window.DTDB ? DTDB.authErrorText(e) : (e && e.message ? e.message : e)); });
       }
+      // תשלום במזומן — ההרשמה כבר נקלטה; מסיימים לדף תודה עם סימון מזומן
+      function cash() {
+        var msg = document.getElementById("payMsg");
+        msg.style.color = "var(--text-dim)"; msg.textContent = "מסיים הרשמה…";
+        // נתוני תזכורת וואטסאפ לדף התודה
+        try {
+          var reg = { phone: document.getElementById("cp").value || "" };
+          if (LOADED) {
+            reg.title = LOADED.title || LOADED.name || "פעילות";
+            reg.date = LOADED.date || (LOADED.dates && LOADED.dates[0]) || "";
+            reg.time = LOADED.time || ""; reg.endTime = LOADED.endTime || "";
+          }
+          localStorage.setItem("dt_last_reg", JSON.stringify(reg));
+        } catch (e) {}
+        var orderNo = "CASH-" + Date.now().toString().slice(-6);
+        window.location.href = "thank-you.html?cash=1&order=" + encodeURIComponent(orderNo);
+      }
 
-      btn.addEventListener("click", function () {
+      // שער משותף: אישור תקנון → חובת התחברות → אימות אימייל → חתימת בריאות → פעולה
+      function startCheckout(action) {
         var msg = document.getElementById("payMsg"); msg.style.color = "var(--text-dim)";
         if (!document.getElementById("cok").checked) { msg.style.color = "#ff8a72"; msg.textContent = "יש לאשר את התקנון והצהרת הבריאות."; return; }
-        // חובה להיות מחובר
         if (!(window.DTDB && DTDB.currentUid && DTDB.currentUid())) {
           msg.style.color = "#ff8a72";
-          msg.innerHTML = 'כדי לשלם יש להתחבר תחילה. <a href="register.html" class="link-lime">התחברות / הרשמה ←</a>';
+          msg.innerHTML = 'כדי להירשם יש להתחבר תחילה. <a href="register.html" class="link-lime">התחברות / הרשמה ←</a>';
           return;
         }
-        // בדיקת אימות אימייל לפני תשלום (מונע משתמשים פיקטיביים)
         if (window.DTDB && DTDB.firebaseOn && DTDB.reloadUser && DTDB.emailVerified) {
           msg.textContent = "בודק אימות אימייל…";
           DTDB.reloadUser().catch(function () {}).then(function () {
             if (!DTDB.emailVerified()) {
               msg.style.color = "#ff8a72";
-              msg.innerHTML = '⚠️ יש לאמת את כתובת האימייל לפני תשלום. שלחנו לך מייל אימות. <a href="#" id="resendVer" class="link-lime">שליחה חוזרת</a>';
+              msg.innerHTML = '⚠️ יש לאמת את כתובת האימייל לפני ההרשמה. שלחנו לך מייל אימות. <a href="#" id="resendVer" class="link-lime">שליחה חוזרת</a>';
               var rv = document.getElementById("resendVer");
               if (rv) rv.onclick = function (e) {
                 e.preventDefault();
                 DTDB.resendVerification()
-                  .then(function () { msg.style.color = "var(--lime-400)"; msg.textContent = "📧 נשלח מייל אימות. בדקו את התיבה (וגם ספאם), לחצו על הקישור — ואז נסו לשלם שוב."; })
+                  .then(function () { msg.style.color = "var(--lime-400)"; msg.textContent = "📧 נשלח מייל אימות. בדקו את התיבה (וגם ספאם), לחצו על הקישור — ואז נסו שוב."; })
                   .catch(function (err) { msg.style.color = "#ff8a72"; msg.textContent = "⚠️ " + (DTDB.authErrorText ? DTDB.authErrorText(err) : (err.message || err)); });
               };
               return;
             }
-            healthThenPay(msg);
+            healthThen(msg, action);
           });
         } else {
-          healthThenPay(msg);
+          healthThen(msg, action);
         }
-      });
+      }
 
-      // חתימה על הצהרת בריאות → תשלום
-      function healthThenPay(msg) {
+      // חתימה על הצהרת בריאות → המשך לפעולה
+      function healthThen(msg, action) {
         msg.style.color = "var(--text-dim)"; msg.textContent = "בודק חתימה על הצהרת בריאות…";
         DTDB.getMyMember().then(function (m) {
           if (!(m && m.health && m.health.accepted)) {
             msg.style.color = "#ff8a72";
-            msg.innerHTML = '⚠️ לא חתמת על הצהרת הבריאות והתקנון — ללא חתימה לא ניתן להמשיך לתשלום. <a href="health.html" class="link-lime">לחתימה עכשיו ←</a>';
+            msg.innerHTML = '⚠️ לא חתמת על הצהרת הבריאות והתקנון — ללא חתימה לא ניתן להמשיך. <a href="health.html" class="link-lime">לחתימה עכשיו ←</a>';
             return;
           }
-          pay();
+          action();
         }).catch(function () { msg.style.color = "#ff8a72"; msg.textContent = "שגיאה בבדיקת החתימה. נסו שוב."; });
       }
+
+      btn.addEventListener("click", function () { startCheckout(pay); });
+      if (cashBtn) cashBtn.addEventListener("click", function () { startCheckout(cash); });
     })();
   </script>
 </body>

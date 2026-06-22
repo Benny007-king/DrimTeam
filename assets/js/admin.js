@@ -166,7 +166,10 @@
     list.forEach(function (g) {
       var tr = document.createElement("tr");
       var tRange = esc(g.time) + (g.endTime ? "–" + esc(g.endTime) : "");
-      tr.innerHTML = "<td><strong>" + esc(g.title) + "</strong></td><td>" + (g.category ? '<span class="badge">' + esc(g.category) + "</span>" : "—") + "</td><td>" + esc(g.format) + "</td><td>" + esc(g.date) + " " + tRange +
+      var titleTag = "<strong>" + esc(g.title) + "</strong>" +
+        (g.recurringId ? ' <span class="badge" title="מלולאה קבועה">🔁</span>' : "") +
+        (g.status === "cancelled" ? ' <span class="badge badge--low">מבוטל</span>' : "");
+      tr.innerHTML = "<td>" + titleTag + "</td><td>" + (g.category ? '<span class="badge">' + esc(g.category) + "</span>" : "—") + "</td><td>" + esc(g.format) + "</td><td>" + esc(g.date) + " " + tRange +
         "</td><td>" + esc(g.venue || g.city) + "</td><td class='reg-count'>…/" + esc(g.max || "-") + "</td>" +
         '<td><div class="row-actions">' +
         '<button class="icon-btn" data-edit-g="' + g.id + '" title="עריכה"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' +
@@ -215,16 +218,30 @@
     else { list.push(obj); }
     DB.set("games", list);
     // פתיחת משחק חדש → הודעה אוטומטית לקבוצת הצ'אט שנבחרה
-    if (isNew && chatGroupId && DB.sendGroupMessage) {
-      var tRange = obj.time + (obj.endTime ? "–" + obj.endTime : "");
-      var msg = "⚽ נפתח משחק חדש לרישום!\n" + obj.title +
-        "\n🗓️ " + obj.date + (tRange ? " " + tRange : "") +
-        "\n📍 " + (obj.venue || obj.city || "") +
-        (obj.size ? "\n" + obj.size : "") +
-        "\n👉 [להרשמה לחצו כאן](" + gameRegLink(obj) + ")";
-      DB.sendGroupMessage(chatGroupId, msg, "DrimTeam ⚽").catch(function () {});
-    }
+    if (isNew) announceNewGame(obj);
     gameReset(); renderGames(); renderDashboard(); fillGameSelects();
+  }
+
+  // הודעת "נפתח משחק חדש" לקבוצת הצ'אט שהוגדרה
+  function announceNewGame(obj) {
+    if (!obj || !obj.chatGroupId || !DB.sendGroupMessage) return;
+    var tRange = obj.time + (obj.endTime ? "–" + obj.endTime : "");
+    var msg = "⚽ נפתח משחק חדש לרישום!\n" + obj.title +
+      "\n🗓️ " + obj.date + (tRange ? " " + tRange : "") +
+      "\n📍 " + (obj.venue || obj.city || "") +
+      (obj.size ? "\n" + obj.size : "") +
+      "\n👉 [להרשמה לחצו כאן](" + gameRegLink(obj) + ")";
+    DB.sendGroupMessage(obj.chatGroupId, msg, "DrimTeam ⚽").catch(function () {});
+  }
+  // הודעת "המשחק בוטל" לקבוצת הצ'אט שהוגדרה
+  function announceCancelGame(obj) {
+    if (!obj || !obj.chatGroupId || !DB.sendGroupMessage) return;
+    var tRange = obj.time + (obj.endTime ? "–" + obj.endTime : "");
+    var msg = "🚫 המשחק בוטל:\n" + obj.title +
+      "\n🗓️ " + obj.date + (tRange ? " " + tRange : "") +
+      "\n📍 " + (obj.venue || obj.city || "") +
+      "\nנתראה בשבוע הבא! 💚";
+    DB.sendGroupMessage(obj.chatGroupId, msg, "DrimTeam ⚽").catch(function () {});
   }
 
   function gameLabel(g) { return g.title + " · " + g.date; }
@@ -242,6 +259,204 @@
       });
       if (prev) sel.value = prev;
     });
+  }
+
+  /* ============================================================
+     RECURRING SERIES (לולאת משחקים קבועה)
+     תבניות נשמרות ב-settings.recurring; מתממשות אוטומטית למשחקים
+     בכל טעינה/רענון של הפאנל ("בשנייה שהמשחק הקודם הסתיים").
+     ============================================================ */
+  var DOW_HE = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
+  function pad2(n) { return (n < 10 ? "0" : "") + n; }
+  function localDateStr(d) { return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()); }
+  function todayStr() { return localDateStr(new Date()); }
+  function parseDate(s) { var p = (s || "").split("-"); return new Date(+p[0], (+p[1] || 1) - 1, +p[2] || 1); }
+  function addDaysStr(s, n) { var d = parseDate(s); d.setDate(d.getDate() + n); return localDateStr(d); }
+  // התאריך הראשון בעל יום-בשבוע נתון, ביום הנתון או אחריו
+  function onOrAfterWeekday(fromStr, dow) {
+    var d = parseDate(fromStr);
+    var diff = ((dow - d.getDay()) % 7 + 7) % 7;
+    d.setDate(d.getDate() + diff);
+    return localDateStr(d);
+  }
+  // האם מופע בתאריך נתון כבר הסתיים (לפי שעת הסיום של התבנית)
+  function occurrenceEnded(dateStr, endTime) {
+    if (endTime) return Date.now() > new Date(dateStr + "T" + endTime + ":00").getTime();
+    return dateStr < todayStr();
+  }
+
+  function getRecurring() { var s = DB.get("settings", {}) || {}; return s.recurring || []; }
+  function setRecurring(arr) { var s = DB.get("settings", {}) || {}; s.recurring = arr; DB.set("settings", s); }
+
+  // ממשק תבנית → אובייקט משחק (ללא id/תאריך)
+  function gameFromTemplate(t, dateStr) {
+    return {
+      id: uid(), recurringId: t.id, title: t.title || "משחק", format: t.format || "",
+      category: t.category || "", sport: t.category === "אירועי ספורט" ? (t.sport || "") : "",
+      city: t.city || "", venue: t.venue || "", date: dateStr, time: t.time || "", endTime: t.endTime || "",
+      max: t.max || 21, price: parseInt(t.price, 10) || 0, manager: t.manager || "", size: t.size || "",
+      link: "", chatGroupId: t.chatGroupId || ""
+    };
+  }
+
+  // מימוש אוטומטי: לכל תבנית פעילה — אם אין מופע חי, נפתח את המופע הבא.
+  // מחזיר true אם נוצר/נשלח משהו (כדי לרענן תצוגות).
+  function materializeRecurring() {
+    var templates = getRecurring().filter(function (t) { return t && t.active !== false; });
+    if (!templates.length) return false;
+    var games = DB.get("games", []);
+    var changed = false;
+    templates.forEach(function (t) {
+      var mine = games.filter(function (g) { return g.recurringId === t.id; });
+      // מופע "חי" = לא מבוטל ולא הסתיים
+      var hasLive = mine.some(function (g) { return g.status !== "cancelled" && !(DB.isGameEnded ? DB.isGameEnded(g) : occurrenceEnded(g.date, g.endTime)); });
+      if (hasLive) return;
+      // מציאת התאריך הבא: ביום-בשבוע, שאינו מבוטל, שאין לו מופע, ושטרם הסתיים
+      var cancelled = t.cancelled || [];
+      var d = onOrAfterWeekday(todayStr(), parseInt(t.dayOfWeek, 10) || 0);
+      var guard = 0;
+      while (guard++ < 60 && (
+        cancelled.indexOf(d) !== -1 ||
+        mine.some(function (g) { return g.date === d; }) ||
+        occurrenceEnded(d, t.endTime)
+      )) { d = addDaysStr(d, 7); }
+      if (guard >= 60) return;
+      var obj = gameFromTemplate(t, d);
+      games.push(obj);
+      announceNewGame(obj);
+      changed = true;
+    });
+    if (changed) DB.set("games", games);
+    return changed;
+  }
+
+  function rCategoryToggle() {
+    var f = $("rSportField"); if (f) f.style.display = ($("rCategory").value === "אירועי ספורט") ? "" : "none";
+  }
+  function fillRecurGroups() {
+    var sel = $("rChatGroup"); if (!sel || !DB.getGroups) return;
+    var cur = sel.value;
+    DB.getGroups().then(function (groups) {
+      sel.innerHTML = '<option value="">— ללא —</option>' + groups.map(function (g) {
+        return '<option value="' + esc(g.id) + '">' + esc(g.name || "קבוצה") + "</option>";
+      }).join("");
+      sel.value = cur;
+    });
+  }
+  function recurReset() {
+    ["rId", "rTitle", "rVenue", "rTime", "rEndTime", "rMax", "rPrice", "rManager", "rSize", "rFormat", "rSport", "rChatGroup"].forEach(function (i) { if ($(i)) $(i).value = ""; });
+    if ($("rDow")) $("rDow").value = "0";
+    if ($("rCategory")) $("rCategory").value = "";
+    if ($("rCity")) $("rCity").value = "ראשון לציון";
+    rCategoryToggle();
+    $("rFormTitle").textContent = "הגדרת לולאה חדשה";
+    if ($("rCancelWrap")) $("rCancelWrap").style.display = "none";
+  }
+  function recurSave() {
+    var arr = getRecurring();
+    var id = $("rId").value;
+    var existing = id ? arr.filter(function (x) { return x.id === id; })[0] : null;
+    var t = {
+      id: id || uid(),
+      title: $("rTitle").value || "משחק שבועי",
+      dayOfWeek: parseInt($("rDow").value, 10) || 0,
+      category: $("rCategory").value || "",
+      sport: ($("rCategory").value === "אירועי ספורט") ? ($("rSport").value || "") : "",
+      city: $("rCity").value || "", venue: ($("rVenue").value || "").trim(),
+      time: ($("rTime").value || "").trim(), endTime: ($("rEndTime").value || "").trim(),
+      max: $("rMax").value || 21, price: parseInt($("rPrice").value, 10) || 0,
+      manager: ($("rManager").value || "").trim(), size: ($("rSize").value || "").trim(),
+      format: ($("rFormat").value || "").trim(),
+      chatGroupId: ($("rChatGroup") && $("rChatGroup").value) || "",
+      active: existing ? existing.active !== false : true,
+      cancelled: existing ? (existing.cancelled || []) : []
+    };
+    if (id) { arr = arr.map(function (x) { return x.id === id ? t : x; }); }
+    else { arr.push(t); }
+    setRecurring(arr);
+    materializeRecurring();
+    recurReset(); renderRecurring(); renderGames(); renderDashboard(); fillGameSelects();
+  }
+  function renderRecurring() {
+    var arr = getRecurring();
+    var tb = $("recurRows"); if (!tb) return;
+    tb.innerHTML = "";
+    if ($("recurEmpty")) $("recurEmpty").style.display = arr.length ? "none" : "block";
+    arr.forEach(function (t) {
+      var tRange = esc(t.time || "") + (t.endTime ? "–" + esc(t.endTime) : "");
+      var status = (t.active === false)
+        ? '<span class="badge badge--low">מושהה</span>'
+        : '<span class="badge">פעילה</span>';
+      var tr = document.createElement("tr");
+      tr.innerHTML = "<td><strong>" + esc(t.title) + "</strong></td>" +
+        "<td>יום " + esc(DOW_HE[t.dayOfWeek] || "?") + "</td>" +
+        "<td>" + tRange + "</td>" +
+        "<td>" + esc(t.venue || t.city || "—") + "</td>" +
+        "<td>" + status + "</td>" +
+        '<td><div class="row-actions">' +
+        '<button class="btn btn--ghost btn--sm" data-toggle-r="' + t.id + '">' + (t.active === false ? "הפעל" : "השהה") + "</button> " +
+        '<button class="icon-btn" data-edit-r="' + t.id + '" title="עריכה"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' +
+        '<button class="icon-btn icon-btn--danger" data-del-recur="' + t.id + '" title="מחיקה"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' +
+        "</div></td>";
+      tb.appendChild(tr);
+    });
+  }
+  // טעינת תבנית לעריכה + רינדור שבועות קרובים לביטול/החזרה
+  function editRecur(id) {
+    var t = getRecurring().filter(function (x) { return x.id === id; })[0]; if (!t) return;
+    $("rId").value = t.id; $("rTitle").value = t.title || "";
+    $("rDow").value = String(t.dayOfWeek || 0);
+    $("rCategory").value = t.category || ""; $("rSport").value = t.sport || ""; rCategoryToggle();
+    $("rCity").value = t.city || "ראשון לציון"; $("rVenue").value = t.venue || "";
+    $("rTime").value = t.time || ""; $("rEndTime").value = t.endTime || "";
+    $("rMax").value = t.max || ""; $("rPrice").value = t.price || "";
+    $("rManager").value = t.manager || ""; $("rSize").value = t.size || ""; $("rFormat").value = t.format || "";
+    fillRecurGroups(); if ($("rChatGroup")) $("rChatGroup").value = t.chatGroupId || "";
+    $("rFormTitle").textContent = "עריכת לולאה";
+    renderRecurWeeks(t);
+    window.scrollTo(0, 0);
+  }
+  function renderRecurWeeks(t) {
+    var wrap = $("rCancelWrap"), box = $("rWeeks"); if (!wrap || !box) return;
+    wrap.style.display = "";
+    var cancelled = t.cancelled || [];
+    var d = onOrAfterWeekday(todayStr(), parseInt(t.dayOfWeek, 10) || 0);
+    // דלג על מופעים שכבר הסתיימו
+    var guard = 0; while (occurrenceEnded(d, t.endTime) && guard++ < 8) d = addDaysStr(d, 7);
+    var html = "";
+    for (var i = 0; i < 6; i++) {
+      var isC = cancelled.indexOf(d) !== -1;
+      var p = d.split("-");
+      var label = p[2] + "." + p[1];
+      html += '<button type="button" class="btn btn--sm ' + (isC ? "btn--ghost" : "btn--primary") + '" data-week="' + esc(d) + '" data-tid="' + esc(t.id) + '" style="' + (isC ? "opacity:.6;text-decoration:line-through" : "") + '">' +
+        (isC ? "מבוטל " : "") + label + "</button>";
+      d = addDaysStr(d, 7);
+    }
+    box.innerHTML = html;
+  }
+  // ביטול/החזרת שבוע ספציפי
+  function toggleWeek(tid, dateStr) {
+    var arr = getRecurring();
+    var t = arr.filter(function (x) { return x.id === tid; })[0]; if (!t) return;
+    t.cancelled = t.cancelled || [];
+    var idx = t.cancelled.indexOf(dateStr);
+    var games = DB.get("games", []);
+    if (idx === -1) {
+      // ביטול
+      t.cancelled.push(dateStr);
+      var inst = games.filter(function (g) { return g.recurringId === tid && g.date === dateStr; })[0];
+      if (inst) { inst.status = "cancelled"; DB.set("games", games); }
+      // הודעת ביטול לקבוצה
+      announceCancelGame(inst || gameFromTemplate(t, dateStr));
+    } else {
+      // החזרה
+      t.cancelled.splice(idx, 1);
+      var inst2 = games.filter(function (g) { return g.recurringId === tid && g.date === dateStr; })[0];
+      if (inst2 && inst2.status === "cancelled") { delete inst2.status; DB.set("games", games); }
+    }
+    setRecurring(arr);
+    materializeRecurring(); // אם בוטל המופע החי — נפתח את הבא
+    renderRecurWeeks(t); renderRecurring(); renderGames(); renderDashboard(); fillGameSelects();
   }
 
   /* ---- Registrations ---- */
@@ -789,7 +1004,7 @@
     document.querySelectorAll(".admin-nav-btn[data-view]").forEach(function (b) { b.classList.toggle("active", b.getAttribute("data-view") === name); });
     if (name === "dashboard") renderDashboard();
     if (name === "tournaments") { renderTournaments(); ensureTDateRow(); }
-    if (name === "games") { renderGames(); fillGameGroups(); }
+    if (name === "games") { materializeRecurring(); renderGames(); fillGameGroups(); renderRecurring(); fillRecurGroups(); rCategoryToggle(); }
     if (name === "regs") { fillGameSelects(); renderRegs(); }
     if (name === "members") renderMembers();
     if (name === "teams") {
@@ -867,9 +1082,13 @@
       if (DB.onChange) DB.onChange(function () {
         if (currentView && $("appShell") && getComputedStyle($("appShell")).display !== "none") showView(currentView);
       });
-      // רענון תקופתי — כדי שמשחקים יעברו ל"הסתיימו" בשעת הסיום שלהם גם בלי שינוי נתונים
+      // רענון תקופתי — כדי שמשחקים יעברו ל"הסתיימו" בשעת הסיום שלהם גם בלי שינוי נתונים,
+      // ושלולאות קבועות יפתחו אוטומטית את המשחק הבא בשנייה שהקודם הסתיים.
       setInterval(function () {
-        if (currentView === "dashboard" && $("appShell") && getComputedStyle($("appShell")).display !== "none") renderDashboard();
+        if (!($("appShell") && getComputedStyle($("appShell")).display !== "none")) return;
+        var created = materializeRecurring();
+        if (currentView === "dashboard") renderDashboard();
+        else if (currentView === "games" && created) { renderGames(); renderRecurring(); }
       }, 60000);
       if (DB.onUser) DB.onUser(function (u) { if (u) gateOtp(u); else showLogin(); });
       if (!DB.firebaseOn && DB.get("session")) startApp();
@@ -906,6 +1125,7 @@
     $("appShell").style.display = "grid";
     // טעינת נתוני המנהל (settings/regs — קריאים למנהלים בלבד) לפני רינדור
     (DB.loadAdmin ? DB.loadAdmin() : Promise.resolve()).catch(function () {}).then(function () {
+      materializeRecurring(); // פתיחה אוטומטית של משחקי לולאה שהגיע זמנם
       renderDashboard(); fillGameSelects();
       showView("dashboard");
     });
@@ -934,7 +1154,7 @@
 
   /* event delegation */
   document.addEventListener("click", function (e) {
-    var t = e.target.closest("[data-view],[data-jump],[data-edit-t],[data-del-t],[data-edit-g],[data-del-g],[data-del-r],[data-move],[data-del-admin],[data-del-gal],[data-del-wa],[data-wa-group],[data-go-result],[data-edit-grp],[data-del-grp]");
+    var t = e.target.closest("[data-view],[data-jump],[data-edit-t],[data-del-t],[data-edit-g],[data-del-g],[data-del-r],[data-move],[data-del-admin],[data-del-gal],[data-del-wa],[data-wa-group],[data-go-result],[data-edit-grp],[data-del-grp],[data-edit-r],[data-del-recur],[data-toggle-r],[data-week]");
     if (!t) return;
     var a;
     if (t.hasAttribute("data-view")) showView(t.getAttribute("data-view"));
@@ -1000,6 +1220,21 @@
         (DB.deleteGroup ? DB.deleteGroup(a) : Promise.resolve()).then(renderGroupChats);
       }
     }
+    else if ((a = t.getAttribute("data-edit-r"))) { editRecur(a); }
+    else if ((a = t.getAttribute("data-del-recur"))) {
+      if (confirm("למחוק את הלולאה? משחקים שכבר נפתחו יישארו, אך לא ייפתחו חדשים.")) {
+        setRecurring(getRecurring().filter(function (x) { return x.id !== a; }));
+        recurReset(); renderRecurring();
+      }
+    }
+    else if ((a = t.getAttribute("data-toggle-r"))) {
+      var arr = getRecurring();
+      arr = arr.map(function (x) { if (x.id === a) x.active = (x.active === false); return x; });
+      setRecurring(arr); materializeRecurring(); renderRecurring(); renderGames(); renderDashboard();
+    }
+    else if ((a = t.getAttribute("data-week"))) {
+      toggleWeek(t.getAttribute("data-tid"), a);
+    }
   });
 
   /* form buttons (wired after DOM ready) */
@@ -1024,6 +1259,9 @@
     $("gSave").addEventListener("click", gameSave);
     $("gReset").addEventListener("click", gameReset);
     if ($("gCategory")) $("gCategory").addEventListener("change", gCategoryToggle);
+    if ($("rSave")) $("rSave").addEventListener("click", recurSave);
+    if ($("rReset")) $("rReset").addEventListener("click", recurReset);
+    if ($("rCategory")) $("rCategory").addEventListener("change", rCategoryToggle);
     $("regGameSel").addEventListener("change", renderRegs);
     $("regAdd").addEventListener("click", regAdd);
     $("genTeams").addEventListener("click", function () { genTeams(false); });

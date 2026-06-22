@@ -112,7 +112,7 @@
         games.forEach(function (g) {
           if (!g.date) return;
           if (window.DTDB && DTDB.isGameEnded && DTDB.isGameEnded(g)) return; // הסתיים (כולל לפי שעה)
-          ev.push({ date: g.date, time: g.time || "", endTime: g.endTime || "", title: g.title || "משחק", city: g.city || "", type: "game", id: g.id, link: g.link || "" });
+          ev.push({ date: g.date, time: g.time || "", endTime: g.endTime || "", title: g.title || "משחק", city: g.city || "", type: "game", id: g.id, link: g.link || "", cancelled: g.status === "cancelled" });
         });
         tourns.forEach(function (t) {
           tDates(t).forEach(function (d) {
@@ -150,6 +150,14 @@
         listEl.innerHTML = order.map(function (d) {
           var rows = byDay[d].map(function (e) {
             var when = e.time ? (e.time + (e.endTime ? "–" + e.endTime : "")) : "";
+            // משחק מבוטל — שורה לא-לחיצה עם סימון "מבוטל"
+            if (e.cancelled) {
+              return '<div class="sched-row" style="opacity:.65">' +
+                '<span class="sched-badge"><span class="badge badge--low">⚽ משחק</span></span>' +
+                '<span class="sched-title" style="text-decoration:line-through">' + esc(e.title) + '</span>' +
+                '<span class="sched-meta">' + (when ? "🕒 " + esc(when) + " · " : "") + "📍 " + esc(e.city || "—") + "</span>" +
+                '<span class="sched-go" style="color:var(--text-dim)">מבוטל</span></div>';
+            }
             var badge = e.type === "tournament" ? '<span class="badge">🏆 טורניר</span>' : '<span class="badge badge--low">⚽ משחק</span>';
             var href = e.type === "tournament" ? ("register.html?tournament=" + e.id) : (e.link ? e.link : ("register.html?game=" + e.id));
             var ext = (e.type === "game" && e.link) ? ' target="_blank" rel="noopener"' : "";

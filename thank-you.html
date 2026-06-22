@@ -37,8 +37,8 @@
       <div class="card__icon" style="width:84px;height:84px;margin:0 auto 22px;border-radius:50%">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:42px;height:42px"><path d="M20 6L9 17l-5-5" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </div>
-      <h1 class="h-lg">התשלום התקבל — נתראה במגרש! ⚽</h1>
-      <p class="lead">אישור הזמנה נשלח למייל שלך. מספר הזמנה: <span class="text-lime" id="orderNo">—</span></p>
+      <h1 class="h-lg" id="tyTitle">התשלום התקבל — נתראה במגרש! ⚽</h1>
+      <p class="lead" id="tyLead">אישור הזמנה נשלח למייל שלך. מספר הזמנה: <span class="text-lime" id="orderNo">—</span></p>
       <div class="hero__cta" style="margin-top:24px">
         <a id="waConfirm" class="btn btn--primary btn--lg btn--block" target="_blank" rel="noopener" style="display:none;background:#25d366;border-color:#25d366;color:#0a2e16">📲 קבלת אישור ותזכורת בוואטסאפ</a>
         <a href="games.html" class="btn btn--primary btn--lg btn--block">למשחקים הקרובים</a>
@@ -59,6 +59,11 @@
   <script>
     var m = location.search.match(/order=([^&]+)/);
     if (m) document.getElementById("orderNo").textContent = decodeURIComponent(m[1]);
+    // תשלום במזומן — שינוי הכותרת בהתאם
+    if (/[?&]cash=1/.test(location.search)) {
+      document.getElementById("tyTitle").textContent = "ההרשמה נקלטה — נתראה במגרש! ⚽";
+      document.getElementById("tyLead").innerHTML = '💵 בחרת לשלם במזומן — התשלום יתבצע במגרש לפני המשחק. מספר הזמנה: <span class="text-lime" id="orderNo">' + (m ? decodeURIComponent(m[1]) : "—") + '</span>';
+    }
     // כפתור וואטסאפ — אישור + תזכורת למספר של המשתמש (לחיצה ושליחה)
     (function () {
       var reg = null;
