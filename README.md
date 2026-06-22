@@ -27,6 +27,8 @@ python -m http.server 5500
 
 > ⚠️ אחרי כל שינוי ב-`firestore.rules` או `storage.rules` — חובה לפרסם אותם מחדש (Console → Rules → Publish או `firebase deploy`).
 
+> **כותרות אבטחה (HTTP security headers):** מוגדרות ב-`firebase.json` (`hosting.headers`) — HSTS, CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy. **חלות רק כשהאתר מוגש דרך Firebase Hosting** (`firebase deploy --only hosting`). GitHub Pages לא תומך בכותרות מותאמות, אז כדי לפתור ממצאי "security headers" יש להגיש את האתר מ-Firebase Hosting. DNSSEC נדלק אצל ספק ה-DNS של הדומיין.
+
 ---
 
 ## דפים
