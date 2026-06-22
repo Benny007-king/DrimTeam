@@ -170,8 +170,9 @@
         if (cityParam && citySel) citySel.value = cityParam;
         if (CATP && catSel) catSel.value = CATP;
         if (head) head.textContent = SPORTP ? sportLabel(SPORTP) : (CATP ? CATP : "");
-        // הגענו דרך קטגוריה/ענף → רשימה בלבד, בלי בורר
-        if (toolbar) toolbar.style.display = CATP ? "none" : "";
+        // הגענו דרך קטגוריה/ענף → משאירים את סינון העיר בלבד (הקטגוריה כבר נבחרה)
+        if (toolbar) toolbar.style.display = "";
+        if (catSel) catSel.style.display = CATP ? "none" : "";
         if (citySel) citySel.onchange = applyFilters;
         if (catSel) catSel.onchange = applyFilters;
       }
