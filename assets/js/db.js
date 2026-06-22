@@ -203,8 +203,21 @@
 
     /* ---- members (חתמו על התקנון) — שם, טלפון, אישור תקנון ---- */
     signUp: function (email, pass) {
-      if (fauth) { return fauth.createUserWithEmailAndPassword(email, pass).then(function (c) { try { localStorage.setItem("dt_last_active", String(Date.now())); } catch (e) {} return c.user; }); }
+      if (fauth) {
+        return fauth.createUserWithEmailAndPassword(email, pass).then(function (c) {
+          try { localStorage.setItem("dt_last_active", String(Date.now())); } catch (e) {}
+          if (c.user && c.user.sendEmailVerification) c.user.sendEmailVerification().catch(function () {}); // מייל אימות
+          return c.user;
+        });
+      }
       return Promise.resolve(null);
+    },
+    // ---- email verification ----
+    emailVerified: function () { return !!(fauth && fauth.currentUser && fauth.currentUser.emailVerified); },
+    reloadUser: function () { return (fauth && fauth.currentUser) ? fauth.currentUser.reload() : Promise.resolve(); },
+    resendVerification: function () {
+      if (fauth && fauth.currentUser && fauth.currentUser.sendEmailVerification) return fauth.currentUser.sendEmailVerification();
+      return Promise.reject(new Error("לא מחובר"));
     },
     saveMember: function (profile) {
       if (fdb && fauth && fauth.currentUser) {

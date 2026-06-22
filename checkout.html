@@ -161,8 +161,32 @@
           msg.innerHTML = 'כדי לשלם יש להתחבר תחילה. <a href="register.html" class="link-lime">התחברות / הרשמה ←</a>';
           return;
         }
-        // הצלבה: חייבים חתימה על הצהרת בריאות + תקנון (כולל ת"ז) לפני תשלום
-        msg.textContent = "בודק חתימה על הצהרת בריאות…";
+        // בדיקת אימות אימייל לפני תשלום (מונע משתמשים פיקטיביים)
+        if (window.DTDB && DTDB.firebaseOn && DTDB.reloadUser && DTDB.emailVerified) {
+          msg.textContent = "בודק אימות אימייל…";
+          DTDB.reloadUser().catch(function () {}).then(function () {
+            if (!DTDB.emailVerified()) {
+              msg.style.color = "#ff8a72";
+              msg.innerHTML = '⚠️ יש לאמת את כתובת האימייל לפני תשלום. שלחנו לך מייל אימות. <a href="#" id="resendVer" class="link-lime">שליחה חוזרת</a>';
+              var rv = document.getElementById("resendVer");
+              if (rv) rv.onclick = function (e) {
+                e.preventDefault();
+                DTDB.resendVerification()
+                  .then(function () { msg.style.color = "var(--lime-400)"; msg.textContent = "📧 נשלח מייל אימות. בדקו את התיבה (וגם ספאם), לחצו על הקישור — ואז נסו לשלם שוב."; })
+                  .catch(function (err) { msg.style.color = "#ff8a72"; msg.textContent = "⚠️ " + (DTDB.authErrorText ? DTDB.authErrorText(err) : (err.message || err)); });
+              };
+              return;
+            }
+            healthThenPay(msg);
+          });
+        } else {
+          healthThenPay(msg);
+        }
+      });
+
+      // חתימה על הצהרת בריאות → תשלום
+      function healthThenPay(msg) {
+        msg.style.color = "var(--text-dim)"; msg.textContent = "בודק חתימה על הצהרת בריאות…";
         DTDB.getMyMember().then(function (m) {
           if (!(m && m.health && m.health.accepted)) {
             msg.style.color = "#ff8a72";
@@ -171,7 +195,7 @@
           }
           pay();
         }).catch(function () { msg.style.color = "#ff8a72"; msg.textContent = "שגיאה בבדיקת החתימה. נסו שוב."; });
-      });
+      }
     })();
   </script>
 </body>

@@ -290,7 +290,7 @@
             msg.style.color = "var(--text-dim)"; msg.textContent = "מעלה תמונה…";
             return (photoFile && window.DTDB && DTDB.uploadAvatar) ? DTDB.uploadAvatar(photoFile).catch(function () { }) : null;
           }).then(function () {
-            msg.style.color = "var(--lime-400)"; msg.textContent = "✅ נוצר חשבון — חתמו על ההצהרה כדי להמשיך."; openSign();
+            msg.style.color = "var(--lime-400)"; msg.textContent = "✅ נוצר חשבון! שלחנו מייל אימות — יש לאשר אותו לפני תשלום. כעת חתמו על ההצהרה."; openSign();
           });
         }
         msg.style.color = "var(--text-dim)"; msg.textContent = "יוצר חשבון…";
