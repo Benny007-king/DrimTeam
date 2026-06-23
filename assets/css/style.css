@@ -1247,18 +1247,56 @@ h1, h2, h3 { line-height: 1.15; margin: 0 0 0.5em; font-weight: 800; }
 .sportcard:hover img { transform: scale(1.06); }
 .sportcard h3 { position: absolute; inset-inline: 0; bottom: 0; margin: 0; padding: 14px 16px; font-size: 1.25rem; color: #fff; background: linear-gradient(transparent, rgba(0,0,0,0.82)); }
 
-/* schedule / games map (schedule.html) */
-.sched-day { margin-bottom: 22px; }
-.sched-dayhead { margin: 0 0 10px; color: var(--lime-400); font-size: 1.05rem; }
-.sched-row {
-  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px;
-  background: var(--navy-800); border: 1px solid var(--navy-line); border-radius: 12px;
-  padding: 12px 16px; margin-bottom: 8px; color: var(--text, #fff); text-decoration: none; transition: .15s;
+/* schedule / games map (schedule.html) — table layout */
+.sched-table-wrap {
+  width: 100%; overflow-x: auto;
+  background: var(--navy-800); border: 1px solid var(--navy-line); border-radius: 16px;
 }
-.sched-row:hover { border-color: var(--lime-500); transform: translateY(-2px); }
-.sched-title { font-weight: 700; flex: 1; min-width: 120px; }
-.sched-meta { color: var(--text-dim); font-size: .85rem; width: 100%; }
-.sched-go { color: var(--lime-400); font-weight: 700; font-size: .85rem; white-space: nowrap; }
+.sched-table { width: 100%; border-collapse: collapse; min-width: 560px; }
+.sched-table thead th {
+  text-align: right; padding: 14px 18px; color: var(--text-dim);
+  font-size: .82rem; font-weight: 700; letter-spacing: .02em;
+  border-bottom: 2px solid var(--navy-line); white-space: nowrap;
+}
+.sched-table tbody td {
+  padding: 15px 18px; border-bottom: 1px solid var(--navy-line);
+  vertical-align: middle; color: var(--text, #fff);
+}
+.sched-table tbody tr:last-child td { border-bottom: none; }
+.sched-table tbody tr:hover td { background: rgba(255,255,255,.03); }
+.sched-table tbody tr.is-newday td { border-top: 1px solid var(--lime-500); }
+.sched-table .st-date { font-weight: 700; white-space: nowrap; }
+.sched-table .st-time { color: var(--text-dim); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.sched-table .st-title { font-weight: 700; }
+.sched-table .st-city { color: var(--text-dim); white-space: nowrap; }
+.sched-table .st-action { white-space: nowrap; }
+.sched-table .st-cancelled { color: var(--text-dim); font-weight: 700; }
+.sched-table tr.is-cancelled td { opacity: .55; }
+.sched-table tr.is-cancelled .st-title { text-decoration: line-through; }
+
+/* mobile — collapse each row into a card */
+@media (max-width: 640px) {
+  .sched-table-wrap { background: transparent; border: none; overflow: visible; }
+  .sched-table { min-width: 0; }
+  .sched-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .sched-table, .sched-table tbody, .sched-table tr, .sched-table td { display: block; width: 100%; }
+  .sched-table tr {
+    background: var(--navy-800); border: 1px solid var(--navy-line);
+    border-radius: 14px; margin-bottom: 12px; padding: 6px 2px;
+  }
+  .sched-table tbody tr.is-newday td { border-top: none; }
+  .sched-table tbody td {
+    border: none; padding: 9px 16px; display: flex; align-items: center;
+    justify-content: space-between; gap: 14px; text-align: left;
+  }
+  .sched-table tbody td::before {
+    content: attr(data-label); color: var(--text-dim);
+    font-size: .78rem; font-weight: 700; white-space: nowrap;
+  }
+  .sched-table .st-action { padding-top: 12px; }
+  .sched-table .st-action::before { content: ""; }
+  .sched-table .st-action .btn { width: 100%; }
+}
 
 .hero-deck__logo { font-size: clamp(2.8rem, 10vw, 5.5rem); margin-bottom: 6px; }
 .hero-deck__tag { color: var(--text-muted); letter-spacing: 0.2em; font-weight: 600; margin: 0 0 56px; }

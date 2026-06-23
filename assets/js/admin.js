@@ -330,6 +330,34 @@
     return changed;
   }
 
+  // עדכון המופע ה"חי" (הפתוח) של לולאה כדי שישקף שינויים בתבנית
+  // (למשל אם שינו את שם הלולאה אחרי שכבר נפתח משחק). שומר id/date/recurringId/status/נרשמים.
+  function syncLiveInstance(t) {
+    var games = DB.get("games", []);
+    var changed = false;
+    games.forEach(function (g) {
+      if (g.recurringId !== t.id) return;
+      if (g.status === "cancelled") return;
+      if (DB.isGameEnded && DB.isGameEnded(g)) return; // משחק שעבר — ארכיון, לא נוגעים
+      g.title = t.title || "משחק";
+      g.format = t.format || "";
+      g.category = t.category || "";
+      g.sport = (t.category === "אירועי ספורט") ? (t.sport || "") : "";
+      g.city = t.city || "";
+      g.venue = t.venue || "";
+      g.time = t.time || "";
+      g.endTime = t.endTime || "";
+      g.max = t.max || 21;
+      g.price = parseInt(t.price, 10) || 0;
+      g.manager = t.manager || "";
+      g.size = t.size || "";
+      g.chatGroupId = t.chatGroupId || "";
+      changed = true;
+    });
+    if (changed) DB.set("games", games);
+    return changed;
+  }
+
   function rCategoryToggle() {
     var f = $("rSportField"); if (f) f.style.display = ($("rCategory").value === "אירועי ספורט") ? "" : "none";
   }
@@ -374,6 +402,7 @@
     if (id) { arr = arr.map(function (x) { return x.id === id ? t : x; }); }
     else { arr.push(t); }
     setRecurring(arr);
+    syncLiveInstance(t);     // שינויים בתבנית משתקפים במשחק הפתוח (שם/מגרש/שעה וכו')
     materializeRecurring();
     recurReset(); renderRecurring(); renderGames(); renderDashboard(); fillGameSelects();
   }
