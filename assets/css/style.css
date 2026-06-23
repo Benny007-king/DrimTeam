@@ -1247,55 +1247,109 @@ h1, h2, h3 { line-height: 1.15; margin: 0 0 0.5em; font-weight: 800; }
 .sportcard:hover img { transform: scale(1.06); }
 .sportcard h3 { position: absolute; inset-inline: 0; bottom: 0; margin: 0; padding: 14px 16px; font-size: 1.25rem; color: #fff; background: linear-gradient(transparent, rgba(0,0,0,0.82)); }
 
-/* schedule / games map (schedule.html) — table layout */
-.sched-table-wrap {
-  width: 100%; overflow-x: auto;
-  background: var(--navy-800); border: 1px solid var(--navy-line); border-radius: 16px;
+/* schedule / games map (schedule.html) — calendar grid */
+.cal-toolbar { align-items: center; gap: 14px; flex-wrap: wrap; }
+.cal-nav { display: flex; align-items: center; gap: 10px; }
+.cal-navbtn {
+  width: 36px; height: 36px; border-radius: 10px; cursor: pointer;
+  background: var(--navy-800); border: 1px solid var(--navy-line);
+  color: var(--lime-400); font-size: 1.3rem; line-height: 1; display: grid; place-items: center;
+  transition: .15s;
 }
-.sched-table { width: 100%; border-collapse: collapse; min-width: 560px; }
-.sched-table thead th {
-  text-align: right; padding: 14px 18px; color: var(--text-dim);
-  font-size: .82rem; font-weight: 700; letter-spacing: .02em;
-  border-bottom: 2px solid var(--navy-line); white-space: nowrap;
-}
-.sched-table tbody td {
-  padding: 15px 18px; border-bottom: 1px solid var(--navy-line);
-  vertical-align: middle; color: var(--text, #fff);
-}
-.sched-table tbody tr:last-child td { border-bottom: none; }
-.sched-table tbody tr:hover td { background: rgba(255,255,255,.03); }
-.sched-table tbody tr.is-newday td { border-top: 1px solid var(--lime-500); }
-.sched-table .st-date { font-weight: 700; white-space: nowrap; }
-.sched-table .st-time { color: var(--text-dim); white-space: nowrap; font-variant-numeric: tabular-nums; }
-.sched-table .st-title { font-weight: 700; }
-.sched-table .st-city { color: var(--text-dim); white-space: nowrap; }
-.sched-table .st-action { white-space: nowrap; }
-.sched-table .st-cancelled { color: var(--text-dim); font-weight: 700; }
-.sched-table tr.is-cancelled td { opacity: .55; }
-.sched-table tr.is-cancelled .st-title { text-decoration: line-through; }
+.cal-navbtn:hover { border-color: var(--lime-500); background: rgba(212,175,55,.08); }
+.cal-title { margin: 0; font-size: 1.15rem; font-weight: 800; white-space: nowrap; }
 
-/* mobile — collapse each row into a card */
-@media (max-width: 640px) {
-  .sched-table-wrap { background: transparent; border: none; overflow: visible; }
-  .sched-table { min-width: 0; }
-  .sched-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
-  .sched-table, .sched-table tbody, .sched-table tr, .sched-table td { display: block; width: 100%; }
-  .sched-table tr {
-    background: var(--navy-800); border: 1px solid var(--navy-line);
-    border-radius: 14px; margin-bottom: 12px; padding: 6px 2px;
-  }
-  .sched-table tbody tr.is-newday td { border-top: none; }
-  .sched-table tbody td {
-    border: none; padding: 9px 16px; display: flex; align-items: center;
-    justify-content: space-between; gap: 14px; text-align: left;
-  }
-  .sched-table tbody td::before {
-    content: attr(data-label); color: var(--text-dim);
-    font-size: .78rem; font-weight: 700; white-space: nowrap;
-  }
-  .sched-table .st-action { padding-top: 12px; }
-  .sched-table .st-action::before { content: ""; }
-  .sched-table .st-action .btn { width: 100%; }
+/* ----- week view ----- */
+.calw {
+  background: var(--navy-800); border: 1px solid var(--navy-line);
+  border-radius: 16px; overflow: hidden;
+}
+.calw-head, .calw-allrow { display: grid; grid-template-columns: 56px repeat(7, 1fr); }
+.calw-head { border-bottom: 1px solid var(--navy-line); }
+.calw-corner { font-size: .68rem; color: var(--text-dim); display: grid; place-items: center; padding: 8px 0; }
+.calw-dayhead {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 10px 4px; border-inline-start: 1px solid var(--navy-line);
+}
+.calw-dow { font-size: .72rem; color: var(--text-dim); font-weight: 700; }
+.calw-dnum { font-size: 1.25rem; font-weight: 800; }
+.calw-dayhead.is-today .calw-dnum {
+  background: var(--lime-500); color: #0a0a0a; width: 34px; height: 34px;
+  border-radius: 50%; display: grid; place-items: center;
+}
+.calw-dayhead.is-today .calw-dow { color: var(--lime-400); }
+
+.calw-allrow { border-bottom: 1px solid var(--navy-line); }
+.calw-allcorner { font-size: .68rem; color: var(--text-dim); display: grid; place-items: center; }
+.calw-allcell { border-inline-start: 1px solid var(--navy-line); padding: 4px; display: flex; flex-direction: column; gap: 4px; min-height: 30px; }
+
+.calw-body { display: grid; grid-template-columns: 56px 1fr; }
+.calw-times { border-inline-end: 1px solid var(--navy-line); }
+.calw-time { font-size: .72rem; color: var(--text-dim); text-align: center; padding-top: 4px; box-sizing: border-box; font-variant-numeric: tabular-nums; }
+.calw-cols { position: relative; display: grid; grid-template-columns: repeat(7, 1fr); }
+.calw-col {
+  position: relative; border-inline-start: 1px solid var(--navy-line);
+  background-image: linear-gradient(to bottom, var(--navy-line) 1px, transparent 1px);
+  background-repeat: repeat-y;
+}
+.calw-col.is-today { background-color: rgba(212,175,55,.045); }
+
+/* event block */
+.cal-ev {
+  position: absolute; box-sizing: border-box; overflow: hidden;
+  border-radius: 8px; padding: 4px 7px; text-decoration: none;
+  background: rgba(212,175,55,.16); border: 1px solid rgba(212,175,55,.42);
+  border-inline-start: 3px solid var(--lime-500); color: #fff;
+  display: flex; flex-direction: column; gap: 1px; transition: .12s; cursor: pointer; min-width: 0;
+}
+.cal-ev:hover { background: rgba(212,175,55,.28); transform: translateY(-1px); }
+.cal-ev__t { font-weight: 700; font-size: .82rem; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cal-ev__m { font-size: .72rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cal-ev.is-cancelled { opacity: .5; border-inline-start-color: var(--text-dim); }
+.cal-ev.is-cancelled .cal-ev__t { text-decoration: line-through; }
+
+/* chips (all-day + month) */
+.cal-chip {
+  display: block; text-decoration: none; border-radius: 6px; padding: 3px 7px;
+  font-size: .76rem; font-weight: 600; line-height: 1.25;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: .12s;
+}
+.cal-chip--game { background: rgba(212,175,55,.16); border: 1px solid rgba(212,175,55,.38); color: #fff; }
+.cal-chip--tourn { background: rgba(244,215,128,.2); border: 1px solid var(--lime-500); color: var(--lime-400); }
+.cal-chip:hover { filter: brightness(1.2); }
+.cal-chip.is-cancelled { opacity: .5; text-decoration: line-through; }
+
+/* ----- month view ----- */
+.calm { background: var(--navy-800); border: 1px solid var(--navy-line); border-radius: 16px; overflow: hidden; }
+.calm-head { display: grid; grid-template-columns: repeat(7, 1fr); border-bottom: 1px solid var(--navy-line); }
+.calm-dow { text-align: center; padding: 10px 0; font-size: .78rem; font-weight: 700; color: var(--text-dim); }
+.calm-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
+.calm-cell {
+  min-height: 96px; padding: 6px; border-inline-start: 1px solid var(--navy-line);
+  border-top: 1px solid var(--navy-line); display: flex; flex-direction: column; gap: 4px;
+}
+.calm-cell:nth-child(7n+1) { border-inline-start: none; }
+.calm-date { font-size: .85rem; font-weight: 700; align-self: flex-start; }
+.calm-cell.is-other { opacity: .4; }
+.calm-cell.is-today .calm-date {
+  background: var(--lime-500); color: #0a0a0a; width: 26px; height: 26px;
+  border-radius: 50%; display: grid; place-items: center;
+}
+.calm-more { font-size: .72rem; color: var(--text-dim); padding: 0 4px; }
+
+@media (max-width: 720px) {
+  .cal-toolbar { flex-direction: column; align-items: stretch; }
+  .cal-nav { justify-content: center; }
+  .calw-corner, .calw-allcorner { font-size: 0; }
+  .calw-time { font-size: .64rem; }
+  .calw-head, .calw-allrow, .calw-body { grid-template-columns: 40px repeat(7, 1fr); }
+  .calw-body { grid-template-columns: 40px 1fr; }
+  .calw-dnum { font-size: 1rem; }
+  .cal-ev__t { font-size: .7rem; }
+  .cal-ev__m { display: none; }
+  .calm-cell { min-height: 70px; padding: 3px; }
+  .cal-chip { font-size: .64rem; padding: 2px 4px; }
+  .calm-date { font-size: .75rem; }
 }
 
 .hero-deck__logo { font-size: clamp(2.8rem, 10vw, 5.5rem); margin-bottom: 6px; }

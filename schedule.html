@@ -49,19 +49,25 @@
         <p class="lead">כל הפעילויות הקרובות במקום אחד — בחרו תצוגה שבועית או חודשית, וסננו לפי עיר.</p>
       </div>
 
-      <div class="toolbar">
-        <div class="view-tabs" id="rangeTabs">
-          <button class="active" data-range="week">שבועי</button>
-          <button data-range="month">חודשי</button>
+      <div class="toolbar cal-toolbar">
+        <div class="cal-nav">
+          <button class="cal-navbtn" id="calPrev" aria-label="הקודם">‹</button>
+          <button class="btn btn--ghost btn--sm" id="calToday">היום</button>
+          <button class="cal-navbtn" id="calNext" aria-label="הבא">›</button>
+          <h2 class="cal-title" id="calTitle"></h2>
         </div>
         <div class="filters">
+          <div class="view-tabs" id="rangeTabs">
+            <button class="active" data-range="week">שבועי</button>
+            <button data-range="month">חודשי</button>
+          </div>
           <select class="select" id="cityFilter" aria-label="עיר">
             <option value="">כל הערים</option>
           </select>
         </div>
       </div>
 
-      <div id="scheduleList"></div>
+      <div id="calRoot"></div>
       <div class="admin-empty" id="scheduleEmpty" style="display:none">אין פעילויות בטווח שנבחר. נסו תצוגה חודשית או עיר אחרת ⚽</div>
     </div>
   </section>
@@ -98,10 +104,25 @@
         return "יום " + DOW[dt.getDay()] + " · " + p[2] + "." + p[1];
       }
 
+      var DOW_SHORT = ["א", "ב", "ג", "ד", "ה", "ו", "ש"];
+      var MONTHS_HE = ["ינואר", "פברואר", "מרץ", "אפריל", "מאי", "יוני", "יולי", "אוגוסט", "ספטמבר", "אוקטובר", "נובמבר", "דצמבר"];
+      var HOUR_H = 64;        // גובה שעה בפיקסלים
+      var DAY_START = 19, DAY_END = 23; // טווח שעות ברירת מחדל (אין משחקים מחוץ לזה)
+
       var range = "week", cityVal = "";
-      var listEl = document.getElementById("scheduleList");
+      var anchor = new Date(); anchor.setHours(0, 0, 0, 0); // התאריך שסביבו מציגים
+      var rootEl = document.getElementById("calRoot");
       var emptyEl = document.getElementById("scheduleEmpty");
+      var titleEl = document.getElementById("calTitle");
       var cityFilter = document.getElementById("cityFilter");
+
+      function pad2(n) { return (n < 10 ? "0" : "") + n; }
+      function ymd(d) { return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()); }
+      function parseYmd(s) { var p = (s || "").split("-"); return new Date(+p[0], (+p[1] || 1) - 1, +p[2] || 1); }
+      function addDaysD(d, n) { var x = new Date(d); x.setDate(x.getDate() + n); return x; }
+      function startOfWeek(d) { var x = new Date(d); x.setDate(x.getDate() - x.getDay()); x.setHours(0, 0, 0, 0); return x; } // ראשון
+      function mins(t) { if (!t) return NaN; var p = t.split(":"); return (+p[0]) * 60 + (+(p[1] || 0)); }
+      var todayYmd = ymd(new Date());
 
       function tDates(t) { return (t.dates && t.dates.length) ? t.dates : (t.date ? [t.date] : []); }
 
@@ -131,50 +152,175 @@
         cityFilter.value = cur;
       }
 
+      // קישור/מאפייני אירוע לחיץ
+      function evHref(e) {
+        if (e.cancelled) return null;
+        if (e.type === "tournament") return "register.html?tournament=" + e.id;
+        return e.link ? e.link : ("register.html?game=" + e.id);
+      }
+      function evAttrs(e) {
+        var href = evHref(e);
+        if (!href) return null;
+        var ext = (e.type === "game" && e.link) ? ' target="_blank" rel="noopener"' : "";
+        return ' href="' + esc(href) + '"' + ext;
+      }
+
+      /* ---------- WEEK VIEW ---------- */
+      function renderWeek(all) {
+        var ws = startOfWeek(anchor);
+        var days = [];
+        for (var i = 0; i < 7; i++) days.push(addDaysD(ws, i));
+        var firstYmd = ymd(days[0]), lastYmd = ymd(days[6]);
+        var ev = all.filter(function (e) { return e.date >= firstYmd && e.date <= lastYmd && (!cityVal || e.city === cityVal); });
+
+        // טווח שעות דינמי (ברירת מחדל 19–23, מתרחב לפי אירועים)
+        var startH = DAY_START, endH = DAY_END;
+        ev.forEach(function (e) {
+          var s = mins(e.time); if (!isNaN(s)) startH = Math.min(startH, Math.floor(s / 60));
+          var en = mins(e.endTime); if (isNaN(en) && !isNaN(s)) en = s + 60;
+          if (!isNaN(en)) endH = Math.max(endH, Math.ceil(en / 60));
+        });
+        if (endH > 24) endH = 24;
+        var hours = endH - startH;
+
+        // כותרת התקופה
+        titleEl.textContent = (days[0].getDate() + "–" + days[6].getDate() + " " +
+          (days[0].getMonth() === days[6].getMonth() ? MONTHS_HE[days[6].getMonth()] : MONTHS_HE[days[0].getMonth()] + "/" + MONTHS_HE[days[6].getMonth()]) +
+          " " + days[6].getFullYear());
+
+        // ראש הלוח
+        var head = '<div class="calw-corner">GMT+3</div>';
+        days.forEach(function (d) {
+          var isToday = ymd(d) === todayYmd;
+          head += '<div class="calw-dayhead' + (isToday ? " is-today" : "") + '">' +
+            '<span class="calw-dow">' + DOW_SHORT[d.getDay()] + '</span>' +
+            '<span class="calw-dnum">' + d.getDate() + '</span></div>';
+        });
+
+        // אירועי "כל היום" (טורנירים — ללא שעה)
+        var allday = ev.filter(function (e) { return !e.time; });
+        var alldayRow = "";
+        if (allday.length) {
+          alldayRow = '<div class="calw-allrow"><div class="calw-allcorner">כל היום</div>';
+          days.forEach(function (d) {
+            var dy = ymd(d);
+            var chips = allday.filter(function (e) { return e.date === dy; }).map(function (e) {
+              var at = evAttrs(e);
+              var cls = "cal-chip cal-chip--tourn" + (e.cancelled ? " is-cancelled" : "");
+              return at ? '<a class="' + cls + '"' + at + '>🏆 ' + esc(e.title) + '</a>'
+                        : '<span class="' + cls + '">🏆 ' + esc(e.title) + (e.cancelled ? " · מבוטל" : "") + '</span>';
+            }).join("");
+            alldayRow += '<div class="calw-allcell">' + chips + '</div>';
+          });
+          alldayRow += '</div>';
+        }
+
+        // עמודת שעות
+        var times = "";
+        for (var h = startH; h < endH; h++) times += '<div class="calw-time" style="height:' + HOUR_H + 'px">' + pad2(h) + ':00</div>';
+
+        // גוף — 7 עמודות עם אירועים ממוקמים
+        var bodyH = hours * HOUR_H;
+        var cols = "";
+        days.forEach(function (d) {
+          var dy = ymd(d);
+          var isToday = dy === todayYmd;
+          var timed = ev.filter(function (e) { return e.date === dy && e.time; });
+          // חישוב עמודות לאירועים חופפים
+          timed.forEach(function (e) { e._s = mins(e.time); var en = mins(e.endTime); e._e = isNaN(en) ? e._s + 60 : Math.max(en, e._s + 30); });
+          timed.sort(function (a, b) { return a._s - b._s || a._e - b._e; });
+          var ends = [];
+          timed.forEach(function (e) {
+            var placed = false;
+            for (var c = 0; c < ends.length; c++) { if (e._s >= ends[c]) { e._col = c; ends[c] = e._e; placed = true; break; } }
+            if (!placed) { e._col = ends.length; ends.push(e._e); }
+          });
+          var ncol = ends.length || 1;
+          var blocks = timed.map(function (e) {
+            var top = (e._s - startH * 60) / 60 * HOUR_H;
+            var hgt = Math.max((e._e - e._s) / 60 * HOUR_H - 3, 26);
+            var w = 100 / ncol, rightPct = e._col * w;
+            var at = evAttrs(e);
+            var cls = "cal-ev" + (e.cancelled ? " is-cancelled" : "");
+            var inner = '<span class="cal-ev__t">' + esc(e.title) + '</span><span class="cal-ev__m">' + esc(e.time) + (e.endTime ? "–" + esc(e.endTime) : "") + (e.cancelled ? " · מבוטל" : "") + '</span>';
+            var style = 'top:' + top + 'px;height:' + hgt + 'px;inset-inline-start:calc(' + rightPct + '% + 2px);width:calc(' + w + '% - 4px)';
+            return at ? '<a class="' + cls + '" style="' + style + '"' + at + '>' + inner + '</a>'
+                      : '<div class="' + cls + '" style="' + style + '">' + inner + '</div>';
+          }).join("");
+          cols += '<div class="calw-col' + (isToday ? " is-today" : "") + '" style="height:' + bodyH + 'px;background-size:100% ' + HOUR_H + 'px">' + blocks + '</div>';
+        });
+
+        rootEl.innerHTML =
+          '<div class="calw">' +
+            '<div class="calw-head">' + head + '</div>' +
+            alldayRow +
+            '<div class="calw-body">' +
+              '<div class="calw-times">' + times + '</div>' +
+              '<div class="calw-cols">' + cols + '</div>' +
+            '</div>' +
+          '</div>';
+        emptyEl.style.display = ev.length ? "none" : "block";
+      }
+
+      /* ---------- MONTH VIEW ---------- */
+      function renderMonth(all) {
+        var first = new Date(anchor.getFullYear(), anchor.getMonth(), 1);
+        var gridStart = startOfWeek(first);
+        titleEl.textContent = MONTHS_HE[anchor.getMonth()] + " " + anchor.getFullYear();
+
+        var ev = all.filter(function (e) { return (!cityVal || e.city === cityVal); });
+        var byDay = {};
+        ev.forEach(function (e) { (byDay[e.date] = byDay[e.date] || []).push(e); });
+
+        var head = DOW_SHORT.map(function (d) { return '<div class="calm-dow">' + d + "</div>"; }).join("");
+        var cells = "";
+        for (var i = 0; i < 42; i++) {
+          var d = addDaysD(gridStart, i);
+          var dy = ymd(d);
+          var other = d.getMonth() !== anchor.getMonth();
+          var isToday = dy === todayYmd;
+          var list = (byDay[dy] || []).slice().sort(function (a, b) { return (a.time || "99").localeCompare(b.time || "99"); });
+          var chips = list.slice(0, 3).map(function (e) {
+            var at = evAttrs(e);
+            var cls = "cal-chip cal-chip--" + (e.type === "tournament" ? "tourn" : "game") + (e.cancelled ? " is-cancelled" : "");
+            var label = (e.time ? e.time + " " : "") + e.title;
+            return at ? '<a class="' + cls + '"' + at + '>' + esc(label) + '</a>'
+                      : '<span class="' + cls + '">' + esc(label) + (e.cancelled ? " · מבוטל" : "") + '</span>';
+          }).join("");
+          if (list.length > 3) chips += '<span class="calm-more">+' + (list.length - 3) + " נוספים</span>";
+          cells += '<div class="calm-cell' + (other ? " is-other" : "") + (isToday ? " is-today" : "") + '">' +
+            '<div class="calm-date">' + d.getDate() + '</div>' + chips + '</div>';
+        }
+
+        rootEl.innerHTML = '<div class="calm"><div class="calm-head">' + head + '</div><div class="calm-grid">' + cells + "</div></div>";
+        emptyEl.style.display = "none";
+      }
+
       function render() {
         var all = buildEvents();
         fillCities(all);
-        var today = new Date().toISOString().slice(0, 10);
-        var maxDate = addDays(new Date(), range === "week" ? 7 : 31);
-        var ev = all.filter(function (e) {
-          return e.date >= today && e.date <= maxDate && (!cityVal || e.city === cityVal);
-        });
-        ev.sort(function (a, b) { return (a.date + (a.time || "")).localeCompare(b.date + (b.time || "")); });
-
-        if (!ev.length) { listEl.innerHTML = ""; emptyEl.style.display = "block"; return; }
-        emptyEl.style.display = "none";
-
-        var prevDate = null;
-        var rowsHtml = ev.map(function (e) {
-          var when = e.time ? (e.time + (e.endTime ? "–" + e.endTime : "")) : "—";
-          var badge = e.type === "tournament" ? '<span class="badge">🏆 טורניר</span>' : '<span class="badge badge--low">⚽ משחק</span>';
-          var newDay = e.date !== prevDate; prevDate = e.date;
-          var action;
-          if (e.cancelled) {
-            action = '<span class="st-cancelled">מבוטל</span>';
-          } else {
-            var href = e.type === "tournament" ? ("register.html?tournament=" + e.id) : (e.link ? e.link : ("register.html?game=" + e.id));
-            var ext = (e.type === "game" && e.link) ? ' target="_blank" rel="noopener"' : "";
-            action = '<a class="btn btn--primary btn--sm" href="' + esc(href) + '"' + ext + '>להרשמה ←</a>';
-          }
-          return '<tr class="' + (e.cancelled ? "is-cancelled" : "") + (newDay ? " is-newday" : "") + '">' +
-            '<td data-label="תאריך" class="st-date">' + esc(fmtDay(e.date)) + '</td>' +
-            '<td data-label="שעה" class="st-time">' + esc(when) + '</td>' +
-            '<td data-label="פעילות"><span class="st-badge">' + badge + '</span> <span class="st-title">' + esc(e.title) + '</span></td>' +
-            '<td data-label="עיר" class="st-city">📍 ' + esc(e.city || "—") + '</td>' +
-            '<td data-label="" class="st-action">' + action + '</td>' +
-            '</tr>';
-        }).join("");
-
-        listEl.innerHTML = '<div class="sched-table-wrap"><table class="sched-table">' +
-          '<thead><tr><th>תאריך</th><th>שעה</th><th>פעילות</th><th>עיר</th><th></th></tr></thead>' +
-          '<tbody>' + rowsHtml + '</tbody></table></div>';
+        todayYmd = ymd(new Date());
+        if (range === "week") renderWeek(all); else renderMonth(all);
       }
 
+      /* ---------- navigation + controls ---------- */
       document.getElementById("rangeTabs").addEventListener("click", function (e) {
         var b = e.target.closest("[data-range]"); if (!b) return;
         this.querySelectorAll("button").forEach(function (x) { x.classList.remove("active"); });
         b.classList.add("active"); range = b.getAttribute("data-range"); render();
+      });
+      document.getElementById("calPrev").addEventListener("click", function () {
+        if (range === "week") anchor = addDaysD(anchor, -7);
+        else anchor = new Date(anchor.getFullYear(), anchor.getMonth() - 1, 1);
+        render();
+      });
+      document.getElementById("calNext").addEventListener("click", function () {
+        if (range === "week") anchor = addDaysD(anchor, 7);
+        else anchor = new Date(anchor.getFullYear(), anchor.getMonth() + 1, 1);
+        render();
+      });
+      document.getElementById("calToday").addEventListener("click", function () {
+        anchor = new Date(); anchor.setHours(0, 0, 0, 0); render();
       });
       cityFilter.addEventListener("change", function () { cityVal = this.value; render(); });
 
