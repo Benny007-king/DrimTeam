@@ -1307,6 +1307,14 @@ h1, h2, h3 { line-height: 1.15; margin: 0 0 0.5em; font-weight: 800; }
 .cal-ev__m { font-size: .72rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cal-ev.is-cancelled { opacity: .5; border-inline-start-color: var(--text-dim); }
 .cal-ev.is-cancelled .cal-ev__t { text-decoration: line-through; }
+/* משחק לולאה עתידי שטרם נפתח — אפור, לא לחיץ */
+.cal-ev.is-placeholder {
+  background: rgba(143,135,107,.1); border: 1px dashed rgba(143,135,107,.5);
+  border-inline-start: 3px dashed var(--text-dim); color: var(--text-dim); cursor: default;
+}
+.cal-ev.is-placeholder:hover { transform: none; background: rgba(143,135,107,.14); }
+.cal-ev.is-placeholder .cal-ev__t { color: var(--text-muted); font-weight: 600; }
+.cal-ev.is-placeholder .cal-ev__m { font-style: italic; }
 
 /* chips (all-day + month) */
 .cal-chip {
@@ -1318,6 +1326,11 @@ h1, h2, h3 { line-height: 1.15; margin: 0 0 0.5em; font-weight: 800; }
 .cal-chip--tourn { background: rgba(244,215,128,.2); border: 1px solid var(--lime-500); color: var(--lime-400); }
 .cal-chip:hover { filter: brightness(1.2); }
 .cal-chip.is-cancelled { opacity: .5; text-decoration: line-through; }
+.cal-chip.is-placeholder {
+  background: rgba(143,135,107,.1); border: 1px dashed rgba(143,135,107,.5);
+  color: var(--text-dim); font-style: italic; cursor: default;
+}
+.cal-chip.is-placeholder:hover { filter: none; }
 
 /* ----- month view ----- */
 .calm { background: var(--navy-800); border: 1px solid var(--navy-line); border-radius: 16px; overflow: hidden; }

@@ -285,8 +285,15 @@
     return dateStr < todayStr();
   }
 
-  function getRecurring() { var s = DB.get("settings", {}) || {}; return s.recurring || []; }
-  function setRecurring(arr) { var s = DB.get("settings", {}) || {}; s.recurring = arr; DB.set("settings", s); }
+  // תבניות הלולאה נשמרות במפתח ציבורי "recurring" (כדי שהלוח הציבורי יציג "ייפתח בקרוב").
+  // תאימות לאחור: אם עדיין אין מפתח ציבורי, קוראים מ-settings.recurring הישן.
+  function getRecurring() {
+    var r = DB.get("recurring", null);
+    if (r && r.length) return r;
+    var s = DB.get("settings", {}) || {};
+    return s.recurring || [];
+  }
+  function setRecurring(arr) { DB.set("recurring", arr); }
 
   // ממשק תבנית → אובייקט משחק (ללא id/תאריך)
   function gameFromTemplate(t, dateStr) {
@@ -1154,6 +1161,10 @@
     $("appShell").style.display = "grid";
     // טעינת נתוני המנהל (settings/regs — קריאים למנהלים בלבד) לפני רינדור
     (DB.loadAdmin ? DB.loadAdmin() : Promise.resolve()).catch(function () {}).then(function () {
+      // מיגרציה חד-פעמית: העברת לולאות מ-settings (ישן, פרטי) למפתח הציבורי "recurring"
+      var pub = DB.get("recurring", null);
+      var s0 = DB.get("settings", {}) || {};
+      if ((!pub || !pub.length) && s0.recurring && s0.recurring.length) DB.set("recurring", s0.recurring);
       materializeRecurring(); // פתיחה אוטומטית של משחקי לולאה שהגיע זמנם
       renderDashboard(); fillGameSelects();
       showView("dashboard");

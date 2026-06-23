@@ -9,7 +9,7 @@
   "use strict";
 
   var USE_FB = window.DT_FIREBASE_ENABLED === true;
-  var PUBLIC_KEYS = ["tournaments", "games"];   // קריאים לכולם
+  var PUBLIC_KEYS = ["tournaments", "games", "recurring"];   // קריאים לכולם (recurring = תבניות לולאה לתצוגת "ייפתח בקרוב")
   var ADMIN_KEYS  = ["settings", "regs"];        // קריאים למנהלים בלבד (נטענים רק בפאנל)
   var KEYS = PUBLIC_KEYS.concat(ADMIN_KEYS);     // stored as app/<key> { value: ... }
   var cache = {};

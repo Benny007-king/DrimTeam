@@ -133,7 +133,7 @@
         games.forEach(function (g) {
           if (!g.date) return;
           if (window.DTDB && DTDB.isGameEnded && DTDB.isGameEnded(g)) return; // הסתיים (כולל לפי שעה)
-          ev.push({ date: g.date, time: g.time || "", endTime: g.endTime || "", title: g.title || "משחק", city: g.city || "", type: "game", id: g.id, link: g.link || "", cancelled: g.status === "cancelled" });
+          ev.push({ date: g.date, time: g.time || "", endTime: g.endTime || "", title: g.title || "משחק", city: g.city || "", type: "game", id: g.id, link: g.link || "", cancelled: g.status === "cancelled", recurringId: g.recurringId || "" });
         });
         tourns.forEach(function (t) {
           tDates(t).forEach(function (d) {
@@ -143,9 +143,45 @@
         return ev;
       }
 
+      // האם מופע בתאריך נתון כבר הסתיים (לפי שעת הסיום של התבנית)
+      function occurrenceEnded(dateStr, endTime) {
+        if (endTime) return Date.now() > new Date(dateStr + "T" + endTime + ":00").getTime();
+        return dateStr < todayYmd;
+      }
+      // משחקים עתידיים מהלולאה שעדיין לא נפתחו — "ייפתח בקרוב" (אפור, לא לחיץ).
+      // מדלגים על תאריכים שכבר יש להם משחק אמיתי, מבוטלים, או שעברו.
+      function loopPlaceholders(startYmd, endYmd, realEvents) {
+        var temps = (window.DTDB ? DTDB.get("recurring", []) : []) || [];
+        if (!temps.length) return [];
+        var taken = {}; // recurringId|date של משחקים אמיתיים קיימים
+        realEvents.forEach(function (e) { if (e.recurringId) taken[e.recurringId + "|" + e.date] = true; });
+        var out = [];
+        temps.forEach(function (t) {
+          if (t.active === false) return;
+          if (cityVal && (t.city || "") !== cityVal) return;
+          var cancelled = t.cancelled || [];
+          var d = parseYmd(startYmd);
+          var diff = (((parseInt(t.dayOfWeek, 10) || 0) - d.getDay()) % 7 + 7) % 7;
+          d = addDaysD(d, diff);
+          for (var guard = 0; guard < 60 && ymd(d) <= endYmd; guard++) {
+            var dy = ymd(d);
+            if (cancelled.indexOf(dy) === -1 && !taken[t.id + "|" + dy] && !occurrenceEnded(dy, t.endTime)) {
+              out.push({ date: dy, time: t.time || "", endTime: t.endTime || "", title: t.title || "משחק", city: t.city || "", type: "game", placeholder: true });
+            }
+            d = addDaysD(d, 7);
+          }
+        });
+        return out;
+      }
+      function recurringCities() {
+        var temps = (window.DTDB ? DTDB.get("recurring", []) : []) || [];
+        return temps.map(function (t) { return t.city || ""; });
+      }
+
       function fillCities(events) {
         var cities = [];
-        events.forEach(function (e) { if (e.city && cities.indexOf(e.city) === -1) cities.push(e.city); });
+        events.concat(recurringCities().map(function (c) { return { city: c }; }))
+          .forEach(function (e) { if (e.city && cities.indexOf(e.city) === -1) cities.push(e.city); });
         cities.sort();
         var cur = cityFilter.value;
         cityFilter.innerHTML = '<option value="">כל הערים</option>' + cities.map(function (c) { return '<option value="' + esc(c) + '">' + esc(c) + "</option>"; }).join("");
@@ -154,7 +190,7 @@
 
       // קישור/מאפייני אירוע לחיץ
       function evHref(e) {
-        if (e.cancelled) return null;
+        if (e.cancelled || e.placeholder) return null;
         if (e.type === "tournament") return "register.html?tournament=" + e.id;
         return e.link ? e.link : ("register.html?game=" + e.id);
       }
@@ -172,6 +208,8 @@
         for (var i = 0; i < 7; i++) days.push(addDaysD(ws, i));
         var firstYmd = ymd(days[0]), lastYmd = ymd(days[6]);
         var ev = all.filter(function (e) { return e.date >= firstYmd && e.date <= lastYmd && (!cityVal || e.city === cityVal); });
+        // משחקי לולאה עתידיים שטרם נפתחו — "ייפתח בקרוב" (אפור)
+        ev = ev.concat(loopPlaceholders(firstYmd, lastYmd, ev));
 
         // טווח שעות דינמי (ברירת מחדל 19–23, מתרחב לפי אירועים)
         var startH = DAY_START, endH = DAY_END;
@@ -241,11 +279,13 @@
             var hgt = Math.max((e._e - e._s) / 60 * HOUR_H - 3, 26);
             var w = 100 / ncol, rightPct = e._col * w;
             var at = evAttrs(e);
-            var cls = "cal-ev" + (e.cancelled ? " is-cancelled" : "");
-            var inner = '<span class="cal-ev__t">' + esc(e.title) + '</span><span class="cal-ev__m">' + esc(e.time) + (e.endTime ? "–" + esc(e.endTime) : "") + (e.cancelled ? " · מבוטל" : "") + '</span>';
+            var cls = "cal-ev" + (e.cancelled ? " is-cancelled" : "") + (e.placeholder ? " is-placeholder" : "");
+            var sub = e.placeholder ? "ייפתח בקרוב" : (esc(e.time) + (e.endTime ? "–" + esc(e.endTime) : "") + (e.cancelled ? " · מבוטל" : ""));
+            var inner = '<span class="cal-ev__t">' + esc(e.title) + '</span><span class="cal-ev__m">' + sub + '</span>';
+            var title = e.placeholder ? ' title="טרם נפתח להרשמה — ייפתח בקרוב"' : "";
             var style = 'top:' + top + 'px;height:' + hgt + 'px;inset-inline-start:calc(' + rightPct + '% + 2px);width:calc(' + w + '% - 4px)';
             return at ? '<a class="' + cls + '" style="' + style + '"' + at + '>' + inner + '</a>'
-                      : '<div class="' + cls + '" style="' + style + '">' + inner + '</div>';
+                      : '<div class="' + cls + '" style="' + style + '"' + title + '>' + inner + '</div>';
           }).join("");
           cols += '<div class="calw-col' + (isToday ? " is-today" : "") + '" style="height:' + bodyH + 'px;background-size:100% ' + HOUR_H + 'px">' + blocks + '</div>';
         });
@@ -268,7 +308,10 @@
         var gridStart = startOfWeek(first);
         titleEl.textContent = MONTHS_HE[anchor.getMonth()] + " " + anchor.getFullYear();
 
+        var gridEndYmd = ymd(addDaysD(gridStart, 41));
         var ev = all.filter(function (e) { return (!cityVal || e.city === cityVal); });
+        // משחקי לולאה עתידיים שטרם נפתחו — "ייפתח בקרוב" (אפור)
+        ev = ev.concat(loopPlaceholders(ymd(gridStart), gridEndYmd, ev));
         var byDay = {};
         ev.forEach(function (e) { (byDay[e.date] = byDay[e.date] || []).push(e); });
 
@@ -282,10 +325,11 @@
           var list = (byDay[dy] || []).slice().sort(function (a, b) { return (a.time || "99").localeCompare(b.time || "99"); });
           var chips = list.slice(0, 3).map(function (e) {
             var at = evAttrs(e);
-            var cls = "cal-chip cal-chip--" + (e.type === "tournament" ? "tourn" : "game") + (e.cancelled ? " is-cancelled" : "");
+            var cls = "cal-chip cal-chip--" + (e.type === "tournament" ? "tourn" : "game") + (e.cancelled ? " is-cancelled" : "") + (e.placeholder ? " is-placeholder" : "");
             var label = (e.time ? e.time + " " : "") + e.title;
+            var ttl = e.placeholder ? ' title="טרם נפתח להרשמה — ייפתח בקרוב"' : "";
             return at ? '<a class="' + cls + '"' + at + '>' + esc(label) + '</a>'
-                      : '<span class="' + cls + '">' + esc(label) + (e.cancelled ? " · מבוטל" : "") + '</span>';
+                      : '<span class="' + cls + '"' + ttl + '>' + esc(label) + (e.cancelled ? " · מבוטל" : (e.placeholder ? " · בקרוב" : "")) + '</span>';
           }).join("");
           if (list.length > 3) chips += '<span class="calm-more">+' + (list.length - 3) + " נוספים</span>";
           cells += '<div class="calm-cell' + (other ? " is-other" : "") + (isToday ? " is-today" : "") + '">' +

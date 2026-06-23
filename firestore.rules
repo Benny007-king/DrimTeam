@@ -13,6 +13,8 @@ service cloud.firestore {
     // משחקים וטורנירים — קריאה לכולם (תוכן ציבורי)
     match /app/games        { allow read: if true; }
     match /app/tournaments  { allow read: if true; }
+    // תבניות לולאת משחקים — קריאה לכולם (לתצוגת "ייפתח בקרוב" בלוח); כתיבה למנהל בלבד (דרך app/{doc})
+    match /app/recurring    { allow read: if true; }
     // הגדרות (כולל קישורי וואטסאפ) ורישומים מקומיים — קריאה למנהלים בלבד
     match /app/settings     { allow read: if isAdmin(); }
     match /app/regs         { allow read: if isAdmin(); }
