@@ -53,6 +53,9 @@
       <!-- כרטיסי ענפי ספורט (לאירועי ספורט) -->
       <div class="sport-grid" id="sportCards" style="display:none"></div>
 
+      <!-- גרף פעילות לפי עיר (לחיץ — מסנן את הרשימה) -->
+      <div class="activity-card" id="activityCard" style="display:none"></div>
+
       <div class="toolbar" id="gamesToolbar">
         <div class="filters">
           <select class="select" data-filter-city aria-label="עיר">
@@ -129,6 +132,7 @@
 
       // ---- סינון (עיר + קטגוריה + ענף) ----
       var citySel, catSel, CATP = "", SPORTP = "", SPORT_MODE = false;
+      var LAST_GAMES = [];
       function applyFilters() {
         var city = citySel ? citySel.value : "";
         var cat = CATP || (catSel ? catSel.value : "");
@@ -147,7 +151,50 @@
           if (!cards.length) empty.textContent = "אין כרגע פעילויות פתוחות בקטגוריה הזו. עקבו אחרינו — נפתחות חדשות כל שבוע! ⚽";
           else if (!shown) empty.textContent = "לא נמצאו פעילויות שתואמות את הסינון.";
         }
+        renderActivity();
       }
+
+      // ---- גרף פעילות לפי עיר (תצוגת תכלית) ----
+      function renderActivity() {
+        var card = document.getElementById("activityCard");
+        if (!card || SPORT_MODE) { if (card) card.style.display = "none"; return; }
+        var counts = {};
+        LAST_GAMES.forEach(function (g) {
+          if (CATP && (g.category || "") !== CATP) return;
+          if (SPORTP && (g.sport || "") !== SPORTP) return;
+          if (g.status === "cancelled") return;
+          var c = g.city || "אחר"; counts[c] = (counts[c] || 0) + 1;
+        });
+        var cities = Object.keys(counts);
+        if (!cities.length) { card.style.display = "none"; return; }
+        card.style.display = "";
+        var total = 0, maxC = 0;
+        cities.forEach(function (c) { total += counts[c]; if (counts[c] > maxC) maxC = counts[c]; });
+        cities.sort(function (a, b) { return counts[b] - counts[a]; });
+        var cur = citySel ? citySel.value : "";
+        var rows = cities.map(function (c) {
+          var pct = Math.max(Math.round(counts[c] / maxC * 100), 6);
+          var active = cur === c;
+          return '<button type="button" class="act-row' + (active ? " is-active" : "") + '" data-actcity="' + esc(c) + '">' +
+            '<span class="act-name">' + esc(c) + '</span>' +
+            '<span class="act-track"><span class="act-fill" style="width:' + pct + '%"></span></span>' +
+            '<span class="act-val">' + counts[c] + '</span></button>';
+        }).join("");
+        card.innerHTML =
+          '<div class="activity-head"><h2>📊 פעילות לפי עיר</h2>' +
+          '<span class="activity-total">' + total + ' <span>משחקים קרובים</span></span></div>' +
+          '<div class="act-rows">' + rows + '</div>' +
+          '<p class="activity-hint">לחצו על עיר כדי לסנן את המשחקים שלה' + (cur ? ' · <a href="#" id="actClear" class="link-lime">ניקוי סינון</a>' : "") + '</p>';
+      }
+      document.addEventListener("click", function (e) {
+        var clear = e.target.closest("#actClear");
+        if (clear) { e.preventDefault(); if (citySel) { citySel.value = ""; applyFilters(); } return; }
+        var row = e.target.closest(".act-row[data-actcity]");
+        if (!row || !citySel) return;
+        var c = row.getAttribute("data-actcity");
+        citySel.value = (citySel.value === c) ? "" : c; // לחיצה חוזרת מבטלת
+        applyFilters();
+      });
       // קביעת ערכים מה-URL — רץ פעם אחת
       function initFilters() {
         citySel = document.querySelector("[data-filter-city]");
@@ -185,6 +232,7 @@
         // משחקים שהסתיימו (כולל לפי שעת סיום) — מוסתרים לגמרי (נשמרים ב-DB לארכיון)
         games = games.filter(function (g) { return !(window.DTDB && DTDB.isGameEnded && DTDB.isGameEnded(g)); });
         games = games.slice().sort(function (a, b) { return (a.date || "").localeCompare(b.date || ""); });
+        LAST_GAMES = games;
         var list = document.getElementById("gamesList"), empty = document.getElementById("gamesEmpty");
         if (!games.length) { list.innerHTML = ""; applyFilters(); return; }
         empty.style.display = "none";
@@ -228,16 +276,16 @@
               '<div class="muted" style="font-size:.82rem;margin-top:8px">הרשמה באתר חיצוני</div>';
             return;
           }
+          // הספירה נשמרת מאחורי הקלעים — לא מציגים כמה מקומות נשארו.
+          // כשמגיעים למקסימום פותחים רשימת המתנה (המיקום מוצג לנרשם בעת ההרשמה).
           var statsP = (window.DTDB && DTDB.getGameStats) ? DTDB.getGameStats(g.id) : Promise.resolve({ count: 0 });
           statsP.then(function (s) {
             var count = s.count || 0;
             if (max && count >= max) {
-              regDiv.innerHTML = '<a href="register.html?game=' + g.id + '" class="btn btn--ghost btn--sm js-reg" data-game="' + g.id + '">רשימת המתנה</a>' +
-                '<div class="muted" style="font-size:.82rem;margin-top:8px">📋 המשחק מלא · ' + (count - max) + " בהמתנה</div>";
+              regDiv.innerHTML = '<a href="register.html?game=' + g.id + '" class="btn btn--ghost btn--sm js-reg" data-game="' + g.id + '">הצטרפות לרשימת המתנה</a>' +
+                '<div class="muted" style="font-size:.82rem;margin-top:8px">📋 המשחק מלא — אפשר להצטרף לרשימת המתנה</div>';
             } else {
-              var left = max ? (max - count) : null;
-              regDiv.innerHTML = '<a href="register.html?game=' + g.id + '" class="btn btn--primary btn--sm js-reg" data-game="' + g.id + '">הרשמה למשחק</a>' +
-                '<div class="muted" style="font-size:.82rem;margin-top:8px">' + (left != null ? ("נותרו " + left + " מקומות") : ("נרשמו " + count)) + "</div>";
+              regDiv.innerHTML = '<a href="register.html?game=' + g.id + '" class="btn btn--primary btn--sm js-reg" data-game="' + g.id + '">הרשמה למשחק</a>';
             }
           });
         });
@@ -248,6 +296,18 @@
       ready.then(render);
       if (window.DTDB && DTDB.onChange) DTDB.onChange(render); // עדכון חי כשנפתחים משחקים
       setInterval(render, 60000); // רענון כל דקה כדי שמשחקים ייעלמו בשעת הסיום שלהם
+
+      // שמירת המשחקים שנרשמתי אליהם (מקומית) — לטובת הזמנה לדרג את המפגש אחרי שהסתיים
+      function rememberMyGame(gid) {
+        try {
+          var g = LAST_GAMES.filter(function (x) { return x.id === gid; })[0] || { id: gid };
+          var mine = JSON.parse(localStorage.getItem("dt_my_games") || "[]");
+          if (!mine.some(function (x) { return x.id === gid; })) {
+            mine.push({ id: gid, title: g.title || "", date: g.date || "", time: g.time || "", endTime: g.endTime || "" });
+            localStorage.setItem("dt_my_games", JSON.stringify(mine));
+          }
+        } catch (e) {}
+      }
 
       // לחיצה על הרשמה: מחובר → רישום + מעבר ישיר לתשלום; אחרת → דף הרשמה
       document.addEventListener("click", function (e) {
@@ -267,8 +327,16 @@
               if (DTDB.saveMember) DTDB.saveMember({ phone: phone });
             }
             a.textContent = "רושם…";
+            var maxN = parseInt((a.closest(".game-cta") || {}).getAttribute && a.closest(".game-cta").getAttribute("data-max"), 10) || 0;
             return DTDB.addRegistration(gid, { name: m.name || "", phone: phone, email: m.email || "", city: m.city || "", rating: m.rating || 4 })
-              .then(function () { location.href = "checkout.html?game=" + gid; });
+              .then(function (res) {
+                rememberMyGame(gid);
+                // אם המשחק מלא — הצגת המיקום ברשימת ההמתנה
+                if (res && res.position && maxN && res.position > maxN) {
+                  alert("המשחק מלא — נרשמת לרשימת ההמתנה.\nהמיקום שלך בהמתנה: " + (res.position - maxN));
+                }
+                location.href = "checkout.html?game=" + gid;
+              });
           }).catch(function () { location.href = "register.html?game=" + gid; });
         } else {
           location.href = "register.html?game=" + gid;

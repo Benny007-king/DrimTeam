@@ -242,6 +242,11 @@
               else msg.textContent = "✅ נרשמת! מעבר לתשלום…";
               var g = (window.DTDB ? (DTDB.get("games", []) || []) : []).filter(function (x) { return x.id === gameId; })[0] || {};
               try { localStorage.setItem("dt_last_reg", JSON.stringify({ title: g.title || "משחק", date: g.date || "", time: g.time || "", endTime: g.endTime || "", phone: profile.phone || "" })); } catch (_) { }
+              // שמירה מקומית לטובת הזמנה לדרג את המפגש אחרי שהסתיים
+              try {
+                var myg = JSON.parse(localStorage.getItem("dt_my_games") || "[]");
+                if (!myg.some(function (x) { return x.id === gameId; })) { myg.push({ id: gameId, title: g.title || "", date: g.date || "", time: g.time || "", endTime: g.endTime || "" }); localStorage.setItem("dt_my_games", JSON.stringify(myg)); }
+              } catch (_) { }
               try { localStorage.removeItem("dt_pending_game"); } catch (_) { }
               setTimeout(function () { location.href = "checkout.html?game=" + gameId; }, 1100);
             });

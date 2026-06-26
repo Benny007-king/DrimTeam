@@ -1544,3 +1544,98 @@ html.a11y-contrast .btn { background: #ff0 !important; color: #000 !important; -
   .cookie-pop { flex-direction: column; align-items: stretch; text-align: center; }
   .cookie-pop__btns { justify-content: center; }
 }
+
+/* ============================================================
+   THEME TOGGLE (light / dark) — default dark, remembered via cookie
+   ============================================================ */
+.theme-toggle {
+  width: 40px; height: 40px; border-radius: 12px; flex: 0 0 auto;
+  display: grid; place-items: center; cursor: pointer;
+  background: var(--navy-800); border: 1px solid var(--navy-line);
+  color: var(--lime-400); transition: .15s;
+}
+.theme-toggle:hover { border-color: var(--lime-500); background: rgba(212,175,55,.08); }
+.theme-toggle svg { width: 20px; height: 20px; }
+.theme-toggle--float { position: fixed; bottom: 18px; inset-inline-start: 18px; z-index: 1000; box-shadow: var(--shadow); }
+
+/* ---- LIGHT THEME tokens (cream + gold, dark text) ---- */
+:root[data-theme="light"] {
+  --navy-900: #f4efe4;
+  --navy-800: #ffffff;
+  --navy-700: #efe8d8;
+  --navy-600: #e6dcc5;
+  --navy-card: #ffffff;
+  --navy-line: rgba(176, 132, 28, 0.30);
+  --lime-400: #9a6f12;   /* accent text — dark gold for AA contrast on light */
+  --lime-500: #c69a2b;
+  --lime-600: #a9791a;
+  --lime-glow: rgba(212, 175, 55, 0.28);
+  --text: #1b1712;
+  --text-muted: #5c5340;
+  --text-dim: #8a7f64;
+  --shadow: 0 18px 40px -20px rgba(90, 68, 12, 0.30);
+  --grad-navy: linear-gradient(180deg, #ffffff 0%, #f4efe4 100%);
+  --grad-gold-text: linear-gradient(180deg, #b8860b 0%, #9a6f12 60%, #7d5a0f 100%);
+}
+/* light-theme fixups for hardcoded dark-surface whites */
+:root[data-theme="light"] .site-header { background: rgba(255, 255, 255, 0.9); }
+:root[data-theme="light"] .nav__links a:hover,
+:root[data-theme="light"] .nav__links a.active { color: var(--text); }
+:root[data-theme="light"] .nav__toggle span { background: var(--text); }
+:root[data-theme="light"] .venue__name { color: var(--text); }
+/* (footer stays dark on purpose — branded band, looks intentional on light) */
+
+/* ============================================================
+   GAMES BOARD — activity graph (games.html)
+   ============================================================ */
+.activity-card {
+  background: var(--grad-navy); border: 1px solid var(--navy-line);
+  border-radius: var(--radius); padding: 22px 24px; margin-bottom: 26px;
+  box-shadow: var(--shadow);
+}
+.activity-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+.activity-head h2 { margin: 0; font-size: 1.15rem; }
+.activity-total { color: var(--lime-400); font-weight: 800; font-size: 1.05rem; }
+.activity-total span { color: var(--text-dim); font-weight: 600; font-size: .85rem; }
+.act-rows { display: flex; flex-direction: column; gap: 10px; }
+.act-row {
+  display: grid; grid-template-columns: 116px 1fr 2.5ch; align-items: center; gap: 14px;
+  background: none; border: none; width: 100%; text-align: start; cursor: pointer;
+  padding: 6px 8px; border-radius: 12px; transition: background .15s; color: inherit; font: inherit;
+}
+.act-row:hover { background: rgba(212,175,55,.06); }
+.act-row.is-active { background: rgba(212,175,55,.12); }
+.act-name { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.act-track { height: 16px; border-radius: var(--radius-pill); background: rgba(176,132,28,.14); overflow: hidden; }
+.act-fill { height: 100%; border-radius: var(--radius-pill); background: var(--grad-lime); width: 0; transition: width .7s cubic-bezier(.2,.8,.25,1); min-width: 2px; }
+.act-row.is-active .act-fill { box-shadow: 0 0 12px var(--lime-glow); }
+.act-val { font-weight: 800; color: var(--lime-400); text-align: end; font-variant-numeric: tabular-nums; }
+.activity-empty { color: var(--text-dim); text-align: center; padding: 12px; }
+.activity-hint { color: var(--text-dim); font-size: .82rem; margin: 14px 0 0; }
+@media (max-width: 560px) {
+  .activity-card { padding: 18px 16px; }
+  .act-row { grid-template-columns: 84px 1fr 2.5ch; gap: 10px; }
+}
+
+/* ============================================================
+   RATING SURVEY (rate.html) — stars
+   ============================================================ */
+.rate-card { max-width: 540px; margin: 0 auto; }
+.rate-stars { display: flex; justify-content: center; gap: 6px; margin: 18px 0 8px; }
+.rate-star {
+  background: none; border: none; cursor: pointer; padding: 4px;
+  font-size: 2.6rem; line-height: 1; color: var(--text-dim); transition: transform .1s, color .12s;
+}
+.rate-star:hover { transform: scale(1.12); }
+.rate-star.on { color: var(--lime-500); }
+.rate-label { text-align: center; color: var(--lime-400); font-weight: 700; min-height: 1.4em; }
+
+/* regular-players chips (admin recurring loop) */
+.reg-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.reg-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(212,175,55,.12); border: 1px solid var(--navy-line);
+  color: var(--text); border-radius: var(--radius-pill); padding: 5px 12px; font-size: .88rem; font-weight: 600;
+}
+.reg-chip__x { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: .9rem; line-height: 1; padding: 0; }
+.reg-chip__x:hover { color: #ff8a72; }

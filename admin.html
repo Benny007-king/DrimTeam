@@ -269,6 +269,19 @@
               <label>שליחת הודעה לקבוצת צ'אט</label>
               <select class="select" id="rChatGroup"><option value="">— ללא —</option></select>
             </div>
+
+            <!-- שחקנים קבועים — נרשמים אוטומטית בכל פתיחה -->
+            <div class="field">
+              <label>שחקנים קבועים (נרשמים אוטומטית בכל פתיחת משחק)</label>
+              <p class="hint" style="margin:-2px 0 8px;font-size:.8rem">השחקנים האלה יירשמו לבד בכל שבוע שהמשחק נפתח — בלי צורך לרשום ידנית.</p>
+              <div id="rRegList" class="reg-chips"></div>
+              <div class="field-row" style="align-items:flex-end;margin-top:8px">
+                <div class="field"><label>שם שחקן</label><input class="input" id="rRegName" placeholder="שם מלא" /></div>
+                <div class="field"><label>רמה (1-7, אופציונלי)</label><input class="input" id="rRegRate" type="number" min="1" max="7" placeholder="4" /></div>
+                <div class="field" style="display:flex;align-items:flex-end"><button class="btn btn--ghost btn--block" id="rRegAdd" type="button">הוסף שחקן קבוע</button></div>
+              </div>
+            </div>
+
             <div class="filters">
               <button class="btn btn--primary" id="rSave">שמירת לולאה</button>
               <button class="btn btn--ghost" id="rReset" type="button">נקה טופס</button>

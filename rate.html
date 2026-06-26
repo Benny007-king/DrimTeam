@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>דירוג מפגש — DrimTeam</title>
+  <meta name="robots" content="noindex" />
+  <link rel="icon" type="image/x-icon" href="favicon.ico" />
+  <meta name="theme-color" content="#0d0d0d" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Rubik:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="container nav">
+      <a href="index.html" class="logo"><span class="drim">Drim</span><span class="ball"></span><span class="team">Team</span></a>
+      <nav class="nav__links">
+        <a href="index.html">בית</a>
+        <a href="games.html">לוח משחקים</a>
+        <a href="tournaments.html">טורנירים</a>
+        <a href="gallery.html">גלריה</a>
+        <a href="podcast.html">פודקאסט</a>
+        <a href="schedule.html">מפת משחקים</a>
+        <a href="takanon.html">תקנון</a>
+      </nav>
+      <div class="nav__actions">
+        <a href="register.html" class="btn btn--ghost btn--sm">התחברות</a>
+        <button class="nav__toggle" aria-label="תפריט"><span></span><span></span><span></span></button>
+      </div>
+    </div>
+  </header>
+
+  <section class="section">
+    <div class="container">
+      <div class="panel rate-card">
+        <div class="section-head" style="margin-bottom:18px">
+          <span class="eyebrow">המשוב שלך חשוב לנו</span>
+          <h1 class="h-md">איך היה המפגש?</h1>
+          <p class="lead" id="rateSub">דרגו את המפגש ושתפו אותנו בהערות — נשמח לשמוע 💚</p>
+        </div>
+
+        <form onsubmit="return false">
+          <div class="rate-stars" id="rateStars" role="radiogroup" aria-label="דירוג מפגש">
+            <button type="button" class="rate-star" data-v="1" aria-label="1 כוכבים">★</button>
+            <button type="button" class="rate-star" data-v="2" aria-label="2 כוכבים">★</button>
+            <button type="button" class="rate-star" data-v="3" aria-label="3 כוכבים">★</button>
+            <button type="button" class="rate-star" data-v="4" aria-label="4 כוכבים">★</button>
+            <button type="button" class="rate-star" data-v="5" aria-label="5 כוכבים">★</button>
+          </div>
+          <p class="rate-label" id="rateLabel"></p>
+
+          <div class="field" style="margin-top:14px">
+            <label for="rNotes">הערות (אופציונלי)</label>
+            <textarea class="input" id="rNotes" rows="4" placeholder="מה אהבת? מה אפשר לשפר?"></textarea>
+          </div>
+
+          <button class="btn btn--primary btn--block btn--lg" id="rSend">שליחת המשוב בוואטסאפ 📲</button>
+          <p class="hint" style="color:var(--text-dim);margin-top:10px;font-size:.82rem">המשוב נשלח אלינו בוואטסאפ בלבד — לא מתפרסם בצ'אט האתר.</p>
+          <p id="rMsg" class="hint" style="margin-top:8px"></p>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-bottom" style="border:none">
+        <span>© 2026 DrimTeam — כל הזכויות שמורות</span>
+        <span><a href="games.html" class="link-lime">למשחקים הקרובים</a></span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="assets/js/db.js"></script>
+  <script src="assets/js/auth-ui.js"></script>
+  <script src="assets/js/chat.js"></script>
+  <script src="assets/js/main.js"></script>
+  <script>
+    (function () {
+      var ORG_WA = "972545543734"; // מספר הוואטסאפ של הארגון (054-5543734)
+      var LABELS = ["", "חלש", "בסדר", "טוב", "טוב מאוד", "מצוין! 🔥"];
+      var params = new URLSearchParams(location.search);
+      var gameId = params.get("game") || "";
+      var gTitle = "", gDate = "";
+      var rating = 0;
+
+      function paintStars() {
+        document.querySelectorAll(".rate-star").forEach(function (s) {
+          s.classList.toggle("on", parseInt(s.getAttribute("data-v"), 10) <= rating);
+        });
+        document.getElementById("rateLabel").textContent = LABELS[rating] || "";
+      }
+      document.getElementById("rateStars").addEventListener("click", function (e) {
+        var b = e.target.closest(".rate-star"); if (!b) return;
+        rating = parseInt(b.getAttribute("data-v"), 10); paintStars();
+      });
+
+      // טעינת כותרת המשחק (אם קיים) לכותרת המשוב
+      var ready = (window.DTDB && DTDB.load) ? DTDB.load() : Promise.resolve();
+      ready.then(function () {
+        if (gameId && window.DTDB) {
+          var g = (DTDB.get("games", []) || []).filter(function (x) { return x.id === gameId; })[0];
+          if (g) {
+            gTitle = g.title || ""; gDate = g.date || "";
+            document.getElementById("rateSub").textContent = "מדרגים את: " + gTitle + (gDate ? " · " + gDate : "");
+          }
+        }
+        // השלמה משם המשחק שנשמר מקומית בעת ההרשמה (אם המשחק כבר לא ברשימה הפעילה)
+        if (!gTitle) {
+          try {
+            var mine = JSON.parse(localStorage.getItem("dt_my_games") || "[]");
+            var hit = mine.filter(function (x) { return x.id === gameId; })[0];
+            if (hit) { gTitle = hit.title || ""; gDate = hit.date || ""; if (gTitle) document.getElementById("rateSub").textContent = "מדרגים את: " + gTitle + (gDate ? " · " + gDate : ""); }
+          } catch (e) {}
+        }
+      });
+
+      document.getElementById("rSend").addEventListener("click", function () {
+        var msg = document.getElementById("rMsg");
+        if (!rating) { msg.style.color = "#ff8a72"; msg.textContent = "בחרו דירוג (כוכבים) לפני השליחה."; return; }
+        var notes = (document.getElementById("rNotes").value || "").trim();
+        var stars = "★★★★★☆☆☆☆☆".slice(5 - rating, 10 - rating);
+        var text = "דירוג מפגש — DrimTeam ⚽\n" +
+          (gTitle ? gTitle + (gDate ? " · " + gDate : "") + "\n" : "") +
+          "דירוג: " + stars + " (" + rating + "/5)" +
+          (notes ? "\nהערות: " + notes : "");
+        // סימון שדורג (כדי לא להציג שוב את ההזמנה לדרג)
+        try {
+          var rated = JSON.parse(localStorage.getItem("dt_rated") || "[]");
+          if (gameId && rated.indexOf(gameId) === -1) { rated.push(gameId); localStorage.setItem("dt_rated", JSON.stringify(rated)); }
+        } catch (e) {}
+        msg.style.color = "var(--lime-400)"; msg.textContent = "תודה! פותח את וואטסאפ לשליחת המשוב…";
+        window.open("https://wa.me/" + ORG_WA + "?text=" + encodeURIComponent(text), "_blank", "noopener");
+      });
+    })();
+  </script>
+</body>
+</html>

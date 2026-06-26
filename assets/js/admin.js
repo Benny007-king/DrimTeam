@@ -267,6 +267,15 @@
      בכל טעינה/רענון של הפאנל ("בשנייה שהמשחק הקודם הסתיים").
      ============================================================ */
   var DOW_HE = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
+  var RREG = []; // שחקנים קבועים של הלולאה הנערכת כעת
+  function renderRRegList() {
+    var box = $("rRegList"); if (!box) return;
+    if (!RREG.length) { box.innerHTML = '<span class="muted" style="font-size:.84rem">אין עדיין שחקנים קבועים.</span>'; return; }
+    box.innerHTML = RREG.map(function (p, i) {
+      return '<span class="reg-chip">' + esc(p.name) + (p.rating ? ' · ' + esc(p.rating) : '') +
+        ' <button type="button" class="reg-chip__x" data-rreg-del="' + i + '" aria-label="הסר">✕</button></span>';
+    }).join("");
+  }
   function pad2(n) { return (n < 10 ? "0" : "") + n; }
   function localDateStr(d) { return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()); }
   function todayStr() { return localDateStr(new Date()); }
@@ -331,6 +340,12 @@
       var obj = gameFromTemplate(t, d);
       games.push(obj);
       announceNewGame(obj);
+      // רישום אוטומטי של השחקנים הקבועים של הלולאה
+      (t.regulars || []).forEach(function (p) {
+        if (p && p.name && DB.addRegistration) {
+          DB.addRegistration(obj.id, { name: p.name, rating: parseInt(p.rating, 10) || 4, phone: p.phone || "" }).catch(function () {});
+        }
+      });
       changed = true;
     });
     if (changed) DB.set("games", games);
@@ -384,6 +399,8 @@
     if ($("rCategory")) $("rCategory").value = "";
     if ($("rCity")) $("rCity").value = "ראשון לציון";
     rCategoryToggle();
+    RREG = []; renderRRegList();
+    if ($("rRegName")) $("rRegName").value = ""; if ($("rRegRate")) $("rRegRate").value = "";
     $("rFormTitle").textContent = "הגדרת לולאה חדשה";
     if ($("rCancelWrap")) $("rCancelWrap").style.display = "none";
   }
@@ -404,7 +421,8 @@
       format: ($("rFormat").value || "").trim(),
       chatGroupId: ($("rChatGroup") && $("rChatGroup").value) || "",
       active: existing ? existing.active !== false : true,
-      cancelled: existing ? (existing.cancelled || []) : []
+      cancelled: existing ? (existing.cancelled || []) : [],
+      regulars: RREG.slice()
     };
     if (id) { arr = arr.map(function (x) { return x.id === id ? t : x; }); }
     else { arr.push(t); }
@@ -448,6 +466,7 @@
     $("rMax").value = t.max || ""; $("rPrice").value = t.price || "";
     $("rManager").value = t.manager || ""; $("rSize").value = t.size || ""; $("rFormat").value = t.format || "";
     fillRecurGroups(); if ($("rChatGroup")) $("rChatGroup").value = t.chatGroupId || "";
+    RREG = (t.regulars || []).slice(); renderRRegList();
     $("rFormTitle").textContent = "עריכת לולאה";
     renderRecurWeeks(t);
     window.scrollTo(0, 0);
@@ -1040,7 +1059,7 @@
     document.querySelectorAll(".admin-nav-btn[data-view]").forEach(function (b) { b.classList.toggle("active", b.getAttribute("data-view") === name); });
     if (name === "dashboard") renderDashboard();
     if (name === "tournaments") { renderTournaments(); ensureTDateRow(); }
-    if (name === "games") { materializeRecurring(); renderGames(); fillGameGroups(); renderRecurring(); fillRecurGroups(); rCategoryToggle(); }
+    if (name === "games") { materializeRecurring(); renderGames(); fillGameGroups(); renderRecurring(); fillRecurGroups(); rCategoryToggle(); renderRRegList(); }
     if (name === "regs") { fillGameSelects(); renderRegs(); }
     if (name === "members") renderMembers();
     if (name === "teams") {
@@ -1194,7 +1213,7 @@
 
   /* event delegation */
   document.addEventListener("click", function (e) {
-    var t = e.target.closest("[data-view],[data-jump],[data-edit-t],[data-del-t],[data-edit-g],[data-del-g],[data-del-r],[data-move],[data-del-admin],[data-del-gal],[data-del-wa],[data-wa-group],[data-go-result],[data-edit-grp],[data-del-grp],[data-edit-r],[data-del-recur],[data-toggle-r],[data-week]");
+    var t = e.target.closest("[data-view],[data-jump],[data-edit-t],[data-del-t],[data-edit-g],[data-del-g],[data-del-r],[data-move],[data-del-admin],[data-del-gal],[data-del-wa],[data-wa-group],[data-go-result],[data-edit-grp],[data-del-grp],[data-edit-r],[data-del-recur],[data-toggle-r],[data-week],[data-rreg-del]");
     if (!t) return;
     var a;
     if (t.hasAttribute("data-view")) showView(t.getAttribute("data-view"));
@@ -1275,6 +1294,9 @@
     else if ((a = t.getAttribute("data-week"))) {
       toggleWeek(t.getAttribute("data-tid"), a);
     }
+    else if ((a = t.getAttribute("data-rreg-del"))) {
+      RREG.splice(parseInt(a, 10), 1); renderRRegList();
+    }
   });
 
   /* form buttons (wired after DOM ready) */
@@ -1302,6 +1324,12 @@
     if ($("rSave")) $("rSave").addEventListener("click", recurSave);
     if ($("rReset")) $("rReset").addEventListener("click", recurReset);
     if ($("rCategory")) $("rCategory").addEventListener("change", rCategoryToggle);
+    if ($("rRegAdd")) $("rRegAdd").addEventListener("click", function () {
+      var n = ($("rRegName").value || "").trim(); if (!n) return;
+      var rate = parseInt($("rRegRate").value, 10) || "";
+      RREG.push({ name: n, rating: rate || "" });
+      $("rRegName").value = ""; $("rRegRate").value = ""; renderRRegList();
+    });
     $("regGameSel").addEventListener("change", renderRegs);
     $("regAdd").addEventListener("click", regAdd);
     $("genTeams").addEventListener("click", function () { genTeams(false); });
@@ -1344,5 +1372,36 @@
     $("otpEnableBtn").addEventListener("click", otpEnableStart);
     $("otpConfirmBtn").addEventListener("click", otpConfirm);
     $("otpDisableBtn").addEventListener("click", otpDisable);
+  });
+})();
+
+/* ============================================================
+   Theme (light / dark) for the admin panel — shares the dt_theme cookie
+   with the public site so the choice is consistent.
+   ============================================================ */
+(function () {
+  "use strict";
+  var KEY = "dt_theme";
+  function getCookie(n) { var m = document.cookie.match("(?:^|; )" + n + "=([^;]*)"); return m ? decodeURIComponent(m[1]) : null; }
+  function setCookie(n, v) { document.cookie = n + "=" + encodeURIComponent(v) + ";path=/;max-age=" + (60 * 60 * 24 * 365) + ";SameSite=Lax"; }
+  function current() { return document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark"; }
+  function apply(t) { document.documentElement.setAttribute("data-theme", t === "light" ? "light" : "dark"); }
+  apply(getCookie(KEY) === "light" ? "light" : "dark");
+
+  var SUN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.4M12 19.6V22M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M2 12h2.4M19.6 12H22M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7" stroke-linecap="round"/></svg>';
+  var MOON = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.8A8.5 8.5 0 1 1 11.2 3a6.6 6.6 0 0 0 9.8 9.8z"/></svg>';
+  function label(t) { return (t === "light" ? MOON + " מצב כהה" : SUN + " מצב בהיר"); }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    var foot = document.querySelector(".admin-side__foot");
+    if (!foot || document.getElementById("themeToggleAdmin")) return;
+    var b = document.createElement("button");
+    b.className = "admin-nav-btn"; b.type = "button"; b.id = "themeToggleAdmin";
+    b.innerHTML = label(current());
+    b.addEventListener("click", function () {
+      var t = current() === "light" ? "dark" : "light";
+      apply(t); setCookie(KEY, t); b.innerHTML = label(t);
+    });
+    foot.insertBefore(b, foot.firstChild);
   });
 })();

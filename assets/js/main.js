@@ -1,3 +1,40 @@
+/* ============================================================
+   Theme (light / dark) — default dark, remembered via cookie
+   (so it persists even for logged-out visitors). Applied on every page.
+   ============================================================ */
+(function () {
+  "use strict";
+  var KEY = "dt_theme";
+  function getCookie(n) { var m = document.cookie.match("(?:^|; )" + n + "=([^;]*)"); return m ? decodeURIComponent(m[1]) : null; }
+  function setCookie(n, v) { document.cookie = n + "=" + encodeURIComponent(v) + ";path=/;max-age=" + (60 * 60 * 24 * 365) + ";SameSite=Lax"; }
+  function current() { return document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark"; }
+  function apply(t) { document.documentElement.setAttribute("data-theme", t === "light" ? "light" : "dark"); }
+  // ברירת מחדל חשוך; נשמרת בחירת המשתמש בקוקי
+  apply(getCookie(KEY) === "light" ? "light" : "dark");
+
+  var SUN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.4M12 19.6V22M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M2 12h2.4M19.6 12H22M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7" stroke-linecap="round"/></svg>';
+  var MOON = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 12.8A8.5 8.5 0 1 1 11.2 3a6.6 6.6 0 0 0 9.8 9.8z"/></svg>';
+  function icon(t) { return t === "light" ? MOON : SUN; } // מציג את היעד: כהה→שמש (מעבר לבהיר), בהיר→ירח
+
+  function mount() {
+    if (document.querySelector(".theme-toggle")) return;
+    var b = document.createElement("button");
+    b.className = "theme-toggle"; b.type = "button";
+    b.setAttribute("aria-label", "מצב בהיר / כהה");
+    b.title = "מצב בהיר / כהה";
+    b.innerHTML = icon(current());
+    b.addEventListener("click", function () {
+      var t = current() === "light" ? "dark" : "light";
+      apply(t); setCookie(KEY, t); b.innerHTML = icon(t);
+    });
+    var slot = document.querySelector(".nav__actions");
+    if (slot) slot.insertBefore(b, slot.firstChild);
+    else { b.classList.add("theme-toggle--float"); document.body.appendChild(b); }
+  }
+  if (document.readyState !== "loading") mount();
+  else document.addEventListener("DOMContentLoaded", mount);
+})();
+
 /* DrimTeam — interactions */
 (function () {
   // Mobile nav toggle
@@ -143,4 +180,55 @@
   requestAnimationFrame(function () { pop.classList.add("show"); });
   pop.querySelector('[data-cookie="accept"]').addEventListener("click", function () { decide("accept"); });
   pop.querySelector('[data-cookie="decline"]').addEventListener("click", function () { decide("decline"); });
+})();
+
+/* ============================================================
+   Post-meeting rating prompt — invites participants of a game that
+   just ended to rate it (sent to WhatsApp only, never the site chat).
+   Games the user registered for are remembered locally (dt_my_games).
+   ============================================================ */
+(function () {
+  "use strict";
+  function lsGet(k, d) { try { return JSON.parse(localStorage.getItem(k)) || d; } catch (e) { return d; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  function todayStr() { return new Date().toISOString().slice(0, 10); }
+  function endMs(g) { return g.endTime ? new Date(g.date + "T" + g.endTime + ":00").getTime() : new Date(g.date + "T23:59:00").getTime(); }
+  function ended(g) { return Date.now() > endMs(g); }
+
+  var mine = lsGet("dt_my_games", []);
+  if (!mine.length) return;
+  var rated = lsGet("dt_rated", []);
+  var dismissed = lsGet("dt_rate_dismiss", []);
+  var WINDOW = 3 * 24 * 60 * 60 * 1000; // מציעים לדרג עד 3 ימים אחרי המפגש
+  var now = Date.now();
+  var cand = mine.filter(function (g) {
+    return g && g.date && ended(g) && (now - endMs(g)) < WINDOW &&
+      rated.indexOf(g.id) === -1 && dismissed.indexOf(g.id) === -1;
+  });
+  if (!cand.length) return;
+  cand.sort(function (a, b) { return endMs(b) - endMs(a); });
+  var g = cand[0];
+
+  function show() {
+    if (document.querySelector(".survey-pop")) return;
+    var pop = document.createElement("div");
+    pop.className = "cookie-pop survey-pop";
+    pop.setAttribute("role", "dialog"); pop.setAttribute("aria-label", "דירוג מפגש");
+    pop.innerHTML =
+      '<div class="cookie-pop__text"><strong>⭐ איך היה המפגש?</strong>' +
+      '<span>' + (g.title ? (g.title + " — ") : "") + 'נשמח לדירוג קצר. המשוב נשלח אלינו בוואטסאפ בלבד.</span></div>' +
+      '<div class="cookie-pop__btns">' +
+      '<a class="btn btn--primary btn--sm" href="rate.html?game=' + encodeURIComponent(g.id) + '">לדירוג ←</a>' +
+      '<button type="button" class="btn btn--ghost btn--sm" data-skip>לא עכשיו</button></div>';
+    // לא להתנגש עם פופאפ העוגיות (אם מוצג)
+    if (document.querySelector(".cookie-pop:not(.survey-pop)")) pop.style.bottom = "112px";
+    document.body.appendChild(pop);
+    requestAnimationFrame(function () { pop.classList.add("show"); });
+    pop.querySelector("[data-skip]").addEventListener("click", function () {
+      dismissed.push(g.id); lsSet("dt_rate_dismiss", dismissed);
+      pop.classList.remove("show");
+      setTimeout(function () { if (pop.parentNode) pop.parentNode.removeChild(pop); }, 350);
+    });
+  }
+  setTimeout(show, 1600);
 })();
