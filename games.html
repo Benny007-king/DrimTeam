@@ -53,9 +53,6 @@
       <!-- כרטיסי ענפי ספורט (לאירועי ספורט) -->
       <div class="sport-grid" id="sportCards" style="display:none"></div>
 
-      <!-- גרף פעילות לפי עיר (לחיץ — מסנן את הרשימה) -->
-      <div class="activity-card" id="activityCard" style="display:none"></div>
-
       <div class="toolbar" id="gamesToolbar">
         <div class="filters">
           <select class="select" data-filter-city aria-label="עיר">
@@ -151,50 +148,7 @@
           if (!cards.length) empty.textContent = "אין כרגע פעילויות פתוחות בקטגוריה הזו. עקבו אחרינו — נפתחות חדשות כל שבוע! ⚽";
           else if (!shown) empty.textContent = "לא נמצאו פעילויות שתואמות את הסינון.";
         }
-        renderActivity();
       }
-
-      // ---- גרף פעילות לפי עיר (תצוגת תכלית) ----
-      function renderActivity() {
-        var card = document.getElementById("activityCard");
-        if (!card || SPORT_MODE) { if (card) card.style.display = "none"; return; }
-        var counts = {};
-        LAST_GAMES.forEach(function (g) {
-          if (CATP && (g.category || "") !== CATP) return;
-          if (SPORTP && (g.sport || "") !== SPORTP) return;
-          if (g.status === "cancelled") return;
-          var c = g.city || "אחר"; counts[c] = (counts[c] || 0) + 1;
-        });
-        var cities = Object.keys(counts);
-        if (!cities.length) { card.style.display = "none"; return; }
-        card.style.display = "";
-        var total = 0, maxC = 0;
-        cities.forEach(function (c) { total += counts[c]; if (counts[c] > maxC) maxC = counts[c]; });
-        cities.sort(function (a, b) { return counts[b] - counts[a]; });
-        var cur = citySel ? citySel.value : "";
-        var rows = cities.map(function (c) {
-          var pct = Math.max(Math.round(counts[c] / maxC * 100), 6);
-          var active = cur === c;
-          return '<button type="button" class="act-row' + (active ? " is-active" : "") + '" data-actcity="' + esc(c) + '">' +
-            '<span class="act-name">' + esc(c) + '</span>' +
-            '<span class="act-track"><span class="act-fill" style="width:' + pct + '%"></span></span>' +
-            '<span class="act-val">' + counts[c] + '</span></button>';
-        }).join("");
-        card.innerHTML =
-          '<div class="activity-head"><h2>📊 פעילות לפי עיר</h2>' +
-          '<span class="activity-total">' + total + ' <span>משחקים קרובים</span></span></div>' +
-          '<div class="act-rows">' + rows + '</div>' +
-          '<p class="activity-hint">לחצו על עיר כדי לסנן את המשחקים שלה' + (cur ? ' · <a href="#" id="actClear" class="link-lime">ניקוי סינון</a>' : "") + '</p>';
-      }
-      document.addEventListener("click", function (e) {
-        var clear = e.target.closest("#actClear");
-        if (clear) { e.preventDefault(); if (citySel) { citySel.value = ""; applyFilters(); } return; }
-        var row = e.target.closest(".act-row[data-actcity]");
-        if (!row || !citySel) return;
-        var c = row.getAttribute("data-actcity");
-        citySel.value = (citySel.value === c) ? "" : c; // לחיצה חוזרת מבטלת
-        applyFilters();
-      });
       // קביעת ערכים מה-URL — רץ פעם אחת
       function initFilters() {
         citySel = document.querySelector("[data-filter-city]");

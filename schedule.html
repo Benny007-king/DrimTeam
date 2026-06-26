@@ -49,6 +49,9 @@
         <p class="lead">כל הפעילויות הקרובות במקום אחד — בחרו תצוגה שבועית או חודשית, וסננו לפי עיר.</p>
       </div>
 
+      <!-- גרף פעילות לפי עיר (לחיץ — מסנן את הלוח) -->
+      <div class="activity-card" id="activityCard" style="display:none"></div>
+
       <div class="toolbar cal-toolbar">
         <div class="cal-nav">
           <button class="cal-navbtn" id="calPrev" aria-label="הקודם">‹</button>
@@ -340,10 +343,50 @@
         emptyEl.style.display = "none";
       }
 
+      /* ---------- activity graph (תצוגת תכלית — פעילות לפי עיר) ---------- */
+      function renderActivity(all) {
+        var card = document.getElementById("activityCard"); if (!card) return;
+        var counts = {};
+        all.forEach(function (e) {
+          if (e.date < todayYmd) return;        // רק פעילויות קרובות
+          if (e.cancelled) return;
+          var c = e.city || "אחר"; counts[c] = (counts[c] || 0) + 1;
+        });
+        var cities = Object.keys(counts);
+        if (!cities.length) { card.style.display = "none"; return; }
+        card.style.display = "";
+        var total = 0, maxC = 0;
+        cities.forEach(function (c) { total += counts[c]; if (counts[c] > maxC) maxC = counts[c]; });
+        cities.sort(function (a, b) { return counts[b] - counts[a]; });
+        var bars = cities.map(function (c) {
+          var h = Math.max(Math.round(counts[c] / maxC * 104), 6);
+          var active = cityVal === c;
+          return '<button type="button" class="act-bar' + (active ? " is-active" : "") + '" data-actcity="' + esc(c) + '" title="' + esc(c) + '">' +
+            '<span class="act-bar__val">' + counts[c] + '</span>' +
+            '<span class="act-bar__col" style="height:' + h + 'px"></span>' +
+            '<span class="act-bar__name">' + esc(c) + '</span></button>';
+        }).join("");
+        card.innerHTML =
+          '<div class="activity-head"><h2>📊 פעילות לפי עיר</h2>' +
+          '<span class="activity-total">' + total + ' <span>פעילויות קרובות</span></span></div>' +
+          '<div class="act-bars' + (cityVal ? " has-filter" : "") + '">' + bars + '</div>' +
+          '<p class="activity-hint">לחצו על עיר כדי לסנן את הלוח' + (cityVal ? ' · <a href="#" id="actClear" class="link-lime">ניקוי סינון</a>' : "") + '</p>';
+      }
+      document.addEventListener("click", function (e) {
+        var clear = e.target.closest("#actClear");
+        if (clear) { e.preventDefault(); cityVal = ""; if (cityFilter) cityFilter.value = ""; render(); return; }
+        var bar = e.target.closest(".act-bar[data-actcity]"); if (!bar) return;
+        var c = bar.getAttribute("data-actcity");
+        cityVal = (cityVal === c) ? "" : c;       // לחיצה חוזרת מבטלת
+        if (cityFilter) cityFilter.value = cityVal;
+        render();
+      });
+
       function render() {
         var all = buildEvents();
         fillCities(all);
         todayYmd = ymd(new Date());
+        renderActivity(all);
         if (range === "week") renderWeek(all); else renderMonth(all);
       }
 

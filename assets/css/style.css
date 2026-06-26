@@ -1586,35 +1586,48 @@ html.a11y-contrast .btn { background: #ff0 !important; color: #000 !important; -
 /* (footer stays dark on purpose — branded band, looks intentional on light) */
 
 /* ============================================================
-   GAMES BOARD — activity graph (games.html)
+   ACTIVITY GRAPH — games map (schedule.html) — vertical bar chart
    ============================================================ */
 .activity-card {
   background: var(--grad-navy); border: 1px solid var(--navy-line);
-  border-radius: var(--radius); padding: 22px 24px; margin-bottom: 26px;
+  border-radius: var(--radius); padding: 20px 22px 16px; margin-bottom: 22px;
   box-shadow: var(--shadow);
 }
-.activity-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
-.activity-head h2 { margin: 0; font-size: 1.15rem; }
+.activity-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 6px; }
+.activity-head h2 { margin: 0; font-size: 1.1rem; }
 .activity-total { color: var(--lime-400); font-weight: 800; font-size: 1.05rem; }
-.activity-total span { color: var(--text-dim); font-weight: 600; font-size: .85rem; }
-.act-rows { display: flex; flex-direction: column; gap: 10px; }
-.act-row {
-  display: grid; grid-template-columns: 116px 1fr 2.5ch; align-items: center; gap: 14px;
-  background: none; border: none; width: 100%; text-align: start; cursor: pointer;
-  padding: 6px 8px; border-radius: 12px; transition: background .15s; color: inherit; font: inherit;
+.activity-total span { color: var(--text-dim); font-weight: 600; font-size: .82rem; }
+.activity-hint { color: var(--text-dim); font-size: .8rem; margin: 6px 0 0; }
+
+.act-bars {
+  display: flex; align-items: flex-end; gap: 10px;
+  padding: 16px 4px 0; overflow-x: auto;
 }
-.act-row:hover { background: rgba(212,175,55,.06); }
-.act-row.is-active { background: rgba(212,175,55,.12); }
-.act-name { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.act-track { height: 16px; border-radius: var(--radius-pill); background: rgba(176,132,28,.14); overflow: hidden; }
-.act-fill { height: 100%; border-radius: var(--radius-pill); background: var(--grad-lime); width: 0; transition: width .7s cubic-bezier(.2,.8,.25,1); min-width: 2px; }
-.act-row.is-active .act-fill { box-shadow: 0 0 12px var(--lime-glow); }
-.act-val { font-weight: 800; color: var(--lime-400); text-align: end; font-variant-numeric: tabular-nums; }
-.activity-empty { color: var(--text-dim); text-align: center; padding: 12px; }
-.activity-hint { color: var(--text-dim); font-size: .82rem; margin: 14px 0 0; }
+.act-bar {
+  flex: 1 1 0; min-width: 46px; background: none; border: none; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 7px;
+  color: inherit; font: inherit; padding: 0;
+}
+.act-bar__val { font-weight: 800; color: var(--lime-400); font-size: .9rem; font-variant-numeric: tabular-nums; }
+.act-bar__col {
+  width: 100%; max-width: 44px; min-height: 6px; border-radius: 9px 9px 4px 4px;
+  background: var(--grad-lime); box-shadow: inset 0 -2px 6px rgba(0,0,0,.12);
+  transition: height .7s cubic-bezier(.2,.8,.25,1), filter .15s, transform .15s;
+}
+.act-bar__name {
+  font-size: .76rem; font-weight: 600; color: var(--text-muted); text-align: center;
+  max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.act-bar:hover .act-bar__col { filter: brightness(1.08); transform: translateY(-2px); }
+.act-bars.has-filter .act-bar:not(.is-active) .act-bar__col { opacity: .4; }
+.act-bar.is-active .act-bar__col { box-shadow: 0 0 14px var(--lime-glow); }
+.act-bar.is-active .act-bar__name { color: var(--lime-400); }
+.activity-empty { color: var(--text-dim); text-align: center; padding: 16px; }
 @media (max-width: 560px) {
-  .activity-card { padding: 18px 16px; }
-  .act-row { grid-template-columns: 84px 1fr 2.5ch; gap: 10px; }
+  .activity-card { padding: 16px 14px 12px; }
+  .act-bars { gap: 7px; }
+  .act-bar { min-width: 40px; }
+  .act-bar__name { font-size: .68rem; }
 }
 
 /* ============================================================
