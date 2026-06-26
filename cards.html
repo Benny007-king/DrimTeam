@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>כרטיסיות — DrimTeam</title>
+  <meta name="description" content="כרטיסיות משחק של DrimTeam — 10 ניקובים, חוסכות ומשתלמות. נקבו במקום לשלם בכל משחק." />
+  <link rel="canonical" href="https://drimteam.co.il/cards.html" />
+  <meta name="theme-color" content="#0d0d0d" />
+  <link rel="icon" type="image/x-icon" href="favicon.ico" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Rubik:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="container nav">
+      <a href="index.html" class="logo"><span class="drim">Drim</span><span class="ball"></span><span class="team">Team</span></a>
+      <nav class="nav__links">
+        <a href="index.html">בית</a>
+        <a href="games.html">לוח משחקים</a>
+        <a href="tournaments.html">טורנירים</a>
+        <a href="gallery.html">גלריה</a>
+        <a href="podcast.html">פודקאסט</a>
+        <a href="schedule.html">מפת משחקים</a>
+        <a href="takanon.html">תקנון</a>
+      </nav>
+      <div class="nav__actions">
+        <a href="register.html" class="btn btn--ghost btn--sm">התחברות</a>
+        <button class="nav__toggle" aria-label="תפריט"><span></span><span></span><span></span></button>
+      </div>
+    </div>
+  </header>
+
+  <section class="section">
+    <div class="container">
+      <div class="section-head" style="margin-bottom:28px">
+        <span class="eyebrow">חוסכים ומשחקים</span>
+        <h1 class="h-lg">כרטיסיות משחק 🎟️</h1>
+        <p class="lead">כרטיסייה = 10 משחקים. במקום לשלם בכל פעם — מנקבים. בחרו את הכרטיסייה שמתאימה לסוג המשחקים שלכם.</p>
+        <p id="balanceLine" class="eyebrow" style="margin-top:8px;color:var(--lime-400)"></p>
+      </div>
+
+      <div class="cards-grid">
+        <div class="punch-card">
+          <div class="punch-card__badge">10 ניקובים</div>
+          <h2 class="h-md">כרטיסיית ₪40</h2>
+          <p class="muted">למשחקים שמחירם ₪40</p>
+          <div class="punch-card__price"><strong>₪400</strong><span>₪40 למשחק</span></div>
+          <ul class="bullets">
+            <li>10 כניסות למשחקים בני ₪40</li>
+            <li>ניקוב מהיר בהרשמה — בלי תשלום בכל פעם</li>
+            <li>תזכורת לחידוש כשנשארים 2 ניקובים</li>
+          </ul>
+          <a href="checkout.html?card=40" class="btn btn--primary btn--block btn--lg">רכישה — ₪400</a>
+        </div>
+
+        <div class="punch-card">
+          <div class="punch-card__badge">10 ניקובים</div>
+          <h2 class="h-md">כרטיסיית ₪45</h2>
+          <p class="muted">למשחקים שמחירם ₪45</p>
+          <div class="punch-card__price"><strong>₪450</strong><span>₪45 למשחק</span></div>
+          <ul class="bullets">
+            <li>10 כניסות למשחקים בני ₪45</li>
+            <li>ניקוב מהיר בהרשמה — בלי תשלום בכל פעם</li>
+            <li>תזכורת לחידוש כשנשארים 2 ניקובים</li>
+          </ul>
+          <a href="checkout.html?card=45" class="btn btn--primary btn--block btn--lg">רכישה — ₪450</a>
+        </div>
+      </div>
+
+      <div class="note" style="margin-top:24px">ℹ️ הכרטיסייה מתאימה לסוג המשחק לפי מחירו: כרטיסיית ₪40 תקפה למשחקי ₪40, וכרטיסיית ₪45 למשחקי ₪45. בהרשמה למשחק תוצג אפשרות ניקוב רק אם יש לכם כרטיסייה תואמת.</div>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-bottom" style="border:none">
+        <span>© 2026 DrimTeam — כל הזכויות שמורות</span>
+        <span><a href="games.html" class="link-lime">למשחקים הקרובים</a></span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="assets/js/db.js"></script>
+  <script src="assets/js/auth-ui.js"></script>
+  <script src="assets/js/chat.js"></script>
+  <script src="assets/js/main.js"></script>
+  <script>
+    (function () {
+      var ready = (window.DTDB && DTDB.load) ? DTDB.load() : Promise.resolve();
+      ready.then(function () {
+        if (!(window.DTDB && DTDB.currentUid && DTDB.currentUid() && DTDB.getPunches)) return;
+        DTDB.getPunches().then(function (p) {
+          var parts = [];
+          if (p["40"]) parts.push("כרטיסיית ₪40: " + p["40"] + " ניקובים");
+          if (p["45"]) parts.push("כרטיסיית ₪45: " + p["45"] + " ניקובים");
+          var el = document.getElementById("balanceLine");
+          if (el && parts.length) el.textContent = "היתרה שלך — " + parts.join(" · ");
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

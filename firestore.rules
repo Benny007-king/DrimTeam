@@ -39,7 +39,7 @@ service cloud.firestore {
     match /members/{uid} {
       allow read: if request.auth != null && (request.auth.uid == uid || isAdmin());
       allow create, update: if request.auth != null && request.auth.uid == uid
-        && request.resource.data.keys().hasOnly(['uid','name','phone','email','city','idNumber','sport','termsAccepted','health','photo','rating','createdAt']);
+        && request.resource.data.keys().hasOnly(['uid','name','phone','email','city','idNumber','sport','termsAccepted','health','photo','rating','createdAt','punches']);
       allow delete: if request.auth != null && (request.auth.uid == uid || isAdmin());
     }
 

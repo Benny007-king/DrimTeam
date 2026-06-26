@@ -59,10 +59,29 @@
   <script>
     var m = location.search.match(/order=([^&]+)/);
     if (m) document.getElementById("orderNo").textContent = decodeURIComponent(m[1]);
+    var qp = new URLSearchParams(location.search);
     // תשלום במזומן — שינוי הכותרת בהתאם
-    if (/[?&]cash=1/.test(location.search)) {
+    if (qp.get("cash") === "1") {
       document.getElementById("tyTitle").textContent = "ההרשמה נקלטה — נתראה במגרש! ⚽";
-      document.getElementById("tyLead").innerHTML = '💵 בחרת לשלם במזומן — התשלום יתבצע במגרש לפני המשחק. מספר הזמנה: <span class="text-lime" id="orderNo">' + (m ? decodeURIComponent(m[1]) : "—") + '</span>';
+      document.getElementById("tyLead").innerHTML = '💵 בחרת לשלם במזומן — התשלום יתבצע במגרש לפני המשחק. מספר הזמנה: <span class="text-lime">' + (m ? decodeURIComponent(m[1]) : "—") + '</span>';
+    }
+    // ניקוב כרטיסייה — הצגת יתרת הניקובים (אדום אם נשארו ≤2)
+    if (qp.get("punch") === "1") {
+      var left = parseInt(qp.get("left"), 10); if (isNaN(left)) left = null;
+      var type = qp.get("type") || "";
+      document.getElementById("tyTitle").textContent = "ניקבת כרטיסייה — נתראה במגרש! ⚽";
+      var lead = '🎟️ ההרשמה הושלמה בניקוב כרטיסייה' + (type ? " (₪" + type + ")" : "") + ".";
+      if (left != null) {
+        var low = left <= 2;
+        lead += ' נותרו לך <strong>' + left + '</strong> ניקובים' +
+          (low ? ' — <span style="color:#ff6b5e;font-weight:800">מומלץ לחדש כרטיסייה! <a href="cards.html" class="link-lime">לרכישה ←</a></span>' : '') + '.';
+      }
+      document.getElementById("tyLead").innerHTML = lead;
+    }
+    // רכישת כרטיסייה
+    if (qp.get("card")) {
+      document.getElementById("tyTitle").textContent = "הכרטיסייה נרכשה — מוכנים לשחק! 🎟️";
+      document.getElementById("tyLead").innerHTML = '✅ נוספו לך 10 ניקובים בכרטיסיית ₪' + qp.get("card") + '. בהרשמה למשחק תואם יופיע כפתור ניקוב במקום תשלום.';
     }
     // כפתור וואטסאפ — אישור + תזכורת למספר של המשתמש (לחיצה ושליחה)
     (function () {

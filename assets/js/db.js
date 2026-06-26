@@ -240,6 +240,28 @@
       }
       return Promise.resolve(null);
     },
+
+    /* ---- punch cards (כרטיסיות) — stored on the member doc as punches:{ "40":n,"45":n } ---- */
+    getPunches: function () {
+      return DTDB.getMyMember().then(function (m) { return (m && m.punches) || {}; });
+    },
+    addPunches: function (type, n) {
+      type = String(type);
+      return DTDB.getMyMember().then(function (m) {
+        var p = (m && m.punches) ? Object.assign({}, m.punches) : {};
+        p[type] = (parseInt(p[type], 10) || 0) + (n || 0);
+        return DTDB.saveMember({ punches: p }).then(function () { return p[type]; });
+      });
+    },
+    usePunch: function (type) {
+      type = String(type);
+      return DTDB.getMyMember().then(function (m) {
+        var p = (m && m.punches) ? Object.assign({}, m.punches) : {};
+        if (!(parseInt(p[type], 10) > 0)) { var e = new Error("אין ניקובים בכרטיסייה"); e.code = "no-punches"; throw e; }
+        p[type] = parseInt(p[type], 10) - 1;
+        return DTDB.saveMember({ punches: p }).then(function () { return p[type]; });
+      });
+    },
     saveHealth: function (data) {
       if (fdb && fauth && fauth.currentUser) {
         return fdb.collection("members").doc(fauth.currentUser.uid).set({

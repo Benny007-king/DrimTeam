@@ -48,6 +48,7 @@
         <h1 class="h-lg">לוח המשחקים הקרובים</h1>
         <p class="lead">בחרו עיר ומשחק — ושמרו מקום במגרש. המשחקים מתעדכנים בזמן אמת מהמערכת.</p>
         <p id="catHead" class="eyebrow" style="margin-top:6px;color:var(--lime-400)"></p>
+        <div style="margin-top:14px"><a href="cards.html" class="btn btn--ghost btn--sm">🎟️ רכישת כרטיסייה (10 משחקים)</a></div>
       </div>
 
       <!-- כרטיסי ענפי ספורט (לאירועי ספורט) -->
@@ -179,20 +180,45 @@
       }
       initFilters();
 
+      // משחקי לולאה עתידיים שטרם נפתחו (המימוש קורה רק בפאנל הניהול) —
+      // מוצגים כ"ייפתח בקרוב" כדי שהלוח יציג את כל משחקי הלולאה גם לפי עיר.
+      function loopPlaceholders(existing) {
+        var temps = (window.DTDB ? DTDB.get("recurring", []) : []) || [];
+        if (!temps.length) return [];
+        function pad(n) { return (n < 10 ? "0" : "") + n; }
+        function ymd(d) { return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+        var todayD = new Date(); todayD.setHours(0, 0, 0, 0); var todayY = ymd(todayD);
+        function occEnded(dy, endTime) { if (endTime) return Date.now() > new Date(dy + "T" + endTime + ":00").getTime(); return dy < todayY; }
+        var out = [];
+        temps.forEach(function (t) {
+          if (t.active === false) return;
+          if (existing.some(function (g) { return g.recurringId === t.id; })) return; // כבר יש משחק חי
+          var d = new Date(todayD);
+          var diff = (((parseInt(t.dayOfWeek, 10) || 0) - d.getDay()) % 7 + 7) % 7;
+          d.setDate(d.getDate() + diff);
+          var cancelled = t.cancelled || [], guard = 0;
+          while (guard++ < 60 && (cancelled.indexOf(ymd(d)) !== -1 || occEnded(ymd(d), t.endTime))) d.setDate(d.getDate() + 7);
+          if (guard >= 60) return;
+          out.push({ placeholder: true, recurringId: t.id, title: t.title || "משחק", category: t.category || "", sport: (t.category === "אירועי ספורט" ? (t.sport || "") : ""), city: t.city || "", venue: t.venue || "", date: ymd(d), time: t.time || "", endTime: t.endTime || "", size: t.size || "", manager: t.manager || "", max: t.max || 0 });
+        });
+        return out;
+      }
+
       function render() {
         if (SPORT_MODE) { renderSportCards(); return; }
         var games = (window.DTDB ? DTDB.get("games", []) : []) || [];
-        var todayStr = new Date().toISOString().slice(0, 10);
         // משחקים שהסתיימו (כולל לפי שעת סיום) — מוסתרים לגמרי (נשמרים ב-DB לארכיון)
         games = games.filter(function (g) { return !(window.DTDB && DTDB.isGameEnded && DTDB.isGameEnded(g)); });
         games = games.slice().sort(function (a, b) { return (a.date || "").localeCompare(b.date || ""); });
-        LAST_GAMES = games;
+        LAST_GAMES = games; // משחקים אמיתיים בלבד (לטובת זכירת הרשמות)
+        var display = games.concat(loopPlaceholders(games)).sort(function (a, b) { return (a.date || "").localeCompare(b.date || ""); });
         var list = document.getElementById("gamesList"), empty = document.getElementById("gamesEmpty");
-        if (!games.length) { list.innerHTML = ""; applyFilters(); return; }
+        if (!display.length) { list.innerHTML = ""; applyFilters(); return; }
         empty.style.display = "none";
-        list.innerHTML = games.map(function (g) {
+        list.innerHTML = display.map(function (g) {
           var d = dpart(g.date);
-          return '<article class="game-card" data-city="' + esc(g.city) + '" data-format="' + esc(g.format) + '" data-category="' + esc(g.category || "") + '" data-sport="' + esc(g.sport || "") + '">' +
+          var gid = g.placeholder ? ("ph_" + g.recurringId) : g.id;
+          return '<article class="game-card' + (g.placeholder ? " game-card--soon" : "") + '" data-city="' + esc(g.city) + '" data-format="' + esc(g.format) + '" data-category="' + esc(g.category || "") + '" data-sport="' + esc(g.sport || "") + '">' +
             '<div class="game-date"><div class="day">' + esc(d.day) + '</div><div class="mon">' + esc(d.mon) + '</div></div>' +
             '<div class="game-info"><h3>' + esc(g.title || "משחק") + '</h3><div class="game-meta">' +
             '<span>🗓️ ' + esc(g.date || "") + " " + esc(g.time || "") + (g.endTime ? "–" + esc(g.endTime) : "") + "</span>" +
@@ -201,17 +227,25 @@
             (g.size ? '<span>' + esc(g.size) + "</span>" : "") +
             (g.manager ? '<span>אחראי משחק: ' + esc(g.manager) + "</span>" : "") +
             "</div></div>" +
-            '<div class="game-cta" data-game="' + esc(g.id) + '" data-max="' + (parseInt(g.max, 10) || 0) + '">' +
+            '<div class="game-cta" data-game="' + esc(gid) + '" data-max="' + (parseInt(g.max, 10) || 0) + '">' +
             '<div class="game-reg"></div></div>' +
             "</article>";
         }).join("");
 
         // ספירת נרשמים + מקומות פנויים / רשימת המתנה — מתחת לכפתור בלבד
-        games.forEach(function (g) {
-          var cta = list.querySelector('.game-cta[data-game="' + g.id + '"]');
+        display.forEach(function (g) {
+          var gid = g.placeholder ? ("ph_" + g.recurringId) : g.id;
+          var cta = list.querySelector('.game-cta[data-game="' + gid + '"]');
           if (!cta) return;
           var max = parseInt(g.max, 10) || 0;
           var regDiv = cta.querySelector(".game-reg");
+          // משחק לולאה שטרם נפתח — "ייפתח בקרוב", ללא הרשמה
+          if (g.placeholder) {
+            cta.closest(".game-card").classList.add("game-card--ended");
+            regDiv.innerHTML = '<span class="badge badge--low">ייפתח בקרוב</span>' +
+              '<div class="muted" style="font-size:.8rem;margin-top:8px">טרם נפתח להרשמה</div>';
+            return;
+          }
           // משחק מבוטל (שבוע שבוטל בלולאה) — מסומן "מבוטל", ללא הרשמה
           if (g.status === "cancelled") {
             cta.closest(".game-card").classList.add("game-card--ended");

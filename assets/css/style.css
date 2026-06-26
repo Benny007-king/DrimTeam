@@ -1583,6 +1583,18 @@ html.a11y-contrast .btn { background: #ff0 !important; color: #000 !important; -
 :root[data-theme="light"] .nav__links a.active { color: var(--text); }
 :root[data-theme="light"] .nav__toggle span { background: var(--text); }
 :root[data-theme="light"] .venue__name { color: var(--text); }
+:root[data-theme="light"] .logo { color: var(--text); }
+/* form fields: white surface + dark text (were white-on-dark) */
+:root[data-theme="light"] .input,
+:root[data-theme="light"] .select,
+:root[data-theme="light"] .textarea { background: #fff; color: var(--text); }
+:root[data-theme="light"] .input::placeholder,
+:root[data-theme="light"] .textarea::placeholder { color: var(--text-dim); }
+/* calendar event blocks/chips had hardcoded white text */
+:root[data-theme="light"] .cal-ev,
+:root[data-theme="light"] .cal-chip--game { color: var(--text); }
+:root[data-theme="light"] .dt-chat-bubble { background: #fff; }
+:root[data-theme="light"] .cookie-pop__text strong { color: var(--text); }
 /* (footer stays dark on purpose — branded band, looks intentional on light) */
 
 /* ============================================================
@@ -1642,6 +1654,35 @@ html.a11y-contrast .btn { background: #ff0 !important; color: #000 !important; -
 .rate-star:hover { transform: scale(1.12); }
 .rate-star.on { color: var(--lime-500); }
 .rate-label { text-align: center; color: var(--lime-400); font-weight: 700; min-height: 1.4em; }
+
+/* punch cards (cards.html) */
+.cards-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+.punch-card {
+  position: relative; background: var(--grad-navy); border: 1px solid var(--lime-500);
+  border-radius: var(--radius); padding: 26px 24px; box-shadow: var(--shadow);
+  display: flex; flex-direction: column; gap: 10px;
+}
+.punch-card::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 4px; border-radius: var(--radius) var(--radius) 0 0; background: var(--grad-lime); }
+.punch-card__badge {
+  align-self: flex-start; background: rgba(212,175,55,.14); color: var(--lime-400);
+  border: 1px solid var(--navy-line); border-radius: var(--radius-pill);
+  padding: 4px 12px; font-size: .8rem; font-weight: 800; margin-bottom: 2px;
+}
+.punch-card h2 { margin: 0; }
+.punch-card__price { display: flex; align-items: baseline; gap: 10px; margin: 6px 0 4px; }
+.punch-card__price strong { font-size: 2rem; color: var(--lime-400); }
+.punch-card__price span { color: var(--text-dim); font-weight: 600; }
+.punch-card .bullets { margin: 4px 0 12px; }
+.punch-card .btn { margin-top: auto; }
+@media (max-width: 640px) { .cards-grid { grid-template-columns: 1fr; } }
+
+/* punch option on checkout */
+.punch-box {
+  border: 1px solid var(--lime-500); border-radius: var(--radius-sm);
+  padding: 14px 16px; margin: 6px 0 4px; background: rgba(212,175,55,.08);
+}
+.punch-box__count { font-weight: 700; margin-bottom: 10px; }
+.punch-box__count.is-low { color: #ff8a72; }
 
 /* regular-players chips (admin recurring loop) */
 .reg-chips { display: flex; flex-wrap: wrap; gap: 8px; }
