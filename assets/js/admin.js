@@ -160,7 +160,8 @@
 
   /* ---- Games ---- */
   function renderGames() {
-    var list = DB.get("games", []);
+    // משחקים שהסתיימו לא מוצגים כאן (מנוהלים תחת "סטטיסטיקות") — להפחתת בלאגן
+    var list = DB.get("games", []).filter(function (g) { return !(DB.isGameEnded && DB.isGameEnded(g)); });
     var tb = $("gameRows"); tb.innerHTML = "";
     $("gameEmpty").style.display = list.length ? "none" : "block";
     list.forEach(function (g) {
@@ -245,20 +246,18 @@
   }
 
   function gameLabel(g) { return g.title + " · " + g.date; }
+  // בורר מקור-שחקנים לחלוקת כוחות — מציג רק משחקים שעדיין לא הסתיימו (רלוונטי לפני המשחק)
   function fillGameSelects() {
     var games = DB.get("games", []);
-    [["regGameSel", true], ["teamGameSel", false]].forEach(function (pair) {
-      var sel = $(pair[0]); if (!sel) return;
-      var prev = sel.value;
-      sel.innerHTML = games.length ? "" : '<option value="">— אין משחקים —</option>';
-      games.forEach(function (g) {
-        var o = document.createElement("option"); o.value = g.id;
-        var done = DB.isGameEnded ? DB.isGameEnded(g) : false;
-        o.textContent = gameLabel(g) + (done ? " (הסתיים)" : "");
-        sel.appendChild(o);
-      });
-      if (prev) sel.value = prev;
+    var sel = $("teamGameSel"); if (!sel) return;
+    var prev = sel.value;
+    var active = games.filter(function (g) { return !(DB.isGameEnded && DB.isGameEnded(g)); });
+    sel.innerHTML = active.length ? "" : '<option value="">— אין משחקים פתוחים —</option>';
+    active.forEach(function (g) {
+      var o = document.createElement("option"); o.value = g.id; o.textContent = gameLabel(g);
+      sel.appendChild(o);
     });
+    if (prev) sel.value = prev;
   }
 
   /* ============================================================
@@ -514,29 +513,128 @@
     renderRecurWeeks(t); renderRecurring(); renderGames(); renderDashboard(); fillGameSelects();
   }
 
-  /* ---- Registrations ---- */
-  function renderRegs() {
-    var gid = $("regGameSel").value;
-    var tb = $("regRows");
-    if (!gid) { tb.innerHTML = ""; $("regEmpty").style.display = "block"; $("regEmpty").textContent = "בחר משחק כדי לראות נרשמים."; return; }
-    var getter = DB.getRegistrations ? DB.getRegistrations(gid) : Promise.resolve((DB.get("regs", {})[gid]) || []);
-    getter.then(function (list) {
-      tb.innerHTML = "";
-      $("regEmpty").style.display = list.length ? "none" : "block";
-      $("regEmpty").textContent = "אין נרשמים למשחק הזה עדיין.";
-      list.forEach(function (p, i) {
-        var tr = document.createElement("tr");
-        tr.innerHTML = "<td>" + (i + 1) + "</td><td><strong>" + esc(p.name) + "</strong></td><td>" + esc(p.rating || "—") + "</td>" +
-          '<td><button class="icon-btn icon-btn--danger" data-del-r="' + p.id + '" data-gid="' + esc(gid) + '" title="הסר"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14" stroke-linecap="round"/></svg></button></td>';
-        tb.appendChild(tr);
-      });
+  /* ============================================================
+     STATISTICS — תוצאות למשחקים שהסתיימו + טבלאות מובילים
+     ============================================================ */
+  var STATS_ROWS = []; // [{name, goals, won}] של המשחק הנבחר
+  var STATS_GID = "";
+
+  // אגרגציה של תוצאות לטבלאות (wins/apps/goals). תומך גם בפורמט הישן.
+  function aggResults(results, sinceYmd) {
+    var wins = {}, apps = {}, goals = {};
+    (results || []).forEach(function (r) {
+      if (sinceYmd && (r.date || "") < sinceYmd) return;
+      if (r.players && r.players.length) {
+        r.players.forEach(function (p) {
+          if (!p || !p.name) return;
+          apps[p.name] = (apps[p.name] || 0) + 1;
+          goals[p.name] = (goals[p.name] || 0) + (parseInt(p.goals, 10) || 0);
+          if (p.won) wins[p.name] = (wins[p.name] || 0) + 1;
+        });
+      } else if (r.teams) { // פורמט ישן
+        Object.keys(r.teams).forEach(function (c) {
+          (r.teams[c] || []).forEach(function (n) {
+            apps[n] = (apps[n] || 0) + 1;
+            if (c === r.winningTeam) wins[n] = (wins[n] || 0) + 1;
+          });
+        });
+        if (r.kingScorer) goals[r.kingScorer] = (goals[r.kingScorer] || 0) + 1;
+      }
+    });
+    return { wins: wins, apps: apps, goals: goals };
+  }
+  function topList(map, n) {
+    return Object.keys(map).map(function (k) { return { name: k, v: map[k] }; })
+      .sort(function (a, b) { return b.v - a.v; }).slice(0, n || 12);
+  }
+  function boardHtml(title, icon, map) {
+    var rows = topList(map, 12);
+    var body = rows.length ? rows.map(function (r, i) {
+      return '<div class="stat-row"><span class="stat-rank">' + (i + 1) + '.</span><span class="stat-name">' + esc(r.name) + '</span><span class="stat-val">' + r.v + '</span></div>';
+    }).join("") : '<div class="muted" style="padding:8px">אין נתונים עדיין.</div>';
+    return '<div class="stat-board"><h4>' + icon + ' ' + title + '</h4>' + body + '</div>';
+  }
+
+  // משחקים שהסתיימו, מהחדש לישן, מוגבל ל-N (0 = הכל)
+  function endedGamesList() {
+    var n = parseInt(($("statsBack") && $("statsBack").value) || "5", 10);
+    var games = DB.get("games", []).filter(function (g) { return DB.isGameEnded && DB.isGameEnded(g); });
+    games.sort(function (a, b) { return (b.date || "").localeCompare(a.date || ""); });
+    return n ? games.slice(0, n) : games;
+  }
+  function renderStatsGames() {
+    var sel = $("statsGameSel"); if (!sel) return;
+    var prev = sel.value;
+    var games = endedGamesList();
+    sel.innerHTML = '<option value="">— בחר משחק —</option>' + games.map(function (g) {
+      return '<option value="' + esc(g.id) + '">' + esc(gameLabel(g)) + "</option>";
+    }).join("");
+    if (prev && games.some(function (g) { return g.id === prev; })) sel.value = prev;
+    if (!sel.value) { $("statsForm").style.display = "none"; }
+  }
+  function renderStatsPlayerRows() {
+    var tb = $("statsPlayerRows"); if (!tb) return;
+    $("statsNoPlayers").style.display = STATS_ROWS.length ? "none" : "block";
+    tb.innerHTML = STATS_ROWS.map(function (p, i) {
+      return "<tr><td><strong>" + esc(p.name) + "</strong></td>" +
+        '<td><input class="input stat-goals" type="number" min="0" value="' + (parseInt(p.goals, 10) || 0) + '" data-i="' + i + '" style="max-width:80px"></td>' +
+        '<td style="text-align:center"><input type="checkbox" class="stat-won" data-i="' + i + '"' + (p.won ? " checked" : "") + '></td>' +
+        '<td><button class="icon-btn icon-btn--danger" type="button" data-stat-del="' + i + '" title="הסר">✕</button></td></tr>';
+    }).join("");
+  }
+  function loadStatsGame(gid) {
+    STATS_GID = gid;
+    if (!gid) { $("statsForm").style.display = "none"; return; }
+    $("statsForm").style.display = "";
+    var g = (DB.get("games", []) || []).filter(function (x) { return x.id === gid; })[0] || {};
+    $("statsGameTitle").textContent = "תוצאת המשחק — " + (g.title || "משחק") + " · " + (g.date || "");
+    $("statsMsg").textContent = "";
+    Promise.all([
+      DB.getResult ? DB.getResult(gid) : Promise.resolve(null),
+      DB.getRegistrations ? DB.getRegistrations(gid) : Promise.resolve([])
+    ]).then(function (res) {
+      var saved = res[0], regs = res[1] || [];
+      $("statsWin").value = (saved && saved.winningTeam) || "";
+      if (saved && saved.players && saved.players.length) {
+        STATS_ROWS = saved.players.map(function (p) { return { name: p.name, goals: parseInt(p.goals, 10) || 0, won: !!p.won }; });
+      } else {
+        // בנייה מהנרשמים (הופעות)
+        var seen = {};
+        STATS_ROWS = [];
+        regs.forEach(function (p) { if (p.name && !seen[p.name]) { seen[p.name] = 1; STATS_ROWS.push({ name: p.name, goals: 0, won: false }); } });
+      }
+      renderStatsPlayerRows();
     });
   }
-  function regAdd() {
-    var gid = $("regGameSel").value; if (!gid) { alert("בחר משחק קודם"); return; }
-    var player = { name: $("regName").value || "שחקן", rating: parseInt($("regRate").value, 10) || 4 };
-    var p = DB.addRegistration ? DB.addRegistration(gid, player) : Promise.resolve();
-    p.then(function () { $("regName").value = ""; $("regRate").value = ""; renderRegs(); });
+  function collectStatsRows() {
+    document.querySelectorAll("#statsPlayerRows .stat-goals").forEach(function (inp) {
+      var i = parseInt(inp.getAttribute("data-i"), 10); if (STATS_ROWS[i]) STATS_ROWS[i].goals = parseInt(inp.value, 10) || 0;
+    });
+    document.querySelectorAll("#statsPlayerRows .stat-won").forEach(function (chk) {
+      var i = parseInt(chk.getAttribute("data-i"), 10); if (STATS_ROWS[i]) STATS_ROWS[i].won = chk.checked;
+    });
+  }
+  function statsSave() {
+    if (!STATS_GID) return;
+    collectStatsRows();
+    var g = (DB.get("games", []) || []).filter(function (x) { return x.id === STATS_GID; })[0] || {};
+    var msg = $("statsMsg"); msg.style.color = "var(--text-dim)"; msg.textContent = "שומר…";
+    var r = {
+      gameTitle: g.title || "משחק", date: g.date || new Date().toISOString().slice(0, 10),
+      winningTeam: $("statsWin").value || "",
+      players: STATS_ROWS.map(function (p) { return { name: p.name, goals: parseInt(p.goals, 10) || 0, won: !!p.won }; })
+    };
+    (DB.setResult ? DB.setResult(STATS_GID, r) : Promise.resolve()).then(function () {
+      msg.style.color = "var(--lime-400)"; msg.textContent = "✅ נשמר — מעודכן בדף הסטטיסטיקות באתר.";
+      renderStatsBoards();
+    }).catch(function (e) { msg.style.color = "#ff8a72"; msg.textContent = "⚠️ " + (DB.authErrorText ? DB.authErrorText(e) : (e.message || e)); });
+  }
+  function renderStatsBoards() {
+    var box = $("statsBoards"); if (!box) return;
+    (DB.getResults ? DB.getResults() : Promise.resolve([])).then(function (results) {
+      var a = aggResults(results, null);
+      box.innerHTML = boardHtml("נצחונות", "🏅", a.wins) + boardHtml("הופעות", "📋", a.apps) + boardHtml("גולים", "⚽", a.goals);
+    });
   }
 
   /* ---- Members (terms signers) ---- */
@@ -1060,7 +1158,7 @@
     if (name === "dashboard") renderDashboard();
     if (name === "tournaments") { renderTournaments(); ensureTDateRow(); }
     if (name === "games") { materializeRecurring(); renderGames(); fillGameGroups(); renderRecurring(); fillRecurGroups(); rCategoryToggle(); renderRRegList(); }
-    if (name === "regs") { fillGameSelects(); renderRegs(); }
+    if (name === "stats") { renderStatsGames(); renderStatsBoards(); }
     if (name === "members") renderMembers();
     if (name === "teams") {
       fillGameSelects();
@@ -1213,7 +1311,7 @@
 
   /* event delegation */
   document.addEventListener("click", function (e) {
-    var t = e.target.closest("[data-view],[data-jump],[data-edit-t],[data-del-t],[data-edit-g],[data-del-g],[data-del-r],[data-move],[data-del-admin],[data-del-gal],[data-del-wa],[data-wa-group],[data-go-result],[data-edit-grp],[data-del-grp],[data-edit-r],[data-del-recur],[data-toggle-r],[data-week],[data-rreg-del]");
+    var t = e.target.closest("[data-view],[data-jump],[data-edit-t],[data-del-t],[data-edit-g],[data-del-g],[data-del-r],[data-move],[data-del-admin],[data-del-gal],[data-del-wa],[data-wa-group],[data-go-result],[data-edit-grp],[data-del-grp],[data-edit-r],[data-del-recur],[data-toggle-r],[data-week],[data-rreg-del],[data-stat-del]");
     if (!t) return;
     var a;
     if (t.hasAttribute("data-view")) showView(t.getAttribute("data-view"));
@@ -1240,9 +1338,8 @@
     else if ((a = t.getAttribute("data-del-g"))) {
       if (confirm("למחוק את המשחק?")) { DB.set("games", DB.get("games", []).filter(function (x) { return x.id !== a; })); renderGames(); renderDashboard(); fillGameSelects(); }
     }
-    else if ((a = t.getAttribute("data-del-r"))) {
-      var gid = t.getAttribute("data-gid") || $("regGameSel").value;
-      (DB.deleteRegistration ? DB.deleteRegistration(a, gid) : Promise.resolve()).then(function () { renderRegs(); });
+    else if ((a = t.getAttribute("data-stat-del"))) {
+      collectStatsRows(); STATS_ROWS.splice(parseInt(a, 10), 1); renderStatsPlayerRows();
     }
     else if ((a = t.getAttribute("data-move"))) { var pr = a.split("|"); move(pr[0], pr[1]); }
     else if ((a = t.getAttribute("data-del-admin"))) {
@@ -1255,10 +1352,11 @@
       if (confirm("למחוק פריט מהגלריה?")) (DB.deleteGalleryItem ? DB.deleteGalleryItem(a) : Promise.resolve()).then(renderGalleryAdmin);
     }
     else if ((a = t.getAttribute("data-go-result"))) {
-      // מהסקירה: פותח חלוקת כוחות עם המשחק הזה ומשחזר כוחות שמורים
-      showView("teams");
-      if ($("teamGameSel")) $("teamGameSel").value = a;
-      restoreTeamState(a);
+      // מהסקירה: פותח את מסך הסטטיסטיקות עם המשחק שהסתיים לרישום תוצאה
+      showView("stats");
+      renderStatsGames();
+      if ($("statsGameSel")) $("statsGameSel").value = a;
+      loadStatsGame(a);
     }
     else if ((a = t.getAttribute("data-del-wa"))) { removeWaGroup(a); }
     else if ((a = t.getAttribute("data-wa-group"))) {
@@ -1330,13 +1428,17 @@
       RREG.push({ name: n, rating: rate || "" });
       $("rRegName").value = ""; $("rRegRate").value = ""; renderRRegList();
     });
-    $("regGameSel").addEventListener("change", renderRegs);
-    $("regAdd").addEventListener("click", regAdd);
+    if ($("statsBack")) $("statsBack").addEventListener("change", renderStatsGames);
+    if ($("statsGameSel")) $("statsGameSel").addEventListener("change", function () { loadStatsGame(this.value); });
+    if ($("statsAddBtn")) $("statsAddBtn").addEventListener("click", function () {
+      var n = ($("statsAddName").value || "").trim(); if (!n) return;
+      collectStatsRows(); STATS_ROWS.push({ name: n, goals: 0, won: false }); $("statsAddName").value = ""; renderStatsPlayerRows();
+    });
+    if ($("statsSave")) $("statsSave").addEventListener("click", statsSave);
     $("genTeams").addEventListener("click", function () { genTeams(false); });
     $("shuffleTeams").addEventListener("click", function () { genTeams(true); });
     $("loadPaste").addEventListener("click", loadPaste);
     $("finishTeams").addEventListener("click", finish);
-    $("saveResult").addEventListener("click", saveResult);
     $("copyTeams").addEventListener("click", function () { if (STATE.teams.some(function (x) { return x.length; })) { copy(buildMessage()); $("waHint").textContent = "ההודעה הועתקה ללוח ✅"; } });
     $("addWaGroup").addEventListener("click", addWaGroup);
     $("addAdmin").addEventListener("click", function () {

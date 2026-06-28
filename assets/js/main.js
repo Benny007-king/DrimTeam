@@ -35,6 +35,21 @@
   else document.addEventListener("DOMContentLoaded", mount);
 })();
 
+/* Inject "סטטיסטיקות" nav link on every page (menu item for the stats page) */
+(function () {
+  "use strict";
+  function mount() {
+    var nav = document.querySelector(".nav__links"); if (!nav) return;
+    if (nav.querySelector('a[href="stats.html"]')) return; // כבר קיים
+    var a = document.createElement("a");
+    a.href = "stats.html"; a.textContent = "סטטיסטיקות";
+    var anchor = nav.querySelector('a[href="takanon.html"]');
+    if (anchor) nav.insertBefore(a, anchor); else nav.appendChild(a);
+  }
+  if (document.readyState !== "loading") mount();
+  else document.addEventListener("DOMContentLoaded", mount);
+})();
+
 /* DrimTeam — interactions */
 (function () {
   // Mobile nav toggle

@@ -46,7 +46,7 @@
       <button class="admin-nav-btn active" data-view="dashboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> סקירה</button>
       <button class="admin-nav-btn" data-view="tournaments"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4h12v3a6 6 0 0 1-12 0z"/><path d="M9 19h6M12 13v6" stroke-linecap="round"/></svg> טורנירים</button>
       <button class="admin-nav-btn" data-view="games"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4" stroke-linecap="round"/></svg> משחקים</button>
-      <button class="admin-nav-btn" data-view="regs"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0M16 6a3 3 0 0 1 0 6M19 20a5 5 0 0 0-3-4.6" stroke-linecap="round"/></svg> נרשמים</button>
+      <button class="admin-nav-btn" data-view="stats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" stroke-linecap="round" stroke-linejoin="round"/></svg> סטטיסטיקות</button>
       <button class="admin-nav-btn" data-view="members"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-8 0v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM20 8v6M23 11h-6" stroke-linecap="round" stroke-linejoin="round"/></svg> חברים</button>
       <button class="admin-nav-btn" data-view="teams"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7l4 3-1.5 5h-5L8 10z" stroke-linejoin="round"/></svg> חלוקת כוחות</button>
       <button class="admin-nav-btn" data-view="gallery"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21" stroke-linecap="round" stroke-linejoin="round"/></svg> גלריה</button>
@@ -304,27 +304,46 @@
         </div>
       </section>
 
-      <!-- REGISTRATIONS -->
-      <section class="admin-view" id="view-regs">
-        <div class="admin-head"><h1 class="h-md">מי נרשם למשחק</h1></div>
+      <!-- STATISTICS (תוצאות + טבלאות מובילים — מקום מאוחד) -->
+      <section class="admin-view" id="view-stats">
+        <div class="admin-head"><h1 class="h-md">📊 סטטיסטיקות ותוצאות</h1></div>
+        <p class="muted" style="margin-top:-6px">רישום תוצאות למשחקים <strong>שהסתיימו</strong> בלבד. מה שנשמר כאן מתעדכן בדף "סטטיסטיקות שחקנים" באתר.</p>
+
         <div class="teams-toolbar">
-          <div class="field" style="margin:0;min-width:260px"><label>בחר משחק</label><select class="select" id="regGameSel"></select></div>
+          <div class="field" style="margin:0;min-width:200px"><label>כמה משחקים אחורה</label>
+            <select class="select" id="statsBack">
+              <option value="5">5 האחרונים</option>
+              <option value="10">10 האחרונים</option>
+              <option value="20">20 האחרונים</option>
+              <option value="0">כל מה שהסתיים</option>
+            </select>
+          </div>
+          <div class="field" style="margin:0;min-width:260px"><label>בחר משחק שהסתיים</label><select class="select" id="statsGameSel"></select></div>
         </div>
-        <div class="panel" style="margin-bottom:18px">
-          <h3 class="h-md">הוספת נרשם ידנית</h3>
-          <p class="muted" style="margin-top:-4px">הנרשם יתווסף למשחק/טורניר שנבחר למעלה.</p>
-          <form id="regAddForm" onsubmit="return false" class="field-row">
-            <div class="field"><label>שם מלא</label><input class="input" id="regName" placeholder="שם הנרשם" /></div>
-            <div class="field"><label>רמה לאיזון כוחות (1-7, אופציונלי)</label><input class="input" id="regRate" type="number" min="1" max="7" placeholder="4" /></div>
-            <div class="field" style="display:flex;align-items:end"><button class="btn btn--primary btn--block" id="regAdd">הוסף</button></div>
-          </form>
+
+        <div class="panel" id="statsForm" style="margin-bottom:18px;display:none">
+          <h3 class="h-md" id="statsGameTitle">תוצאת המשחק</h3>
+          <div class="field" style="max-width:280px"><label>קבוצה מנצחת</label>
+            <select class="select" id="statsWin"><option value="">— ללא —</option><option value="לבנה">לבנה ⚪</option><option value="צהובה">צהובה 🟡</option><option value="כתומה">כתומה 🟠</option><option value="תיקו">תיקו</option></select>
+          </div>
+          <div style="overflow-x:auto">
+            <table class="admin-table">
+              <thead><tr><th>שחקן</th><th>גולים</th><th>ניצח 🏆</th><th></th></tr></thead>
+              <tbody id="statsPlayerRows"></tbody>
+            </table>
+            <div class="admin-empty" id="statsNoPlayers" style="display:none">אין נרשמים למשחק — אפשר להוסיף שחקנים ידנית למטה.</div>
+          </div>
+          <div class="field-row" style="align-items:flex-end;margin-top:10px">
+            <div class="field"><label>הוספת שחקן ידנית</label><input class="input" id="statsAddName" placeholder="שם שחקן" /></div>
+            <div class="field" style="display:flex;align-items:flex-end"><button class="btn btn--ghost btn--block" id="statsAddBtn" type="button">הוסף שחקן</button></div>
+          </div>
+          <button class="btn btn--primary" id="statsSave">שמירת תוצאה</button>
+          <p id="statsMsg" class="hint" style="color:var(--text-dim);margin-top:8px"></p>
         </div>
-        <div class="panel" style="overflow-x:auto">
-          <table class="admin-table">
-            <thead><tr><th>#</th><th>שם</th><th>רמה</th><th></th></tr></thead>
-            <tbody id="regRows"></tbody>
-          </table>
-          <div class="admin-empty" id="regEmpty">בחר משחק כדי לראות נרשמים.</div>
+
+        <div class="panel">
+          <div class="admin-head" style="margin-bottom:10px"><h3 class="h-md">טבלאות מובילים (מצטבר)</h3></div>
+          <div id="statsBoards" class="stats-boards"></div>
         </div>
       </section>
 
@@ -376,21 +395,7 @@
         </div>
         <p class="hint" id="waHint" style="color:var(--text-dim);margin-top:10px"></p>
 
-        <!-- תוצאת משחק -->
-        <div class="panel" style="margin-top:24px">
-          <h3 class="h-md">תוצאת משחק (כדורגל)</h3>
-          <p class="muted">בסיום המשחק — בחרו את הקבוצה שלקחה את הגביע ואת מלך השערים (מתוך השחקנים שחולקו). כל שחקן בקבוצה המנצחת יקבל "גביע קבוצתי" בכרטיס, ומלך השערים ייספר בטבלה.</p>
-          <div class="field-row">
-            <div class="field"><label>קבוצה מנצחת</label>
-              <select class="select" id="winTeam"><option value="">—</option><option value="לבנה">לבנה ⚪</option><option value="צהובה">צהובה 🟡</option><option value="כתומה">כתומה 🟠</option></select>
-            </div>
-            <div class="field"><label>מלך השערים</label>
-              <select class="select" id="kingScorer"><option value="">—</option></select>
-            </div>
-          </div>
-          <button class="btn btn--primary" id="saveResult">שמור תוצאה</button>
-          <p id="resultMsg" class="hint" style="color:var(--text-dim);margin-top:8px"></p>
-        </div>
+        <div class="note" style="margin-top:24px">🏆 רישום תוצאות (קבוצה מנצחת, גולים, ניצחונות) עבר ל<strong>"סטטיסטיקות"</strong> בתפריט — שם רושמים תוצאה למשחקים שהסתיימו.</div>
       </section>
 
       <!-- GALLERY MANAGEMENT -->

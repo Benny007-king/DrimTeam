@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>סטטיסטיקות שחקנים — DrimTeam</title>
+  <meta name="description" content="טבלאות המובילים של DrimTeam — נצחונות, הופעות ומלכי השערים, עם סינון שבועי/חודשי/מצטבר וקבוצה מנצחת." />
+  <link rel="canonical" href="https://drimteam.co.il/stats.html" />
+  <meta name="theme-color" content="#0d0d0d" />
+  <link rel="icon" type="image/x-icon" href="favicon.ico" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="DrimTeam" />
+  <meta property="og:title" content="סטטיסטיקות שחקנים — DrimTeam" />
+  <meta property="og:url" content="https://drimteam.co.il/stats.html" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Rubik:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="container nav">
+      <a href="index.html" class="logo"><span class="drim">Drim</span><span class="ball"></span><span class="team">Team</span></a>
+      <nav class="nav__links">
+        <a href="index.html">בית</a>
+        <a href="games.html">לוח משחקים</a>
+        <a href="tournaments.html">טורנירים</a>
+        <a href="gallery.html">גלריה</a>
+        <a href="podcast.html">פודקאסט</a>
+        <a href="schedule.html">מפת משחקים</a>
+        <a href="stats.html" class="active">סטטיסטיקות</a>
+        <a href="takanon.html">תקנון</a>
+      </nav>
+      <div class="nav__actions">
+        <a href="register.html" class="btn btn--ghost btn--sm">התחברות</a>
+        <button class="nav__toggle" aria-label="תפריט"><span></span><span></span><span></span></button>
+      </div>
+    </div>
+  </header>
+
+  <section class="section">
+    <div class="container">
+      <div class="section-head" style="margin-bottom:24px">
+        <span class="eyebrow">המספרים מדברים</span>
+        <h1 class="h-lg">סטטיסטיקות שחקנים 📊</h1>
+        <p class="lead">טבלאות המובילים של הקהילה — נצחונות, הופעות וגולים. מתעדכן מהתוצאות שנרשמות בכל משחק.</p>
+      </div>
+
+      <div class="toolbar">
+        <div class="view-tabs" id="rangeTabs">
+          <button class="active" data-range="all">מצטבר</button>
+          <button data-range="month">חודשי</button>
+          <button data-range="week">שבועי</button>
+        </div>
+      </div>
+
+      <div id="winnerCard" class="winner-card" style="display:none"></div>
+
+      <div id="statsBoards" class="stats-boards"></div>
+      <div class="admin-empty" id="statsEmpty" style="display:none">אין עדיין תוצאות בטווח שנבחר. ברגע שיירשמו תוצאות משחקים — הטבלאות יתעדכנו ⚽</div>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-bottom" style="border:none">
+        <span>© 2026 DrimTeam — כל הזכויות שמורות</span>
+        <span><a href="games.html" class="link-lime">למשחקים הקרובים</a></span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="assets/js/db.js"></script>
+  <script src="assets/js/auth-ui.js"></script>
+  <script src="assets/js/chat.js"></script>
+  <script src="assets/js/main.js"></script>
+  <script>
+    (function () {
+      function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]; }); }
+      var RESULTS = [], range = "all";
+
+      function sinceYmd() {
+        if (range === "all") return null;
+        var d = new Date(); d.setDate(d.getDate() - (range === "week" ? 7 : 30));
+        return d.toISOString().slice(0, 10);
+      }
+      function agg(results, since) {
+        var wins = {}, apps = {}, goals = {};
+        results.forEach(function (r) {
+          if (since && (r.date || "") < since) return;
+          if (r.players && r.players.length) {
+            r.players.forEach(function (p) {
+              if (!p || !p.name) return;
+              apps[p.name] = (apps[p.name] || 0) + 1;
+              goals[p.name] = (goals[p.name] || 0) + (parseInt(p.goals, 10) || 0);
+              if (p.won) wins[p.name] = (wins[p.name] || 0) + 1;
+            });
+          } else if (r.teams) {
+            Object.keys(r.teams).forEach(function (c) {
+              (r.teams[c] || []).forEach(function (n) {
+                apps[n] = (apps[n] || 0) + 1;
+                if (c === r.winningTeam) wins[n] = (wins[n] || 0) + 1;
+              });
+            });
+            if (r.kingScorer) goals[r.kingScorer] = (goals[r.kingScorer] || 0) + 1;
+          }
+        });
+        return { wins: wins, apps: apps, goals: goals };
+      }
+      function top(map) {
+        return Object.keys(map).map(function (k) { return { name: k, v: map[k] }; })
+          .sort(function (a, b) { return b.v - a.v; }).slice(0, 15);
+      }
+      function board(title, icon, map) {
+        var rows = top(map);
+        var body = rows.length ? rows.map(function (r, i) {
+          return '<div class="stat-row"><span class="stat-rank">' + (i + 1) + '.</span><span class="stat-name">' + esc(r.name) + '</span><span class="stat-val">' + r.v + '</span></div>';
+        }).join("") : '<div class="muted" style="padding:10px;text-align:center">אין נתונים</div>';
+        return '<div class="stat-board"><h4>' + icon + ' ' + title + ' ' + icon + '</h4>' + body + '</div>';
+      }
+
+      function renderWinner(results, since) {
+        var card = document.getElementById("winnerCard");
+        // התוצאה האחרונה (לפי תאריך) עם קבוצה מנצחת, בטווח שנבחר
+        var inRange = results.filter(function (r) { return (!since || (r.date || "") >= since) && r.winningTeam && r.winningTeam !== "תיקו"; });
+        inRange.sort(function (a, b) { return (b.date || "").localeCompare(a.date || ""); });
+        var last = inRange[0];
+        if (!last) { card.style.display = "none"; return; }
+        var winners = [];
+        if (last.players && last.players.length) winners = last.players.filter(function (p) { return p.won; }).map(function (p) { return p.name; });
+        else if (last.teams && last.teams[last.winningTeam]) winners = last.teams[last.winningTeam];
+        card.style.display = "";
+        card.innerHTML = '<div class="winner-card__badge">🏆 הקבוצה המנצחת האחרונה</div>' +
+          '<div class="winner-card__team">קבוצה ' + esc(last.winningTeam) + '</div>' +
+          '<div class="winner-card__meta">' + esc(last.gameTitle || "משחק") + (last.date ? " · " + esc(last.date) : "") + '</div>' +
+          (winners.length ? '<div class="winner-card__players">' + winners.map(function (n) { return '<span>' + esc(n) + '</span>'; }).join("") + '</div>' : "");
+      }
+
+      function render() {
+        var since = sinceYmd();
+        var a = agg(RESULTS, since);
+        var boards = document.getElementById("statsBoards");
+        var any = a.wins && (Object.keys(a.wins).length || Object.keys(a.apps).length || Object.keys(a.goals).length);
+        document.getElementById("statsEmpty").style.display = any ? "none" : "block";
+        boards.innerHTML = board("נצחונות", "🏅", a.wins) + board("הופעות", "📋", a.apps) + board("גולים", "⚽", a.goals);
+        renderWinner(RESULTS, since);
+      }
+
+      document.getElementById("rangeTabs").addEventListener("click", function (e) {
+        var b = e.target.closest("[data-range]"); if (!b) return;
+        this.querySelectorAll("button").forEach(function (x) { x.classList.remove("active"); });
+        b.classList.add("active"); range = b.getAttribute("data-range"); render();
+      });
+
+      var ready = (window.DTDB && DTDB.load) ? DTDB.load() : Promise.resolve();
+      ready.then(function () {
+        return (window.DTDB && DTDB.getResults) ? DTDB.getResults() : [];
+      }).then(function (res) { RESULTS = res || []; render(); });
+    })();
+  </script>
+</body>
+</html>

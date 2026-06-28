@@ -109,8 +109,9 @@
   <script>
     (function () {
       var months = ["ינו", "פבר", "מרץ", "אפר", "מאי", "יוני", "יולי", "אוג", "ספט", "אוק", "נוב", "דצמ"];
+      var DOW = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
       function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]; }); }
-      function dpart(d) { if (!d) return { day: "--", mon: "" }; var p = d.split("-"); return { day: p[2], mon: months[parseInt(p[1], 10) - 1] || "" }; }
+      function dpart(d) { if (!d) return { day: "--", mon: "", dow: "" }; var p = d.split("-"); var dt = new Date(d + "T00:00:00"); return { day: p[2], mon: months[parseInt(p[1], 10) - 1] || "", dow: isNaN(dt.getTime()) ? "" : ("יום " + DOW[dt.getDay()]) }; }
       // ---- ענפי ספורט (לקטגוריית "אירועי ספורט") ----
       var SPORTS = [
         { key: "football", label: "כדורגל" }, { key: "basketball", label: "כדורסל" },
@@ -219,7 +220,7 @@
           var d = dpart(g.date);
           var gid = g.placeholder ? ("ph_" + g.recurringId) : g.id;
           return '<article class="game-card' + (g.placeholder ? " game-card--soon" : "") + '" data-city="' + esc(g.city) + '" data-format="' + esc(g.format) + '" data-category="' + esc(g.category || "") + '" data-sport="' + esc(g.sport || "") + '">' +
-            '<div class="game-date"><div class="day">' + esc(d.day) + '</div><div class="mon">' + esc(d.mon) + '</div></div>' +
+            '<div class="game-date"><div class="day">' + esc(d.day) + '</div><div class="mon">' + esc(d.mon) + '</div>' + (d.dow ? '<div class="dow">' + esc(d.dow) + '</div>' : '') + '</div>' +
             '<div class="game-info"><h3>' + esc(g.title || "משחק") + '</h3><div class="game-meta">' +
             '<span>🗓️ ' + esc(g.date || "") + " " + esc(g.time || "") + (g.endTime ? "–" + esc(g.endTime) : "") + "</span>" +
             '<span>📍 ' + esc(g.venue || g.city || "") + "</span>" +

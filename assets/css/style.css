@@ -647,6 +647,7 @@ h1, h2, h3 { line-height: 1.15; margin: 0 0 0.5em; font-weight: 800; }
 }
 .game-date .day { font-size: 1.8rem; font-weight: 800; color: var(--lime-400); line-height: 1; }
 .game-date .mon { font-size: 0.85rem; color: var(--text-muted); }
+.game-date .dow { font-size: 0.78rem; color: var(--text-dim); font-weight: 700; margin-top: 4px; }
 .game-info h3 { margin: 0 0 4px; font-size: 1.2rem; }
 .game-meta { display: flex; flex-wrap: wrap; gap: 16px; color: var(--text-muted); font-size: 0.95rem; }
 .game-meta span { display: inline-flex; align-items: center; gap: 6px; }
@@ -826,11 +827,12 @@ h1, h2, h3 { line-height: 1.15; margin: 0 0 0.5em; font-weight: 800; }
   overflow: hidden;
   border-radius: var(--radius);
   border: 1px solid var(--navy-line);
+  background: var(--navy-700);
   cursor: pointer;
 }
 .gallery__item img {
   width: 100%; height: 100%;
-  object-fit: cover;
+  object-fit: contain;   /* התצוגה המקדימה מציגה את התמונה במלואה (בלי חיתוך) */
   transition: transform 0.4s ease;
 }
 .gallery__item:hover img { transform: scale(1.08); }
@@ -1411,6 +1413,20 @@ h1, h2, h3 { line-height: 1.15; margin: 0 0 0.5em; font-weight: 800; }
   box-shadow: var(--shadow); cursor: pointer;
 }
 .dt-chat-btn svg { width: 28px; height: 28px; }
+/* WhatsApp float (before login) — same spot as chat, gently pulsing */
+.wa-float {
+  position: fixed; inset-inline-end: 18px; bottom: 18px; z-index: 1100;
+  width: 56px; height: 56px; border-radius: 50%; display: none; place-items: center;
+  background: #25d366; color: #fff; box-shadow: 0 8px 22px -6px rgba(37,211,102,.7);
+  text-decoration: none; animation: wa-pulse 1.6s ease-in-out infinite;
+}
+.wa-float svg { width: 32px; height: 32px; }
+.wa-float:hover { transform: scale(1.06); animation-play-state: paused; }
+@keyframes wa-pulse {
+  0%, 100% { box-shadow: 0 8px 22px -6px rgba(37,211,102,.7), 0 0 0 0 rgba(37,211,102,.55); }
+  50%      { box-shadow: 0 8px 22px -6px rgba(37,211,102,.7), 0 0 0 12px rgba(37,211,102,0); }
+}
+@media (prefers-reduced-motion: reduce) { .wa-float { animation: none; } }
 .dt-chat-badge {
   position: absolute; top: -4px; inset-inline-end: -4px;
   min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px;
@@ -1654,6 +1670,33 @@ html.a11y-contrast .btn { background: #ff0 !important; color: #000 !important; -
 .rate-star:hover { transform: scale(1.12); }
 .rate-star.on { color: var(--lime-500); }
 .rate-label { text-align: center; color: var(--lime-400); font-weight: 700; min-height: 1.4em; }
+
+/* winning team card (stats.html) */
+.winner-card {
+  background: var(--grad-navy); border: 1px solid var(--lime-500); border-radius: var(--radius);
+  padding: 20px 22px; margin-bottom: 22px; text-align: center; box-shadow: var(--shadow); position: relative; overflow: hidden;
+}
+.winner-card::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 4px; background: var(--grad-lime); }
+.winner-card__badge { color: var(--lime-400); font-weight: 800; font-size: .9rem; }
+.winner-card__team { font-size: 1.6rem; font-weight: 900; margin: 4px 0; }
+.winner-card__meta { color: var(--text-dim); font-size: .88rem; }
+.winner-card__players { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 12px; }
+.winner-card__players span { background: rgba(212,175,55,.14); border: 1px solid var(--navy-line); border-radius: var(--radius-pill); padding: 4px 12px; font-size: .85rem; font-weight: 600; }
+
+/* player statistics boards (stats.html + admin stats) */
+.stats-boards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.stat-board { background: var(--navy-800); border: 1px solid var(--navy-line); border-radius: var(--radius); padding: 14px 16px; }
+.stat-board h4 { margin: 0 0 12px; font-size: 1rem; text-align: center; color: var(--lime-400); }
+.stat-row {
+  display: grid; grid-template-columns: 2ch 1fr auto; align-items: center; gap: 10px;
+  padding: 9px 8px; border-bottom: 1px solid var(--navy-line);
+}
+.stat-row:last-child { border-bottom: none; }
+.stat-rank { color: var(--lime-500); font-weight: 800; font-size: .85rem; }
+.stat-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stat-val { font-weight: 800; color: var(--lime-400); font-variant-numeric: tabular-nums; }
+.stat-row:nth-child(2) .stat-val { font-size: 1.05rem; } /* leader pops a touch */
+@media (max-width: 720px) { .stats-boards { grid-template-columns: 1fr; } }
 
 /* punch cards (cards.html) */
 .cards-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }

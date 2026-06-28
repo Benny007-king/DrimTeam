@@ -360,6 +360,16 @@
       }
       return Promise.resolve(DTDB.get("results", []));
     },
+    // תוצאה אחת לכל משחק (doc id = gameId) — שמירה/דריסה
+    setResult: function (gameId, r) {
+      if (fdb) { return fdb.collection("results").doc(gameId).set(Object.assign({ gameId: gameId, createdAt: firebase.firestore.FieldValue.serverTimestamp() }, r)); }
+      var a = DTDB.get("results", []).filter(function (x) { return x.id !== gameId; });
+      a.push(Object.assign({ id: gameId, gameId: gameId }, r)); DTDB.set("results", a); return Promise.resolve();
+    },
+    getResult: function (gameId) {
+      if (fdb) { return fdb.collection("results").doc(gameId).get().then(function (s) { return s.exists ? Object.assign({ id: s.id }, s.data()) : null; }).catch(function () { return null; }); }
+      return Promise.resolve(DTDB.get("results", []).filter(function (x) { return x.id === gameId; })[0] || null);
+    },
     currentUid: function () { return (fauth && fauth.currentUser) ? fauth.currentUser.uid : null; },
 
     /* ---- "ended" helpers (end-time aware) ---- */

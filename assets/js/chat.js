@@ -294,8 +294,28 @@
   function show() { build(); btn.style.display = "grid"; startNotif(); }
   function hide() { stopSub(); stopNotif(); if (panel) panel.classList.remove("open"); if (btn) btn.style.display = "none"; }
 
+  /* ---- WhatsApp button (shown only BEFORE login; chat replaces it after) ---- */
+  var waBtn = null;
+  function ensureWa() {
+    if (waBtn) return waBtn;
+    waBtn = document.createElement("a");
+    waBtn.className = "wa-float";
+    waBtn.href = "https://wa.me/972545543734";
+    waBtn.target = "_blank"; waBtn.rel = "noopener";
+    waBtn.setAttribute("aria-label", "צרו קשר בוואטסאפ");
+    waBtn.title = "דברו איתנו בוואטסאפ";
+    waBtn.innerHTML = '<svg viewBox="0 0 32 32" fill="currentColor" aria-hidden="true"><path d="M16 3C9.4 3 4 8.4 4 15c0 2.1.6 4.1 1.6 5.9L4 29l8.3-1.6c1.7.9 3.7 1.4 5.7 1.4 6.6 0 12-5.4 12-12S22.6 3 16 3zm0 21.8c-1.8 0-3.5-.5-5-1.4l-.4-.2-3.7.7.7-3.6-.2-.4c-1-1.6-1.5-3.4-1.5-5.3 0-5.4 4.4-9.8 9.8-9.8s9.8 4.4 9.8 9.8-4.4 9.8-9.8 9.8zm5.4-7.3c-.3-.1-1.7-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6l.4-.5c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.2 5.1 4.5.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.7-.7 2-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3z"/></svg>';
+    document.body.appendChild(waBtn);
+    return waBtn;
+  }
+  function showWa() { ensureWa().style.display = "grid"; }
+  function hideWa() { if (waBtn) waBtn.style.display = "none"; }
+  // ברירת מחדל (לפני שמצב ההתחברות נקבע) — מבקרים לא-מחוברים רואים וואטסאפ
+  showWa();
+
   DTDB.onUser(function (user) {
-    if (!user) { myUid = null; hide(); return; }
+    if (!user) { myUid = null; hide(); showWa(); return; }
+    hideWa();
     myUid = user.uid;
     myName = (user.displayName || (user.email || "").split("@")[0] || "אורח");
     if (DTDB.isCurrentUserAdmin) DTDB.isCurrentUserAdmin().then(function (a) { iAmAdmin = a; }).catch(function () {});
