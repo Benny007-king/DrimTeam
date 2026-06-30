@@ -139,6 +139,7 @@
   }
   function tournReset() {
     $("tId").value = ""; $("tName").value = ""; $("tCity").value = ""; $("tPrice").value = "";
+    if ($("tLink")) $("tLink").value = "";
     if ($("tDesc")) $("tDesc").value = "";
     var wrap = $("tDatesWrap"); if (wrap) wrap.innerHTML = "";
     addTDateRow("");
@@ -151,6 +152,7 @@
     var obj = {
       id: id || uid(), name: $("tName").value || "ללא שם", format: $("tFormat").value,
       dates: dates, date: dates[0] || "", city: $("tCity").value, price: $("tPrice").value || 0,
+      link: ($("tLink") ? $("tLink").value.trim() : ""),
       desc: ($("tDesc") ? $("tDesc").value.trim() : "")
     };
     if (id) { list = list.map(function (t) { return t.id === id ? obj : t; }); }
@@ -1321,6 +1323,7 @@
       if (tt) {
         $("tId").value = tt.id; $("tName").value = tt.name; $("tFormat").value = tt.format;
         $("tCity").value = tt.city; $("tPrice").value = tt.price;
+        if ($("tLink")) $("tLink").value = tt.link || "";
         if ($("tDesc")) $("tDesc").value = tt.desc || "";
         var wrap = $("tDatesWrap"); if (wrap) wrap.innerHTML = "";
         var ds = tournDates(tt); if (!ds.length) ds = [""];

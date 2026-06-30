@@ -160,7 +160,9 @@
             '<ul class="tcol__list">' + liHtml + '</ul>' +
             '<div class="tcol__foot">' +
             '<div class="tcol__price">₪' + esc(t.price || 0) + ' <span>/ טורניר</span></div>' +
-            '<a href="register.html?tournament=' + esc(t.id) + '" class="btn ' + (featured ? 'btn--primary' : 'btn--ghost') + ' btn--block js-reg-t" data-t="' + esc(t.id) + '">הרשמה לטורניר</a>' +
+            (t.link
+              ? '<a href="' + esc(t.link) + '" class="btn ' + (featured ? 'btn--primary' : 'btn--ghost') + ' btn--block" target="_blank" rel="noopener">הרשמה לטורניר ←</a>'
+              : '<a href="register.html?tournament=' + esc(t.id) + '" class="btn ' + (featured ? 'btn--primary' : 'btn--ghost') + ' btn--block js-reg-t" data-t="' + esc(t.id) + '">הרשמה לטורניר</a>') +
             '</div></article>';
         }).join("");
       });

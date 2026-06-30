@@ -140,7 +140,7 @@
         });
         tourns.forEach(function (t) {
           tDates(t).forEach(function (d) {
-            ev.push({ date: d, time: "", endTime: "", title: t.name || "טורניר", city: t.city || "", type: "tournament", id: t.id });
+            ev.push({ date: d, time: "", endTime: "", title: t.name || "טורניר", city: t.city || "", type: "tournament", id: t.id, link: t.link || "" });
           });
         });
         return ev;
@@ -194,13 +194,14 @@
       // קישור/מאפייני אירוע לחיץ
       function evHref(e) {
         if (e.cancelled || e.placeholder) return null;
+        if (e.link) return e.link; // קישור חיצוני (משחק/טורניר) — מוביל אליו בלבד
         if (e.type === "tournament") return "register.html?tournament=" + e.id;
-        return e.link ? e.link : ("register.html?game=" + e.id);
+        return "register.html?game=" + e.id;
       }
       function evAttrs(e) {
         var href = evHref(e);
         if (!href) return null;
-        var ext = (e.type === "game" && e.link) ? ' target="_blank" rel="noopener"' : "";
+        var ext = e.link ? ' target="_blank" rel="noopener"' : "";
         return ' href="' + esc(href) + '"' + ext;
       }
 
